@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadshow TESPOIN - DPD Majalengka</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#090909;color:#fff}
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:28px 16px}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.42)}
+.overlay{position:absolute;inset:0;background:linear-gradient(180deg,#0005 0%,#0008 55%,#000 100%)}
+.content{position:relative;z-index:2;width:min(650px,100%);text-align:center}
+.brand{display:inline-block;background:#d90000;border:1px solid #ffffff55;border-radius:30px;padding:8px 15px;font-size:12px;font-weight:800;margin-bottom:13px}
+h1{font-size:clamp(34px,10vw,62px);line-height:.92;margin:0 0 10px;text-transform:uppercase;text-shadow:0 4px 20px #000}
+h1 span{color:#ff2020}
+.desc{font-size:15px;line-height:1.45;font-weight:600;margin:0 auto 20px;max-width:540px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.info{background:#050505c9;border:1px solid #ffffff38;border-radius:14px;padding:13px 10px;text-align:left}
+.info small{display:block;color:#ff2525;font-weight:900;font-size:10px;margin-bottom:5px;text-transform:uppercase}
+.info strong{font-size:14px;line-height:1.25}
+.poster-card{background:#000b;border:1px solid #ffffff35;border-radius:16px;padding:8px;margin:0 auto 17px;max-width:430px;box-shadow:0 10px 30px #0008}
+.poster-card img{display:block;width:100%;border-radius:11px;max-height:390px;object-fit:cover;object-position:top}.slide-wrap{position:relative}.slide-wrap img{display:none}.slide-wrap img.active{display:block}.slide-dots{text-align:center;padding:7px 0 0}.slide-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#777;margin:0 3px}.slide-dot.active{background:#ff2020}
+.poster-link{display:block;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:9px 4px 2px}
+.cta{display:block;background:#e00000;color:#fff;text-decoration:none;padding:16px;border-radius:13px;font-size:18px;font-weight:900;box-shadow:0 8px 24px #0009}
+.cta:hover{background:#ff1515}
+.note{font-size:11px;color:#ccc;margin-top:9px}
+@media(max-width:430px){
+ .info-grid{grid-template-columns:1fr}
+ .hero{padding:18px 12px}
+ .poster-card img{max-height:360px}
+}
+</style>
+</head>
+<body>
+<section class="hero">
+  <img class="hero-bg" src="poster-roadshow.jpg" alt="">
+  <div class="overlay"></div>
+
+  <main class="content">
+    <div class="brand">ROADSHOW TESPOIN DPW JAWA BARAT</div>
+    <h1>TESPOIN<br><span>DPD MAJALENGKA</span></h1>
+    <p class="desc">
+      Tempat informasi dan registrasi peserta Roadshow TESPOIN.
+      Detail waktu, tiket, lokasi, kuota, dan fasilitas acara ditampilkan di halaman ini.
+    </p>
+
+    <!-- KOLOM INFORMASI ACARA: tinggal ubah isinya -->
+    <div class="info-grid">
+      <div class="info"><small>Waktu Acara</small><strong id="iWaktu">-</strong></div>
+      <div class="info"><small>Lokasi</small><strong id="iLokasi">-</strong></div>
+      <div class="info"><small>Tiket</small><strong id="iTiket">-</strong></div>
+      <div class="info"><small>Kuota</small><strong id="iKuota">-</strong></div>
+      <div class="info"><small>Fasilitas</small><strong id="iBenefit">-</strong></div>
+      <div class="info"><small>Info Pendaftaran</small><strong id="iWa">-</strong></div>
+    </div>
+
+    <!-- PAMFLET: tampil di index, klik untuk membuka halaman lain -->
+    <div class="poster-card">
+      <a href="pamplet.html">
+        <div id="slideWrap" class="slide-wrap">
+          <img src="poster-roadshow.jpg" class="active" alt="Pamflet Roadshow TESPOIN DPD Majalengka">
+        </div>
+        <div id="slideDots" class="slide-dots"></div>
+      </a>
+      <a class="poster-link" href="pamplet.html">TAP PAMFLET UNTUK MELIHAT UKURAN PENUH →</a>
+    </div>
+
+    <a class="cta" href="registrasi.html">DAFTAR SEKARANG</a>
+    <div class="note">Kode unik registrasi dibuat otomatis setelah formulir dikirim.</div>
+  </main>
+</section>
+
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+let slideTimer=null;
+function rupiah(v){const n=Number(String(v||'').replace(/[^0-9.-]/g,''));return isNaN(n)?(v||'-'):'Rp '+n.toLocaleString('id-ID')}
+function parseSlides(v){if(Array.isArray(v))return v.filter(Boolean);try{const a=JSON.parse(String(v||'[]'));return Array.isArray(a)?a.filter(Boolean):[]}catch(e){return String(v||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean)}}
+async function loadPublicSettings(){
+ try{
+  const r=await fetch(API_URL+'?action=pengaturan&_='+Date.now(),{cache:'no-store'});
+  const d=JSON.parse((await r.text()).trim()); if(!d.ok)return; const p=d.pengaturan||{};
+  document.getElementById('iWaktu').textContent=p.tanggalAcara&&p.waktu?p.tanggalAcara+' • '+p.waktu:(p.waktu||p.tanggalAcara||'-');
+  document.getElementById('iLokasi').textContent=p.lokasi||'-';
+  document.getElementById('iTiket').textContent=rupiah(p.tier1Harga);
+  document.getElementById('iKuota').textContent=p.kuota||'-';
+  document.getElementById('iBenefit').textContent=p.benefit||'-';
+  document.getElementById('iWa').textContent=p.wa||p.nomorWa||'-';
+  if(p.deskripsi)document.querySelector('.desc').textContent=p.deskripsi;
+  const slides=parseSlides(p.slideGambar); if(slides.length)startSlides(slides);
+ }catch(e){console.warn('Pengaturan publik:',e)}
+}
+function startSlides(slides){
+ const wrap=document.getElementById('slideWrap'),dots=document.getElementById('slideDots'); wrap.innerHTML='';dots.innerHTML='';
+ slides.forEach((url,i)=>{const img=document.createElement('img');img.src=url;img.alt='Slide '+(i+1);if(i===0)img.className='active';wrap.appendChild(img);const dot=document.createElement('span');dot.className='slide-dot'+(i===0?' active':'');dots.appendChild(dot)});
+ if(slides.length<2)return; let i=0; clearInterval(slideTimer); slideTimer=setInterval(()=>{const imgs=wrap.querySelectorAll('img'),ds=dots.querySelectorAll('.slide-dot');imgs[i].classList.remove('active');ds[i].classList.remove('active');i=(i+1)%imgs.length;imgs[i].classList.add('active');ds[i].classList.add('active')},4000);
+}
+loadPublicSettings();
+</script>
+</body>
+</html>
