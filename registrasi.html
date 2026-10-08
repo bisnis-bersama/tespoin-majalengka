@@ -98,7 +98,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
       <label>Alamat <span class="req">*</span></label>
       <textarea id="alamat" required></textarea>
 
-      <label>Email</label>
+      <label>Email <span class="req">*</span></label>
       <input id="email" type="email">
 
       <label>Ukuran Kaos <span class="req">*</span></label>
@@ -114,7 +114,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 
       <label>Bukti Transfer</label>
       <div class="file-box"><input id="bukti" type="file" accept="image/*,.pdf"></div>
-      <div class="small">Opsional. Jika diaktifkan di Apps Script, file akan disimpan ke Google Drive.</div>
+      <div class="small">Opsional. File tidak disimpan. Sistem hanya membaca tulisan pada bukti transfer dan menyimpan hasil teksnya ke Firebase.</div>
 
       <button id="btnDaftar" type="submit">DAFTAR SEKARANG</button>
     </form>
@@ -161,7 +161,8 @@ button:disabled{opacity:.6;cursor:not-allowed}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -177,12 +178,18 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
+const auth = firebase.auth();
 
 const form = document.getElementById('formRegistrasi');
 const btn = document.getElementById('btnDaftar');
 const pesan = document.getElementById('pesan');
 const hasil = document.getElementById('hasil');
+
+async function pastikanAnonim(){
+  if(auth.currentUser) return auth.currentUser;
+  const cred = await auth.signInAnonymously();
+  return cred.user;
+}
 
 form.addEventListener('submit', async function(e){
   e.preventDefault();
@@ -204,16 +211,23 @@ form.addEventListener('submit', async function(e){
 
     const kode = buatKodeRegistrasi();
     const file = document.getElementById('bukti').files[0];
-    let buktiTeks = '';
+    let buktiTransfer = '';
     let buktiNama = '';
 
+    let buktiTransfer = '';
+    let buktiNama = '';
+    let buktiTeks = '';
+
     if(file){
-      if(file.size > 10 * 1024 * 1024) throw new Error('Ukuran bukti transfer maksimal 10 MB.');
-      if(!file.type.startsWith('image/')) throw new Error('Untuk pembacaan bukti transfer otomatis, gunakan foto/screenshot bukti transfer.');
+      if(file.size > 10 * 1024 * 1024){
+        throw new Error('Ukuran bukti transfer maksimal 10 MB.');
+      }
       buktiNama = file.name;
-      btn.textContent = 'MEMBACA BUKTI TRANSFER...';
-      buktiTeks = await bacaBuktiTransfer(file);
-      if(!buktiTeks.trim()) throw new Error('Tulisan pada bukti transfer tidak terbaca. Silakan gunakan foto yang lebih jelas.');
+      btn.textContent = 'MEMBACA BUKTI...';
+      buktiTeks = await bacaBuktiDenganOCR(file);
+      if(!buktiTeks.trim()){
+        throw new Error('Tulisan pada bukti transfer tidak terbaca. Silakan gunakan foto yang lebih jelas.');
+      }
     }
 
     btn.textContent = 'MENYIMPAN DATA...';
@@ -228,7 +242,7 @@ form.addEventListener('submit', async function(e){
       ukuran: ukuran,
       buktiTransfer: '',
       buktiNama: buktiNama,
-      buktiTransferTeks: buktiTeks,
+      buktiTeks: buktiTeks,
       statusPembayaran: 'BELUM LUNAS',
       nominalPembayaran: 0,
       statusKehadiran: 'BELUM HADIR',
@@ -236,6 +250,7 @@ form.addEventListener('submit', async function(e){
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
+    await pastikanAnonim();
     await db.collection('peserta').doc(kode).set(peserta);
 
     tampilkanBukti(peserta);
@@ -252,14 +267,6 @@ form.addEventListener('submit', async function(e){
     btn.textContent = 'DAFTAR SEKARANG';
   }
 });
-
-
-async function bacaBuktiTransfer(file){
-  const result = await Tesseract.recognize(file, 'ind+eng', {
-    logger: m => { if(m.status === 'recognizing text') btn.textContent = 'MEMBACA BUKTI '+Math.round((m.progress||0)*100)+'%...'; }
-  });
-  return String(result.data.text || '').replace(/\r/g,'').trim();
-}
 
 function buatKodeRegistrasi(){
   const d = new Date();
@@ -302,6 +309,21 @@ function compressProofImage(file){
     img.onerror = () => reject(new Error('Format gambar bukti transfer tidak dapat dibaca.'));
     reader.readAsDataURL(file);
   });
+}
+
+async function bacaBuktiDenganOCR(file){
+  if(file.type === 'application/pdf'){
+    return 'PDF dipilih: file tidak dibaca otomatis oleh OCR browser. Verifikasi dilakukan Admin dari data pembayaran.';
+  }
+  if(!window.Tesseract) throw new Error('Mesin OCR belum siap. Coba lagi.');
+  const result = await Tesseract.recognize(file, 'ind+eng', {
+    logger: m => {
+      if(m.status === 'recognizing text' && m.progress) {
+        btn.textContent = 'MEMBACA BUKTI ' + Math.round(m.progress*100) + '%...';
+      }
+    }
+  });
+  return (result.data.text || '').trim();
 }
 
 function tampilkanBukti(p){
