@@ -161,7 +161,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -177,7 +177,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const storage = firebase.storage();
+
 
 const form = document.getElementById('formRegistrasi');
 const btn = document.getElementById('btnDaftar');
@@ -204,29 +204,16 @@ form.addEventListener('submit', async function(e){
 
     const kode = buatKodeRegistrasi();
     const file = document.getElementById('bukti').files[0];
-    let buktiTransfer = '';
+    let buktiTeks = '';
     let buktiNama = '';
 
     if(file){
-      if(file.size > 10 * 1024 * 1024){
-        throw new Error('Ukuran bukti transfer maksimal 10 MB.');
-      }
-
-      btn.textContent = 'MENYIAPKAN BUKTI...';
-      let uploadFile = file;
-
-      // Foto dikompres agar upload cepat tetapi tulisan/nominal tetap terlihat.
-      // PDF tidak diubah.
-      if(file.type.startsWith('image/')){
-        uploadFile = await compressProofImage(file);
-      }
-
+      if(file.size > 10 * 1024 * 1024) throw new Error('Ukuran bukti transfer maksimal 10 MB.');
+      if(!file.type.startsWith('image/')) throw new Error('Untuk pembacaan bukti transfer otomatis, gunakan foto/screenshot bukti transfer.');
       buktiNama = file.name;
-      btn.textContent = 'UPLOAD BUKTI...';
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-      const ref = storage.ref('bukti-transfer/' + kode + '-' + safeName);
-      const snap = await ref.put(uploadFile, {contentType: uploadFile.type || file.type});
-      buktiTransfer = await snap.ref.getDownloadURL();
+      btn.textContent = 'MEMBACA BUKTI TRANSFER...';
+      buktiTeks = await bacaBuktiTransfer(file);
+      if(!buktiTeks.trim()) throw new Error('Tulisan pada bukti transfer tidak terbaca. Silakan gunakan foto yang lebih jelas.');
     }
 
     btn.textContent = 'MENYIMPAN DATA...';
@@ -239,8 +226,9 @@ form.addEventListener('submit', async function(e){
       alamat: alamat,
       email: email,
       ukuran: ukuran,
-      buktiTransfer: buktiTransfer,
+      buktiTransfer: '',
       buktiNama: buktiNama,
+      buktiTransferTeks: buktiTeks,
       statusPembayaran: 'BELUM LUNAS',
       nominalPembayaran: 0,
       statusKehadiran: 'BELUM HADIR',
@@ -264,6 +252,14 @@ form.addEventListener('submit', async function(e){
     btn.textContent = 'DAFTAR SEKARANG';
   }
 });
+
+
+async function bacaBuktiTransfer(file){
+  const result = await Tesseract.recognize(file, 'ind+eng', {
+    logger: m => { if(m.status === 'recognizing text') btn.textContent = 'MEMBACA BUKTI '+Math.round((m.progress||0)*100)+'%...'; }
+  });
+  return String(result.data.text || '').replace(/\r/g,'').trim();
+}
 
 function buatKodeRegistrasi(){
   const d = new Date();
