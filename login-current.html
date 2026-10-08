@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login Admin - DPD TESPOIN Majalengka</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;font-family:Arial,sans-serif;padding:20px}
+.card{width:100%;max-width:420px;background:#fff;border-radius:20px;padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.3)}
+.logo{display:block;width:90px;height:90px;object-fit:contain;margin:0 auto 10px}
+h1{text-align:center;font-size:22px;margin:5px 0}.sub{text-align:center;color:#777;font-size:13px;margin-bottom:24px}
+label{display:block;font-weight:800;font-size:13px;margin:14px 0 7px}
+input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;font-size:15px;outline:none}
+button{width:100%;padding:14px;margin-top:20px;border:0;border-radius:11px;background:#f5c400;color:#111;font-size:16px;font-weight:900}
+button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:11px;border-radius:9px;font-size:13px;font-weight:700}.error{background:#ffe4e4;color:#a00000}
+.info{margin-top:20px;background:#fff8d8;border-left:4px solid #f5c400;padding:11px;font-size:12px;color:#666}
+.back{display:block;text-align:center;margin-top:17px;color:#777;text-decoration:none;font-size:13px}
+</style>
+</head>
+<body>
+<div class="card">
+<img src="logo.png" class="logo" onerror="this.style.display='none'">
+<h1>DPD TESPOIN MAJALENGKA</h1>
+<div class="sub">LOGIN ADMIN / PANITIA</div>
+<form id="loginForm">
+<label>Email</label><input id="username" type="email" autocomplete="username" required>
+<label>Password</label><input id="password" type="password" autocomplete="current-password" required>
+<button id="btnLogin" type="submit">MASUK ADMIN</button>
+</form>
+<div id="msg" class="msg"></div>
+<div class="info">Halaman ini khusus admin/panitia. Peserta tidak perlu login.</div>
+<a href="index.html" class="back">← Kembali ke halaman peserta</a>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
+  authDomain: "register-peserta.firebaseapp.com",
+  projectId: "register-peserta",
+  storageBucket: "register-peserta.firebasestorage.app",
+  messagingSenderId: "983090504866",
+  appId: "1:983090504866:web:7879b0784b9fecad4863fb"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const form = document.getElementById('loginForm');
+const btn = document.getElementById('btnLogin');
+const msg = document.getElementById('msg');
+
+function showError(text){
+  msg.textContent = text;
+  msg.className = 'msg error';
+  msg.style.display = 'block';
+}
+
+form.addEventListener('submit', async function(e){
+  e.preventDefault();
+  msg.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'MEMERIKSA...';
+
+  const email = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const userSnap = await getDoc(doc(db, 'users', credential.user.uid));
+
+    if (!userSnap.exists()) {
+      await auth.signOut();
+      throw new Error('Akun belum memiliki data role Admin/Owner.');
+    }
+
+    const role = String(userSnap.data().role || '').toLowerCase();
+    if (role !== 'admin' && role !== 'owner') {
+      await auth.signOut();
+      throw new Error('Role akun tidak valid.');
+    }
+
+    location.href = 'index-admin.html';
+  } catch (err) {
+    console.error(err);
+    let text = 'Email atau password salah.';
+    if (err && err.message && !String(err.message).includes('auth/')) text = err.message;
+    else if (err?.code === 'auth/invalid-credential') text = 'Email atau password salah.';
+    else if (err?.code === 'auth/too-many-requests') text = 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
+    showError(text);
+    btn.disabled = false;
+    btn.textContent = 'MASUK ADMIN';
+  }
+});
+</script>
+</body></html>
