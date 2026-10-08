@@ -80,7 +80,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
     <div class="price-card">
       <div class="price-label">HARGA TIKET</div>
       <div class="price">Rp 150.000</div>
-      <div class="price-note">Saat transfer, tambahkan 3 digit kode unik sesuai arahan panitia agar pembayaran mudah diverifikasi.</div>
+      <div class="price-note">Saat transfer, tambahkan 3 digit kode unik pada nominal pembayaran agar Admin lebih mudah mencocokkan transfer.</div>
     </div>
 
     <div class="form-title"><div class="form-icon">📝</div><h2>Data Peserta</h2></div>
@@ -110,22 +110,21 @@ button:disabled{opacity:.6;cursor:not-allowed}
         <option>XL</option>
         <option>XXL</option>
         <option>XXXL</option>
-        <option value="XXXXL">XXXXL / 4XL</option>
+        <option>XXXXL / 4XL</option>
       </select>
 
-      <div class="bank-box" style="background:#fff8dc;border:1px solid #f1d875;border-left:5px solid #ffc107;border-radius:12px;padding:14px;margin-top:20px;line-height:1.55;color:#333">
-        <b style="display:block;margin-bottom:6px;color:#111">REKENING TRANSFER RESMI</b>
-        <div>Bank Syariah Indonesia (BSI)</div>
-        <div style="font-size:20px;font-weight:900;letter-spacing:1px;margin:5px 0">7342320095</div>
-        <div>Atas nama: <b>DPD TESPOIN MAJALENGKA</b></div>
-        <div style="font-size:12px;margin-top:7px">Pastikan nama pemilik rekening dan nominal transfer benar sebelum mengirim pembayaran.</div>
+      <div class="info" style="margin-top:18px;margin-bottom:0">
+        <b>REKENING PEMBAYARAN</b><br>
+        Bank Syariah Indonesia (BSI)<br>
+        <b style="font-size:20px;letter-spacing:1px">7342320095</b><br>
+        Atas nama <b>DPD TESPOIN MAJALENGKA</b>
       </div>
 
       <label>Bukti Transfer</label>
       <div class="file-box"><input id="bukti" type="file" accept="image/*,.pdf"></div>
       <div class="small">Opsional. File tidak disimpan. Sistem hanya membaca tulisan pada bukti transfer dan menyimpan hasil teksnya ke Firebase.</div>
 
-      <button id="btnDaftar" type="submit">DAFTAR SEKARANG</button>
+      <button id="btnDaftar" type="submit">SIMPAN KE FIRESTORE</button>
     </form>
 
     <div id="hasil">
@@ -273,7 +272,7 @@ form.addEventListener('submit', async function(e){
     tampilPesan(err.message || 'Terjadi kesalahan saat menyimpan.', true);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'DAFTAR SEKARANG';
+    btn.textContent = 'SIMPAN KE FIRESTORE';
   }
 });
 
