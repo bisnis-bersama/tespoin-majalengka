@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pengaturan Acara - DPD TESPOIN Majalengka</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f3f3;color:#222;font-family:Arial,sans-serif}
+.wrap{max-width:820px;margin:auto;padding:18px}.header{background:#111;color:#fff;border-radius:18px;padding:20px;text-align:center}
+.header h1{margin:0;color:#f5c400;font-size:22px}.header p{margin:7px 0 0;color:#ddd;font-size:13px}
+.card{background:#fff;margin-top:16px;padding:18px;border-radius:16px;box-shadow:0 3px 15px rgba(0,0,0,.07)}
+.section{margin-top:22px;padding-top:15px;border-top:1px solid #eee}.section:first-child{margin-top:0;padding-top:0;border-top:0}
+.section-title{font-size:15px;font-weight:900;margin-bottom:8px;color:#111}
+label{display:block;font-weight:800;font-size:13px;margin:13px 0 6px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #d8d8d8;border-radius:9px;font-size:14px;background:#fff}
+textarea{min-height:90px;resize:vertical}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tier{border:2px solid #eee;border-radius:14px;padding:14px;margin-top:12px}.tier h3{margin:0 0 5px}.tier small{color:#777}
+button{width:100%;border:0;border-radius:11px;padding:14px;background:#f5c400;color:#111;font-weight:900;font-size:15px;margin-top:20px;cursor:pointer}
+button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border-radius:10px;font-weight:700}.msg.ok{display:block;background:#e9f8ed;color:#087b25}.msg.err{display:block;background:#fff0f0;color:#b00000}
+.note{margin-top:15px;padding:12px;background:#fff8d8;border-left:4px solid #f5c400;border-radius:8px;font-size:12px;line-height:1.5}
+.back{display:block;text-align:center;margin:18px;color:#555;text-decoration:none}
+ .slide-preview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.slide-preview .slide-thumb{border:1px solid #ddd;border-radius:10px;overflow:hidden;background:#f7f7f7;aspect-ratio:16/9}
+.slide-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.slide-preview .old{outline:2px solid #f5c400}
+.slide-preview .empty{grid-column:1/-1;padding:12px;border:1px dashed #ccc;border-radius:10px;color:#777;font-size:12px;text-align:center}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.slide-preview{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="header"><h1>PENGATURAN ACARA</h1><p>DPD TESPOIN MAJALENGKA</p></div>
+<div class="card">
+<form id="form">
+
+<div class="section">
+<div class="section-title">📅 INFORMASI ACARA</div>
+<label>Judul Acara</label><input id="judul">
+<label>Deskripsi</label><textarea id="deskripsi"></textarea>
+<div class="grid">
+<div><label>Tanggal Acara</label><input id="tanggal" type="date"></div>
+<div><label>Waktu</label><input id="waktu" placeholder="10.00 WIB - selesai"></div>
+</div>
+<label>Lokasi</label><input id="lokasi">
+</div>
+
+<div class="section">
+<div class="section-title">💰 HARGA TIKET PESERTA</div>
+<div class="note">Peserta <b>tidak memilih tier</b>. Sistem otomatis menentukan tier berdasarkan tanggal. Saat registrasi, harga yang tampil adalah <b>estimasi</b>. Saat pembayaran, sistem menghitung ulang berdasarkan tanggal pembayaran.</div>
+
+<div class="tier">
+<h3>TIER 1</h3><small>Harga tahap pertama</small>
+<div class="grid"><div><label>Harga</label><input id="tier1Harga" inputmode="numeric" placeholder="110000"></div><div><label>Mulai</label><input id="tier1Mulai" type="date"></div></div>
+<label>Selesai</label><input id="tier1Selesai" type="date">
+</div>
+
+<div class="tier">
+<h3>TIER 2</h3><small>Harga tahap kedua</small>
+<div class="grid"><div><label>Harga</label><input id="tier2Harga" inputmode="numeric" placeholder="200000"></div><div><label>Mulai</label><input id="tier2Mulai" type="date"></div></div>
+<label>Selesai</label><input id="tier2Selesai" type="date">
+</div>
+
+<div class="tier">
+<h3>TIER 3</h3><small>Harga tahap ketiga</small>
+<div class="grid"><div><label>Harga</label><input id="tier3Harga" inputmode="numeric" placeholder="300000"></div><div><label>Mulai</label><input id="tier3Mulai" type="date"></div></div>
+<label>Selesai</label><input id="tier3Selesai" type="date">
+</div>
+
+<div class="tier">
+<h3>COD — HARI ACARA</h3><small>Khusus peserta yang mendaftar/membayar langsung di lokasi pada hari acara.</small>
+<label>Harga COD</label><input id="codHarga" inputmode="numeric" placeholder="400000">
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">📞 KONTAK & BENEFIT</div>
+<label>Nomor WhatsApp Panitia</label><input id="wa">
+<label>Benefit Peserta</label><textarea id="benefit"></textarea>
+<label>Pemberi Benefit</label><input id="pemberiBenefit">
+</div>
+
+<div class="section">
+<div class="section-title">👤 PETUGAS</div>
+<div class="grid">
+<div><label>Petugas Registrasi</label><input id="petugasRegistrasi"></div>
+<div><label>Petugas Scan</label><input id="petugasScan"></div>
+<div><label>Petugas Pembayaran / COD</label><input id="petugasPembayaran"></div>
+<div><label>Petugas Approval</label><input id="petugasApproval"></div>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">🖼️ PUBLIKASI</div>
+<label>Slide Gambar (Landscape)</label>
+<div class="note">Pilih beberapa gambar sekaligus. Gambar akan diunggah ke Google Drive dan tampil otomatis sebagai slide berjalan di halaman utama. Disarankan rasio <b>16:9</b>.</div>
+<input id="slideFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+<div id="slidePreview" class="slide-preview"></div>
+<label>Link Pamflet / Poster</label><input id="pamflet" type="url" placeholder="https://...">
+<label>Status Pendaftaran</label>
+<select id="status"><option value="DIBUKA">DIBUKA</option><option value="DITUTUP">DITUTUP</option></select>
+</div>
+
+<button type="submit"  id="btn">SIMPAN PENGATURAN</button>
+<div id="msg" class="msg"></div>
+<div class="note"><b>Aturan:</b> tanggal daftar hanya menentukan estimasi. Harga final mengikuti tier pada <b>tanggal pembayaran</b>. COD hanya memakai harga COD pada hari acara.</div>
+</form>
+</div>
+<a href="index-admin.html" class="back">← Kembali ke Dashboard Admin</a>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore();
+async function requireAdmin(){
+ const user=await new Promise(resolve=>{const u=auth.onAuthStateChanged(x=>{u();resolve(x)})});
+ if(!user){location.href='login.html';return false}
+ const snap=await db.collection('users').doc(user.uid).get();
+ const role=snap.exists?snap.data().role:'';
+ if(role!=='admin'){alert('Akses ditolak. Halaman Pengaturan hanya untuk Admin.');await auth.signOut();location.href='login.html';return false}
+ return true;
+}
+
+const API_URL='https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+const ids=['judul','deskripsi','tanggal','waktu','lokasi','tier1Harga','tier1Mulai','tier1Selesai','tier2Harga','tier2Mulai','tier2Selesai','tier3Harga','tier3Mulai','tier3Selesai','codHarga','wa','benefit','pemberiBenefit','petugasRegistrasi','petugasScan','petugasPembayaran','petugasApproval','pamflet','status'];
+let slideGambar=[];
+
+function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??''}
+async function apiJson(url,opt){
+ const r=await fetch(url,opt),t=await r.text();
+ try{return JSON.parse(t.trim())}catch(e){throw new Error('Respons API bukan JSON. Pastikan Web App sudah di-deploy versi terbaru.')}
+}
+function parseSlideGambar(value){
+ if(Array.isArray(value))return value.filter(Boolean);if(!value)return [];
+ try{const a=JSON.parse(String(value));return Array.isArray(a)?a.filter(Boolean):[]}
+ catch(e){return String(value).split(/\n|,/).map(x=>x.trim()).filter(Boolean)}
+}
+function renderSlidePreview(extraFiles){
+ const box=document.getElementById('slidePreview');box.innerHTML='';
+ (Array.isArray(slideGambar)?slideGambar:[]).forEach(url=>{
+  if(!url)return;const div=document.createElement('div');div.className='slide-thumb old';
+  const img=document.createElement('img');img.src=url;img.alt='Slide tersimpan';div.appendChild(img);box.appendChild(div);
+ });
+ Array.from(extraFiles||[]).forEach(file=>{
+  const div=document.createElement('div');div.className='slide-thumb';
+  const img=document.createElement('img');img.alt=file.name;img.src=URL.createObjectURL(file);div.appendChild(img);box.appendChild(div);
+ });
+ if(!box.children.length)box.innerHTML='<div class="empty">Belum ada gambar slide.</div>';
+}
+function resizeImage(file){
+ return new Promise((resolve,reject)=>{
+  const img=new Image(),reader=new FileReader();
+  reader.onload=()=>{
+   img.onload=()=>{
+    const maxW=1600,maxH=900;let w=img.naturalWidth,h=img.naturalHeight;
+    const scale=Math.min(1,maxW/w,maxH/h);w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));
+    const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);
+    resolve(canvas.toDataURL('image/jpeg',0.86));
+   };
+   img.onerror=()=>reject(new Error('Gambar tidak dapat dibaca: '+file.name));img.src=reader.result;
+  };
+  reader.onerror=()=>reject(new Error('Gagal membaca file: '+file.name));reader.readAsDataURL(file);
+ });
+}
+async function uploadSlide(file){
+ const base64=await resizeImage(file);
+ const d=await apiJson(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'uploadSlide',imageBase64:base64,fileName:file.name})});
+ if(!d.ok||!d.url)throw new Error(d.message||('Gagal upload slide: '+file.name));
+ return d.url;
+}
+async function load(){
+ try{
+  const d=await apiJson(API_URL+'?action=pengaturan&_='+Date.now());
+  if(!d.ok)throw new Error(d.message||'Gagal mengambil pengaturan.');
+  const p=d.pengaturan||{};ids.forEach(id=>setVal(id,p[id]??''));
+  setVal('tanggal',p.tanggalAcara||p.tanggal||'');setVal('wa',p.wa||p.nomorWa||'');setVal('status',p.statusPendaftaran||'DIBUKA');
+  slideGambar=parseSlideGambar(p.slideGambar);renderSlidePreview([]);
+ }catch(e){show(e.message,false)}
+}
+document.getElementById('slideFiles').addEventListener('change',function(){renderSlidePreview(this.files||[])});
+document.getElementById('form').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=document.getElementById('btn'),files=Array.from(document.getElementById('slideFiles').files||[]);btn.disabled=true;
+ try{
+  const uploaded=[];
+  for(let i=0;i<files.length;i++){btn.textContent='UPLOAD SLIDE '+(i+1)+' / '+files.length+'...';uploaded.push(await uploadSlide(files[i]))}
+  const body={action:'simpanPengaturan'};ids.forEach(id=>body[id]=document.getElementById(id).value.trim());
+  body.judulAcara=body.judul;body.nomorWa=body.wa;body.tanggalAcara=body.tanggal;
+  body.slideGambar=JSON.stringify(files.length?uploaded:slideGambar);
+  btn.textContent='MENYIMPAN PENGATURAN...';
+  const d=await apiJson(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  if(!d.ok)throw new Error(d.message||'Gagal menyimpan.');
+  slideGambar=files.length?uploaded:slideGambar;document.getElementById('slideFiles').value='';renderSlidePreview([]);show('Pengaturan dan slide berhasil disimpan.',true);
+ }catch(e){show(e.message,false)}
+ finally{btn.disabled=false;btn.textContent='SIMPAN PENGATURAN'}
+});
+function show(t,ok){const e=document.getElementById('msg');e.textContent=t;e.className='msg '+(ok?'ok':'err')}
+(async function(){const ok=await requireAdmin();if(ok)load()})();</script>
+</body>
+</html>
