@@ -798,8 +798,8 @@ let currentRole = '';
 async function requireAdmin(){
   try{
     const user = await new Promise(resolve => {
-      const unsub = auth.onAuthStateChanged(u => {
-        unsub();
+      const unsubscribe = auth.onAuthStateChanged(u => {
+        unsubscribe();
         resolve(u);
       });
     });
@@ -833,8 +833,8 @@ async function requireAdmin(){
    API
 ================================================== */
 
-const API_URL =
-'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+// Data peserta dan approval pembayaran menggunakan Firestore.
+
 
 
 let peserta = [];
@@ -850,77 +850,44 @@ let selected = null;
 ================================================== */
 
 async function load(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '<tr><td colspan="9" class="empty">Memuat data dari Firebase...</td></tr>';
 
   try{
+    const snap = await db.collection('peserta').get();
+    peserta = snap.docs.map(docSnap => {
+      const data = docSnap.data() || {};
+      return {
+        ...data,
+        kode: data.kode || docSnap.id,
+        // Simpan ID dokumen untuk operasi update Firestore.
+        _firestoreId: docSnap.id,
+        nama: data.nama || '',
+        toko: data.toko || data.namaToko || '',
+        wa: data.wa || data.noWa || '',
+        email: data.email || '',
+        alamat: data.alamat || '',
+        ukuran: data.ukuran || '',
+        statusPembayaran: data.statusPembayaran || 'BELUM LUNAS',
+        statusKehadiran: data.statusKehadiran || 'BELUM HADIR',
+        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL'
+      };
+    });
 
-    const r =
-      await fetch(
-        API_URL +
-        '?action=peserta&_=' +
-        Date.now()
-      );
-
-
-    const raw =
-      await r.text();
-
-
-    let d;
-
-
-    try{
-
-      d =
-        JSON.parse(
-          raw.trim()
-        );
-
-    }catch(e){
-
-      throw new Error(
-        'Respons API bukan JSON. Pastikan deployment Code.gs terbaru.'
-      );
-
-    }
-
-
-    if(!d.ok){
-
-      throw new Error(
-        d.message ||
-        'Gagal mengambil data peserta.'
-      );
-
-    }
-
-
-    peserta =
-      d.peserta || [];
-
+    // Urutkan berdasarkan waktu pendaftaran terbaru jika tersedia.
+    peserta.sort((a,b) => {
+      const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
 
     updateStats();
-
     render();
-
-
   }catch(e){
-
-    document.getElementById('tbody').innerHTML =
-
-      '<tr>' +
-
-      '<td colspan="9" class="empty">' +
-
-      esc(e.message) +
-
-      '</td>' +
-
-      '</tr>';
-
+    console.error('Gagal membaca Firestore:', e);
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Gagal memuat data Firebase: ' + esc(e.message || 'Periksa Firestore Rules dan koneksi.') + '</td></tr>';
   }
-
 }
-
 
 
 /* ==================================================
@@ -1448,8 +1415,19 @@ function openReview(kode){
       <div class="proof-note">
         <b>Bukti transfer belum tersedia.</b>
         <br><br>
-        File bukti belum tersimpan ke server atau kolom
-        <b>Bukti Transfer</b> pada Spreadsheet belum berisi URL.
+        Teks atau tautan bukti transfer belum tersedia pada data Firestore.
+      </div>
+    `;
+
+  }
+
+  else if(!/^https?:\/\//i.test(url)){
+
+    // Bukti versi OCR disimpan sebagai teks di Firestore, bukan file Storage.
+    proof.innerHTML = `
+      <div class="proof-note">
+        <b>Teks bukti transfer (hasil pembacaan):</b>
+        <div style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(url)}</div>
       </div>
     `;
 
@@ -1546,185 +1524,62 @@ function openReview(kode){
 ================================================== */
 
 async function confirmLunas(){
-
   if(currentRole !== 'admin'){
     alert('Hanya Admin yang dapat mengonfirmasi pembayaran.');
     return;
   }
+  if(!selected) return;
 
-  if(!selected)
-    return;
-
-
-  const btn =
-    document.getElementById('confirmBtn');
-
-
+  const btn = document.getElementById('confirmBtn');
   btn.disabled = true;
-
-  btn.textContent =
-    'MEMPROSES...';
-
-
-  document.getElementById('modalMsg').className =
-    'msg';
-
-
-  document.getElementById('modalMsg').textContent =
-    '';
-
+  btn.textContent = 'MEMPROSES...';
+  const msgEl = document.getElementById('modalMsg');
+  msgEl.className = 'msg';
+  msgEl.textContent = '';
 
   try{
+    const nominalRaw = selected.nominalPembayaran;
+    const nominal = Number(String(nominalRaw ?? '').replace(/[^\d.-]/g,'')) || 0;
+    const user = auth.currentUser;
+    if(!user) throw new Error('Sesi login berakhir. Silakan login kembali.');
 
-
-    const nominal =
-      selected.nominalPembayaran || '';
-
-
-
-    const r =
-      await fetch(
-
-        API_URL,
-
-        {
-
-          method:'POST',
-
-          headers:{
-
-            'Content-Type':
-            'text/plain;charset=utf-8'
-
-          },
-
-          body:
-
-            JSON.stringify({
-
-              action:
-                'verifikasiLunas',
-
-              kode:
-                selected.kode,
-
-              nominal:
-                nominal
-
-            })
-
-        }
-
-      );
-
-
-
-    const raw =
-      await r.text();
-
-
-    let d;
-
-
-    try{
-
-      d =
-        JSON.parse(
-          raw.trim()
-        );
-
-    }catch(e){
-
-      throw new Error(
-        'Approval terkirim tetapi respons API tidak terbaca.'
-      );
-
+    const docId = selected._firestoreId || selected.kode;
+    const docRef = db.collection('peserta').doc(docId);
+    const snap = await docRef.get();
+    if(!snap.exists) throw new Error('Data peserta tidak ditemukan di Firestore.');
+    if(String(snap.data().statusPembayaran || '').toUpperCase() === 'LUNAS'){
+      throw new Error('Peserta ini sudah berstatus LUNAS. Muat ulang data.');
     }
 
+    await docRef.update({
+      statusPembayaran: 'LUNAS',
+      nominalPembayaran: nominal,
+      tanggalVerifikasi: firebase.firestore.FieldValue.serverTimestamp(),
+      metodePembayaran: snap.data().metodePembayaran || 'TRANSFER',
+      petugasPembayaran: user.email || user.uid,
+      waktuPembayaran: firebase.firestore.FieldValue.serverTimestamp(),
+      petugasVerifikasi: user.email || user.uid,
+      waktuVerifikasi: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-    if(!d.ok){
-
-      throw new Error(
-        d.message ||
-        'Verifikasi gagal.'
-      );
-
-    }
-
-
-
-    document
-      .getElementById('modalMsg')
-      .className =
-      'msg okmsg';
-
-
-    document
-      .getElementById('modalMsg')
-      .textContent =
-
-      '✓ ' +
-      (
-        d.message ||
-        'Berhasil menjadi LUNAS.'
-      );
-
-
-
-    /*
-      Update data lokal
-      supaya tampilan langsung berubah.
-    */
-
-    selected.statusPembayaran =
-      'LUNAS';
-
-
-
+    msgEl.className = 'msg okmsg';
+    msgEl.textContent = '✓ Pembayaran berhasil dikonfirmasi di Firestore.';
+    selected.statusPembayaran = 'LUNAS';
+    selected.nominalPembayaran = nominal;
     updateStats();
-
     render();
-
-
-
-    /*
-      Tutup modal setelah berhasil.
-    */
-
-    setTimeout(
-      closeModal,
-      900
-    );
-
-
+    setTimeout(closeModal, 900);
   }catch(e){
-
-    document
-      .getElementById('modalMsg')
-      .className =
-      'msg err';
-
-
-    document
-      .getElementById('modalMsg')
-      .textContent =
-      e.message ||
-      'Terjadi kesalahan.';
-
-  }
-
-
-  finally{
-
+    console.error('Approval Firestore gagal:', e);
+    msgEl.className = 'msg err';
+    msgEl.textContent = e.code === 'permission-denied'
+      ? 'Izin ditolak Firestore. Periksa Rules koleksi peserta untuk role Admin.'
+      : (e.message || 'Verifikasi pembayaran gagal.');
+  }finally{
     btn.disabled = false;
-
-    btn.textContent =
-      'KONFIRMASI LUNAS';
-
+    btn.textContent = 'KONFIRMASI LUNAS';
   }
-
 }
-
 
 
 /* ==================================================
