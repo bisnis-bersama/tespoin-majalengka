@@ -98,8 +98,8 @@ button:disabled{opacity:.6;cursor:not-allowed}
       <label>Alamat <span class="req">*</span></label>
       <textarea id="alamat" required></textarea>
 
-      <label>Email <span class="req">*</span></label>
-      <input id="email" type="email" required autocomplete="email">
+      <label>Email</label>
+      <input id="email" type="email">
 
       <label>Ukuran Kaos <span class="req">*</span></label>
       <select id="ukuran" required>
@@ -159,16 +159,25 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-/*
-  GANTI dengan URL Web App Google Apps Script setelah deployment.
-  Contoh:
-  https://script.google.com/macros/s/XXXXXXXX/exec
-*/
-const API_URL = 'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+const firebaseConfig = {
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
+  authDomain: "register-peserta.firebaseapp.com",
+  projectId: "register-peserta",
+  storageBucket: "register-peserta.firebasestorage.app",
+  messagingSenderId: "983090504866",
+  appId: "1:983090504866:web:7879b0784b9fecad4863fb"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
 
 const form = document.getElementById('formRegistrasi');
 const btn = document.getElementById('btnDaftar');
@@ -177,120 +186,124 @@ const hasil = document.getElementById('hasil');
 
 form.addEventListener('submit', async function(e){
   e.preventDefault();
-
-  if (!API_URL || API_URL.includes('ISI_URL')) {
-    tampilPesan('URL Apps Script belum dipasang.', true);
-    return;
-  }
-
   btn.disabled = true;
   btn.textContent = 'MENYIMPAN...';
   tampilPesan('');
 
   try {
+    const nama = document.getElementById('nama').value.trim();
+    const toko = document.getElementById('toko').value.trim();
+    const wa = document.getElementById('wa').value.trim();
+    const alamat = document.getElementById('alamat').value.trim();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const ukuran = document.getElementById('ukuran').value;
+
+    if(!nama || !wa || !alamat || !email || !ukuran){
+      throw new Error('Mohon lengkapi semua kolom yang wajib diisi.');
+    }
+
+    const kode = buatKodeRegistrasi();
     const file = document.getElementById('bukti').files[0];
-    let buktiBase64 = '';
+    let buktiTransfer = '';
     let buktiNama = '';
 
-    if (file) {
-      // Batasi agar upload dari browser tidak terlalu besar.
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('Ukuran bukti transfer maksimal 5 MB.');
+    if(file){
+      if(file.size > 10 * 1024 * 1024){
+        throw new Error('Ukuran bukti transfer maksimal 10 MB.');
+      }
+
+      btn.textContent = 'MENYIAPKAN BUKTI...';
+      let uploadFile = file;
+
+      // Foto dikompres agar upload cepat tetapi tulisan/nominal tetap terlihat.
+      // PDF tidak diubah.
+      if(file.type.startsWith('image/')){
+        uploadFile = await compressProofImage(file);
       }
 
       buktiNama = file.name;
-      if (file.type && file.type.startsWith('image/')) {
-        buktiBase64 = await compressImage(file, 1280, 0.70);
-      } else {
-        buktiBase64 = await fileToBase64(file);
-      }
+      btn.textContent = 'UPLOAD BUKTI...';
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const ref = storage.ref('bukti-transfer/' + kode + '-' + safeName);
+      const snap = await ref.put(uploadFile, {contentType: uploadFile.type || file.type});
+      buktiTransfer = await snap.ref.getDownloadURL();
     }
 
-    const data = {
-      action: 'registrasi',
-      nama: document.getElementById('nama').value.trim(),
-      toko: document.getElementById('toko').value.trim(),
-      wa: document.getElementById('wa').value.trim(),
-      alamat: document.getElementById('alamat').value.trim(),
-      email: document.getElementById('email').value.trim(),
-      ukuran: document.getElementById('ukuran').value,
-      buktiBase64: buktiBase64,
-      buktiNama: buktiNama
+    btn.textContent = 'MENYIMPAN DATA...';
+    const peserta = {
+      kode: kode,
+      nama: nama,
+      toko: toko,
+      wa: wa,
+      waNormalized: normalisasiWa(wa),
+      alamat: alamat,
+      email: email,
+      ukuran: ukuran,
+      buktiTransfer: buktiTransfer,
+      buktiNama: buktiNama,
+      statusPembayaran: 'BELUM LUNAS',
+      nominalPembayaran: 0,
+      statusKehadiran: 'BELUM HADIR',
+      statusBenefit: 'BELUM DIAMBIL',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify(data)
-    });
+    await db.collection('peserta').doc(kode).set(peserta);
 
-    const raw = await response.text();
-    let result;
-
-    try {
-      // Code.gs mengirim JSON sebagai body HTML polos.
-      result = JSON.parse(raw.trim());
-    } catch (parseError) {
-      console.error('Respons API:', raw);
-      throw new Error('Data tersimpan, tetapi jawaban API tidak terbaca. Silakan deploy versi Code.gs terbaru.');
-    }
-
-    if (!result.ok) {
-      throw new Error(result.message || 'Registrasi gagal.');
-    }
-
-    tampilkanBukti(result.peserta);
+    tampilkanBukti(peserta);
     hasil.style.display = 'block';
-
     form.reset();
-    tampilPesan('Data peserta sudah tersimpan ke Google Sheet.', false);
-
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: 'smooth'
-    });
+    tampilPesan('Data peserta berhasil tersimpan.', false);
+    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
 
   } catch(err) {
-    tampilPesan(err.message || 'Terjadi kesalahan.', true);
+    console.error(err);
+    tampilPesan(err.message || 'Terjadi kesalahan saat menyimpan.', true);
   } finally {
     btn.disabled = false;
     btn.textContent = 'DAFTAR SEKARANG';
   }
 });
 
-function fileToBase64(file){
-  return new Promise((resolve,reject)=>{
-    const reader = new FileReader();
-
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Bukti transfer gagal dibaca.'));
-
-    reader.readAsDataURL(file);
-  });
+function buatKodeRegistrasi(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  const time = String(Date.now()).slice(-6);
+  return `REG-${y}${m}${day}-${time}`;
 }
 
-function compressImage(file, maxSide=1280, quality=0.70){
+function normalisasiWa(value){
+  let n = String(value || '').replace(/[^0-9]/g,'');
+  if(n.startsWith('62')) return n;
+  if(n.startsWith('0')) return '62' + n.slice(1);
+  return n;
+}
+
+function compressProofImage(file){
   return new Promise((resolve,reject)=>{
     const reader = new FileReader();
     const img = new Image();
-    reader.onload = () => {
-      img.onload = () => {
-        let w = img.naturalWidth, h = img.naturalHeight;
-        const scale = Math.min(1, maxSide / Math.max(w,h));
-        w = Math.max(1, Math.round(w * scale));
-        h = Math.max(1, Math.round(h * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = () => reject(new Error('Bukti transfer gagal dibaca.'));
-      img.src = reader.result;
-    };
+    reader.onload = () => { img.src = reader.result; };
     reader.onerror = () => reject(new Error('Bukti transfer gagal dibaca.'));
+    img.onload = () => {
+      const maxSide = 1200;
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d', {alpha:false});
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>{
+        if(!blob) return reject(new Error('Gagal mengompres bukti transfer.'));
+        resolve(new File([blob], file.name.replace(/\.[^.]+$/i,'.jpg'), {type:'image/jpeg'}));
+      }, 'image/jpeg', 0.68);
+    };
+    img.onerror = () => reject(new Error('Format gambar bukti transfer tidak dapat dibaca.'));
     reader.readAsDataURL(file);
   });
 }
@@ -306,66 +319,29 @@ function tampilkanBukti(p){
 
   const qr = document.getElementById('qrcode');
   qr.innerHTML = '';
-
-  new QRCode(qr, {
-    text: p.kode,
-    width: 220,
-    height: 220,
-    correctLevel: QRCode.CorrectLevel.H
-  });
-
-  document.getElementById('rKode').textContent = p.kode || '-';
+  new QRCode(qr, {text:p.kode,width:220,height:220,correctLevel:QRCode.CorrectLevel.H});
 
   document.getElementById('btnSimpanQR').onclick = async function(){
     const target = document.getElementById('hasil');
-
     try {
       const oldText = this.textContent;
-      this.textContent = 'MEMBUAT JPG...';
-      this.disabled = true;
-
-      // Tunggu QR benar-benar dirender.
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      const canvas = await html2canvas(target, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        logging: false
-      });
-
-      downloadDataUrl(
-        canvas.toDataURL('image/jpeg', 0.95),
-        p.kode + '-BUKTI-REGISTRASI.jpg'
-      );
-
+      this.textContent = 'MEMBUAT JPG...'; this.disabled = true;
+      await new Promise(resolve => setTimeout(resolve,150));
+      const canvas = await html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+      downloadDataUrl(canvas.toDataURL('image/jpeg',0.95),p.kode+'-BUKTI-REGISTRASI.jpg');
       this.textContent = oldText;
-    } catch (err) {
-      alert('Gagal membuat JPG: ' + (err.message || err));
-    } finally {
-      this.disabled = false;
-    }
+    } catch(err) {
+      alert('Gagal membuat JPG: '+(err.message||err));
+    } finally { this.disabled = false; }
   };
 }
 
-function formatRupiah(value){
-  const n = Number(String(value).replace(/[^0-9.-]/g, ''));
-  if (isNaN(n)) return value;
-  return 'Rp ' + n.toLocaleString('id-ID');
-}
-
 function downloadDataUrl(dataUrl, filename){
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const a=document.createElement('a');a.href=dataUrl;a.download=filename;document.body.appendChild(a);a.click();a.remove();
 }
-
-function tampilPesan(text, error){
-  pesan.textContent = text || '';
-  pesan.className = 'status ' + (error ? 'error' : 'success');
+function tampilPesan(text,error){
+  pesan.textContent=text||'';
+  pesan.className='status '+(error?'error':'success');
 }
 </script>
 </body>
