@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registrasi Akun Petugas</title><style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;font-family:Arial,sans-serif;padding:20px}
+.card{width:100%;max-width:420px;background:#fff;border-radius:20px;padding:28px;box-shadow:0 10px 35px #0005}.logo{display:block;width:90px;height:90px;object-fit:contain;margin:0 auto 10px}
+h1{text-align:center;font-size:22px;margin:5px 0}.sub{text-align:center;color:#777;font-size:13px;margin-bottom:20px}label{display:block;font-weight:800;font-size:13px;margin:14px 0 7px}
+input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;font-size:15px}button{width:100%;padding:14px;margin-top:20px;border:0;border-radius:11px;background:#f5c400;color:#111;font-size:16px;font-weight:900}
+button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:11px;border-radius:9px;font-size:13px;font-weight:700}.error{background:#ffe4e4;color:#a00000}.ok{background:#e2f7e7;color:#087b25}
+.note{margin-top:15px;background:#fff8d8;border-left:4px solid #f5c400;padding:11px;font-size:12px;color:#665500;line-height:1.5}.link{text-align:center;margin-top:16px;font-size:13px}.link a{color:#555}
+</style></head><body><div class="card"><img src="logo.png" class="logo" onerror="this.style.display='none'">
+<h1>REGISTRASI AKUN PETUGAS</h1><div class="sub">DPD TESPOIN MAJALENGKA</div>
+<form id="f"><label>Nama</label><input id="nama" required><label>Email</label><input id="email" type="email" required>
+<label>Password</label><input id="password" type="password" minlength="6" required><label>Konfirmasi Password</label><input id="confirm" type="password" minlength="6" required>
+<button id="btn">DAFTAR AKUN</button></form><div id="msg" class="msg"></div>
+<div class="note"><b>Role awal: OWNER</b><br>Akun baru dibuat sebagai Owner. Role dapat diubah menjadi Admin oleh Admin melalui pengaturan akun.</div>
+<div class="link"><a href="login.html">← Kembali ke Login</a></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+ apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
+ authDomain:"register-peserta.firebaseapp.com",
+ projectId:"register-peserta",
+ storageBucket:"register-peserta.firebasestorage.app",
+ messagingSenderId:"983090504866",
+ appId:"1:983090504866:web:7879b0784b9fecad4863fb"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+</script>
+<script>
+const f=document.getElementById('f'),btn=document.getElementById('btn'),msg=document.getElementById('msg');
+function show(t,ok=false){msg.textContent=t;msg.className='msg '+(ok?'ok':'error');msg.style.display='block'}
+f.addEventListener('submit',async e=>{e.preventDefault();msg.style.display='none';
+if(password.value!==confirm.value){show('Konfirmasi password tidak sama.');return}
+btn.disabled=true;btn.textContent='MEMBUAT AKUN...';
+try{
+ const c=await auth.createUserWithEmailAndPassword(email.value.trim(),password.value);
+ await db.collection('users').doc(c.user.uid).set({nama:nama.value.trim(),email:email.value.trim().toLowerCase(),role:'owner',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+ await auth.signOut();show('Akun berhasil dibuat. Silakan login.',true);f.reset();
+}catch(e){show(e.code==='auth/email-already-in-use'?'Email sudah terdaftar.':(e.message||'Registrasi gagal.'))}
+finally{btn.disabled=false;btn.textContent='DAFTAR AKUN'}});
+</script></body></html>
