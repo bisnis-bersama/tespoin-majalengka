@@ -795,36 +795,33 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 let currentRole = '';
 
-function waitForAuth(){
-  return new Promise(resolve => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      unsubscribe();
-      resolve(user);
-    });
-  });
-}
-
 async function requireAdmin(){
   try{
-    const user = await waitForAuth();
+    const user = await new Promise(resolve => {
+      if(auth.currentUser) return resolve(auth.currentUser);
+      const unsub = auth.onAuthStateChanged(u => { unsub(); resolve(u); });
+    });
     if(!user){
-      location.replace('login-panitia.html');
+      location.replace('login.html');
       return false;
     }
+
     const snap = await db.collection('users').doc(user.uid).get();
     const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
+
     if(role !== 'admin'){
       alert('Akses ditolak. Halaman ini khusus Admin.');
       await auth.signOut();
-      location.replace('login-panitia.html');
+      location.replace('login.html');
       return false;
     }
+
     currentRole = role;
     return true;
   }catch(e){
-    console.error('Pemeriksaan akses:', e);
-    alert('Gagal memeriksa hak akses Admin: ' + (e.message || ''));
-    location.replace('login-panitia.html');
+    console.error('Pemeriksaan akses:',e);
+    alert('Akses Admin belum dapat diperiksa.');
+    location.replace('login.html');
     return false;
   }
 }
@@ -835,51 +832,43 @@ async function requireAdmin(){
 ================================================== */
 
 let peserta = [];
-
 let tab = 'semua';
-
 let selected = null;
 
-
-
-/* ==================================================
-   LOAD PESERTA
-================================================== */
+function mapPeserta(doc){
+  const d = doc.data() || {};
+  return {
+    ...d,
+    _docId: doc.id,
+    kode: d.kode || doc.id,
+    nama: d.nama || '',
+    toko: d.toko || '',
+    wa: d.wa || '',
+    email: d.email || '',
+    ukuran: d.ukuran || '',
+    nominalPembayaran: d.nominalPembayaran ?? d.hargaFinal ?? '',
+    statusPembayaran: d.statusPembayaran || 'BELUM LUNAS',
+    statusKehadiran: d.statusKehadiran || 'BELUM HADIR',
+    jamCheckin: d.jamCheckin || d.jamCheckIn || '-',
+    buktiTransfer: d.buktiTransfer || d.buktiUrl || d.urlBukti || '',
+    buktiNama: d.buktiNama || '',
+    buktiTeks: d.buktiTeks || ''
+  };
+}
 
 async function load(){
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '<tr><td colspan="9" class="empty">Memuat data Firestore...</td></tr>';
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '<tr><td colspan="9" class="empty">Memuat data dari Firestore...</td></tr>';
   try{
-    const snapshot = await db.collection('peserta').get();
-    peserta = snapshot.docs.map(doc => {
-      const d = doc.data() || {};
-      return {
-        ...d,
-        _docId: doc.id,
-        kode: d.kode || doc.id,
-        nama: d.nama || '',
-        toko: d.toko || d.namaToko || '',
-        wa: d.wa || d.noWa || d.whatsapp || '',
-        email: d.email || '',
-        ukuran: d.ukuran || d.ukuranKaos || '',
-        statusPembayaran: d.statusPembayaran || 'BELUM LUNAS',
-        statusKehadiran: d.statusKehadiran || 'BELUM HADIR',
-        nominalPembayaran: d.nominalPembayaran ?? d.hargaFinal ?? '',
-        jamCheckin: d.jamCheckin || d.jamCheckIn || '',
-        buktiTransfer: d.buktiTransfer || '',
-        buktiNama: d.buktiNama || '',
-        buktiTeks: d.buktiTeks || ''
-      };
-    });
+    const snap = await db.collection('peserta').get();
+    peserta = snap.docs.map(mapPeserta);
     updateStats();
     render();
   }catch(e){
-    console.error('Gagal memuat Firestore:', e);
-    tbody.innerHTML = '<tr><td colspan="9" class="empty">Gagal memuat Firestore: ' + esc(e.message || e) + '</td></tr>';
+    console.error('Gagal membaca Firestore peserta:', e);
+    tb.innerHTML = '<tr><td colspan="9" class="empty">Gagal memuat Firestore: ' + esc(e.message || 'Periksa Firestore Rules') + '</td></tr>';
   }
 }
-
-
 
 /* ==================================================
    STATISTIK
@@ -1136,11 +1125,11 @@ function render(){
 
           'class="action" ' +
 
-          'onclick="openReview(' +
+          'onclick="openReview(&quot;' +
 
-          JSON.stringify(p.kode) +
+          escAttr(p.kode) +
 
-          ')">' +
+          '&quot;)">' +
 
           'LIHAT BUKTI' +
 
@@ -1162,11 +1151,11 @@ function render(){
 
           'class="action" ' +
 
-          'onclick="openReview(' +
+          'onclick="openReview(&quot;' +
 
-          JSON.stringify(p.kode) +
+          escAttr(p.kode) +
 
-          ')">' +
+          '&quot;)">' +
 
           'LIHAT DATA' +
 
@@ -1269,70 +1258,160 @@ function render(){
 ================================================== */
 
 function openReview(kode){
-  const key = String(kode || '').toUpperCase();
-  selected = peserta.find(p =>
-    String(p.kode || p._docId || '').toUpperCase() === key ||
-    String(p._docId || '').toUpperCase() === key
-  );
-  if(!selected){
-    alert('Data peserta tidak ditemukan. Muat ulang data lalu coba lagi.');
+
+  selected =
+    peserta.find(
+      p =>
+        String(p.kode).toUpperCase() ===
+        String(kode).toUpperCase()
+    );
+
+
+  if(!selected)
     return;
-  }
 
-  document.getElementById('mKode').textContent = selected.kode || selected._docId || '-';
-  document.getElementById('mNama').textContent = selected.nama || '-';
-  document.getElementById('mToko').textContent = selected.toko || selected.namaToko || '-';
-  document.getElementById('mWa').textContent = selected.wa || selected.noWa || '-';
-  document.getElementById('mEmail').textContent = selected.email || '-';
-  document.getElementById('mUkuran').textContent = selected.ukuran || '-';
-  document.getElementById('mNominal').textContent = rupiah(selected.nominalPembayaran || selected.hargaFinal || 0);
 
-  const bayar = String(selected.statusPembayaran || 'BELUM LUNAS').toUpperCase();
-  document.getElementById('mBayar').innerHTML = bayar === 'LUNAS'
-    ? '<span class="badge ok">LUNAS</span>'
-    : '<span class="badge wait">BELUM LUNAS</span>';
 
-  const hadir = String(selected.statusKehadiran || 'BELUM HADIR').toUpperCase();
-  document.getElementById('mHadir').innerHTML = hadir === 'HADIR'
-    ? '<span class="badge hadir">HADIR</span>'
-    : '<span class="badge belumhadir">BELUM HADIR</span>';
-  document.getElementById('mCheckin').textContent = selected.jamCheckin || selected.jamCheckIn || '-';
+  document.getElementById('mKode').textContent =
+    selected.kode || '-';
+
+
+  document.getElementById('mNama').textContent =
+    selected.nama || '-';
+
+
+  document.getElementById('mToko').textContent =
+    selected.toko || '-';
+
+
+  document.getElementById('mWa').textContent =
+    selected.wa || '-';
+
+
+  document.getElementById('mEmail').textContent =
+    selected.email || '-';
+
+
+  document.getElementById('mUkuran').textContent =
+    selected.ukuran || '-';
+
+
+  document.getElementById('mNominal').textContent =
+    selected.nominalPembayaran ||
+    'Belum diisi';
+
+
+
+  /* STATUS PEMBAYARAN */
+
+  const bayar =
+    String(
+      selected.statusPembayaran || ''
+    ).toUpperCase();
+
+
+  document.getElementById('mBayar').innerHTML =
+
+    bayar === 'LUNAS'
+
+      ?
+
+      '<span class="badge ok">LUNAS</span>'
+
+      :
+
+      '<span class="badge wait">BELUM LUNAS</span>';
+
+
+
+  /* STATUS KEHADIRAN */
+
+  const hadir =
+    String(
+      selected.statusKehadiran || ''
+    ).toUpperCase();
+
+
+  document.getElementById('mHadir').innerHTML =
+
+    hadir === 'HADIR'
+
+      ?
+
+      '<span class="badge hadir">HADIR</span>'
+
+      :
+
+      '<span class="badge belumhadir">BELUM HADIR</span>';
+
+
+
+  document.getElementById('mCheckin').textContent =
+    selected.jamCheckin || '-';
+
+
+
   document.getElementById('modalMsg').textContent = '';
 
-  const confirmBtn = document.getElementById('confirmBtn');
-  confirmBtn.style.display = bayar === 'LUNAS' ? 'none' : 'block';
 
+
+  /* ==================================================
+     TOMBOL KONFIRMASI LUNAS
+  ================================================== */
+
+  const btn =
+    document.getElementById('confirmBtn');
+
+
+  const already =
+    bayar === 'LUNAS';
+
+
+  btn.style.display =
+    already
+      ? 'none'
+      : 'block';
+
+
+
+  /* ==================================================
+     BUKTI TRANSFER / HASIL OCR DARI FIRESTORE
+  ================================================== */
   const proof = document.getElementById('proofContent');
-  const proofText = String(selected.buktiTeks || selected.buktiText || '').trim();
-  const proofName = String(selected.buktiNama || '').trim();
-  const proofUrl = String(selected.buktiTransfer || selected.buktiUrl || '').trim();
-  let html = '';
-  if(proofName){
-    html += '<p><b>Nama pada bukti:</b> ' + esc(proofName) + '</p>';
-  }
-  if(proofText){
-    html += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;padding:12px;border:1px solid #ddd;border-radius:10px;color:#222">' + esc(proofText) + '</div>';
-  }
-  if(proofUrl){
-    const driveId = ambilDriveId(proofUrl);
-    const imageUrl = driveId ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId) : proofUrl;
-    const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(proofUrl) || !!driveId;
-    if(isImage){
-      html += '<img src="' + escAttr(imageUrl) + '" alt="Bukti transfer" style="display:block;max-width:100%;max-height:430px;margin:12px auto;border-radius:10px">';
-    }
-    html += '<p><a href="' + escAttr(proofUrl) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
-  }
-  if(!proofName && !proofText && !proofUrl){
-    html = '<div class="proof-note"><b>Detail bukti belum tersedia.</b><br>Dokumen Firestore belum memiliki field buktiNama, buktiTeks, atau buktiTransfer.</div>';
-  }
-  proof.innerHTML = html;
+  const buktiNama = String(selected.buktiNama || '').trim();
+  const buktiTeks = String(selected.buktiTeks || '').trim();
+  const url = String(selected.buktiTransfer || '').trim();
 
-  // Tampilkan modal dengan memastikan kelas dan display tidak tertimpa CSS lain.
-  const modal = document.getElementById('modal');
-  modal.classList.add('show');
-  modal.style.display = 'block';
+  let proofHtml = '';
+  if(buktiNama){
+    proofHtml += '<p><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
+  }
+  if(buktiTeks){
+    proofHtml += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
+  }
+  if(url){
+    const driveId = ambilDriveId(url);
+    const imageUrl = driveId ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId) : url;
+    const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) || !!driveId;
+    if(isImage){
+      proofHtml += '<img style="margin-top:12px" src="' + escAttr(imageUrl) + '" alt="Bukti transfer" onerror="this.style.display=\'none\';">';
+    }
+    proofHtml += '<p><a href="' + escAttr(url) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
+  }
+  if(!proofHtml){
+    proofHtml = '<div class="proof-note">Belum ada data bukti transfer atau hasil OCR pada dokumen Firestore ini.</div>';
+  }
+  proof.innerHTML = proofHtml;
+
+  const modalEl = document.getElementById('modal');
+  modalEl.classList.add('show');
+  modalEl.style.display = 'block';
+  modalEl.style.zIndex = '99999';
   document.body.style.overflow = 'hidden';
+
 }
+
+
 
 /* ==================================================
    KONFIRMASI LUNAS
@@ -1344,35 +1423,44 @@ async function confirmLunas(){
     return;
   }
   if(!selected) return;
+  if(String(selected.statusPembayaran || '').toUpperCase() === 'LUNAS'){
+    document.getElementById('modalMsg').textContent = 'Pembayaran sudah LUNAS.';
+    return;
+  }
+  if(!confirm('Setujui pembayaran peserta ' + (selected.nama || selected.kode) + '?')) return;
+
   const btn = document.getElementById('confirmBtn');
-  const msg = document.getElementById('modalMsg');
   btn.disabled = true;
   btn.textContent = 'MEMPROSES...';
+  const msg = document.getElementById('modalMsg');
   msg.className = 'msg';
   msg.textContent = '';
   try{
+    const uid = auth.currentUser;
+    if(!uid) throw new Error('Sesi login berakhir. Silakan login kembali.');
     const docId = selected._docId || selected.kode;
-    if(!docId) throw new Error('ID dokumen peserta tidak ditemukan.');
-    await db.collection('peserta').doc(docId).update({
+    const patch = {
       statusPembayaran: 'LUNAS',
-      nominalPembayaran: selected.nominalPembayaran || selected.hargaFinal || 0,
-      tanggalVerifikasi: new Date().toISOString(),
-      metodePembayaran: selected.metodePembayaran || 'TRANSFER',
-      petugasPembayaran: auth.currentUser ? (auth.currentUser.email || auth.currentUser.uid) : 'admin',
-      waktuPembayaran: firebase.firestore.FieldValue.serverTimestamp(),
-      petugasVerifikasi: auth.currentUser ? (auth.currentUser.email || auth.currentUser.uid) : 'admin',
-      waktuVerifikasi: firebase.firestore.FieldValue.serverTimestamp()
-    });
+      tanggalVerifikasi: firebase.firestore.FieldValue.serverTimestamp(),
+      waktuVerifikasi: firebase.firestore.FieldValue.serverTimestamp(),
+      petugasVerifikasi: uid.email || uid.uid,
+      petugasPembayaran: uid.email || uid.uid,
+      metodePembayaran: selected.metodePembayaran || 'TRANSFER'
+    };
+    if(selected.nominalPembayaran !== undefined && selected.nominalPembayaran !== ''){
+      patch.nominalPembayaran = selected.nominalPembayaran;
+    }
+    await db.collection('peserta').doc(docId).update(patch);
     selected.statusPembayaran = 'LUNAS';
+    msg.className = 'msg okmsg';
+    msg.textContent = 'Pembayaran berhasil disetujui. Status menjadi LUNAS.';
     updateStats();
     render();
-    msg.className = 'msg okmsg';
-    msg.textContent = '✓ Pembayaran berhasil disetujui. Status peserta sekarang LUNAS.';
-    btn.style.display = 'none';
+    setTimeout(() => { closeModal(); load(); }, 900);
   }catch(e){
     console.error('Approval Firestore gagal:', e);
     msg.className = 'msg err';
-    msg.textContent = 'Gagal menyetujui pembayaran: ' + (e.message || e);
+    msg.textContent = 'Approval gagal: ' + (e.message || 'Periksa Firestore Rules.');
   }finally{
     btn.disabled = false;
     btn.textContent = 'KONFIRMASI LUNAS';
@@ -1380,15 +1468,14 @@ async function confirmLunas(){
 }
 
 
-
 /* ==================================================
    TUTUP MODAL
 ================================================== */
 
 function closeModal(){
-  const modal = document.getElementById('modal');
-  modal.classList.remove('show');
-  modal.style.display = '';
+  const modalEl = document.getElementById('modal');
+  modalEl.classList.remove('show');
+  modalEl.style.display = 'none';
   document.body.style.overflow = '';
   selected = null;
 }
@@ -1477,7 +1564,7 @@ document
 
 (async function(){
   const ok = await requireAdmin();
-  if(ok) await load();
+  if(ok) load();
 })();
 
 </script>
