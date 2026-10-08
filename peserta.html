@@ -1317,8 +1317,9 @@ function openReview(kode){
 
 
   document.getElementById('mNominal').textContent =
-    selected.nominalPembayaran ||
-    'Belum diisi';
+    selected.nominalPembayaran != null && selected.nominalPembayaran !== ''
+      ? rupiah(selected.nominalPembayaran)
+      : 'Belum diisi';
 
 
 
@@ -1395,121 +1396,44 @@ function openReview(kode){
 
 
   /* ==================================================
-     BUKTI TRANSFER
+     DETAIL BUKTI TRANSFER DARI FIRESTORE
   ================================================== */
+  const proof = document.getElementById('proofContent');
+  const buktiNama = String(selected.buktiNama || '').trim();
+  const buktiTeks = String(
+    selected.buktiTeks || selected.buktiTransferTeks ||
+    (selected.buktiTransfer && !/^https?:\/\//i.test(String(selected.buktiTransfer)) ? selected.buktiTransfer : '') || ''
+  ).trim();
+  const buktiUrl = String(
+    selected.buktiUrl || selected.buktiTransferUrl ||
+    (selected.buktiTransfer && /^https?:\/\//i.test(String(selected.buktiTransfer)) ? selected.buktiTransfer : '') || ''
+  ).trim();
 
-  const proof =
-    document.getElementById('proofContent');
-
-
-  const url =
-    String(
-      selected.buktiTransfer || ''
-    ).trim();
-
-
-
-  if(!url){
-
-    proof.innerHTML = `
-      <div class="proof-note">
-        <b>Bukti transfer belum tersedia.</b>
-        <br><br>
-        Teks atau tautan bukti transfer belum tersedia pada data Firestore.
-      </div>
-    `;
-
+  let proofHtml = '';
+  if (buktiNama) {
+    proofHtml += `<div class="proof-note"><b>Nama pada bukti:</b><br>${esc(buktiNama)}</div>`;
   }
-
-  else if(!/^https?:\/\//i.test(url)){
-
-    // Bukti versi OCR disimpan sebagai teks di Firestore, bukan file Storage.
-    proof.innerHTML = `
-      <div class="proof-note">
-        <b>Teks bukti transfer (hasil pembacaan):</b>
-        <div style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(url)}</div>
-      </div>
-    `;
-
+  if (buktiTeks) {
+    proofHtml += `<div class="proof-note"><b>Detail transaksi (hasil OCR):</b><div style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(buktiTeks)}</div></div>`;
   }
-
-  else{
-
-    const driveId = ambilDriveId(url);
-
+  if (buktiUrl) {
+    const driveId = ambilDriveId(buktiUrl);
     const imageUrl = driveId
       ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId)
-      : url;
-
-    const isImage =
-      /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) ||
-      !!driveId;
-
-    if(isImage){
-
-      proof.innerHTML = `
-        <img
-          src="${escAttr(imageUrl)}"
-          alt="Bukti transfer"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-
-        <div
-          class="proof-note"
-          style="display:none;margin-top:10px">
-          Gambar tidak dapat ditampilkan langsung.
-          Silakan buka bukti penuh.
-        </div>
-
-        <a
-          href="${escAttr(url)}"
-          target="_blank"
-          rel="noopener">
-          BUKA BUKTI PENUH
-        </a>
-      `;
-
+      : buktiUrl;
+    const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(buktiUrl) || !!driveId;
+    if (isImage) {
+      proofHtml += `<img src="${escAttr(imageUrl)}" alt="Bukti transfer" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="proof-note" style="display:none">Gambar tidak dapat ditampilkan langsung. Buka bukti penuh.</div><a href="${escAttr(buktiUrl)}" target="_blank" rel="noopener">BUKA BUKTI PENUH</a>`;
+    } else if (/\.pdf(\?|#|$)/i.test(buktiUrl)) {
+      proofHtml += `<iframe src="${escAttr(buktiUrl)}" style="width:100%;height:420px;border:1px solid #ddd;border-radius:10px" title="Bukti transfer PDF"></iframe><a href="${escAttr(buktiUrl)}" target="_blank" rel="noopener">BUKA PDF PENUH</a>`;
+    } else {
+      proofHtml += `<a href="${escAttr(buktiUrl)}" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a>`;
     }
-
-    else if(/\.pdf(\?|#|$)/i.test(url)){
-
-      proof.innerHTML = `
-        <iframe
-          src="${escAttr(url)}"
-          style="width:100%;height:500px;border:1px solid #ddd;border-radius:10px"
-          title="Bukti transfer PDF">
-        </iframe>
-
-        <a
-          href="${escAttr(url)}"
-          target="_blank"
-          rel="noopener">
-          BUKA PDF PENUH
-        </a>
-      `;
-
-    }
-
-    else{
-
-      proof.innerHTML = `
-        <div class="proof-note">
-          <b>File bukti tersedia.</b>
-          <br>
-          Tekan tombol di bawah untuk memeriksa bukti transfer.
-        </div>
-
-        <a
-          href="${escAttr(url)}"
-          target="_blank"
-          rel="noopener">
-          BUKA BUKTI TRANSFER
-        </a>
-      `;
-
-    }
-
   }
-
+  if (!proofHtml) {
+    proofHtml = `<div class="proof-note"><b>Detail bukti transfer belum tersedia.</b><br>Dokumen Firestore ini tidak memiliki field buktiNama, buktiTeks, buktiTransferTeks, atau tautan bukti. Admin dapat memeriksa data transaksi yang tersedia sebelum menyetujui pembayaran.</div>`;
+  }
+  proof.innerHTML = proofHtml;
 
   document
     .getElementById('modal')
