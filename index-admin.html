@@ -874,10 +874,6 @@ async function requireAdmin(){
   }
 }
 
-const API_URL =
-'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
-
-
 /* =========================
    HELPER
 ========================= */
@@ -952,126 +948,31 @@ function showStatus(
 
 async function loadDashboard(){
 
-  document.getElementById(
-    'loading'
-  ).textContent =
-    'Mengambil data peserta...';
-
-  showStatus(
-    'Mengambil data peserta...',
-    ''
-  );
-
+  document.getElementById('loading').textContent =
+    'Mengambil data peserta dari Firestore...';
+  showStatus('Mengambil data peserta dari Firestore...', '');
 
   try{
+    // Baca langsung dari koleksi Firestore, bukan Apps Script/Spreadsheet.
+    const snapshot = await db.collection('peserta').get();
+    const peserta = snapshot.docs.map(docSnap => {
+      const data = docSnap.data() || {};
+      return { ...data, _docId: docSnap.id };
+    });
 
-    const response =
-      await fetch(
-        API_URL +
-        '?action=peserta&_=' +
-        Date.now(),
-        {
-          method:'GET',
-          cache:'no-store'
-        }
-      );
-
-
-    if(!response.ok){
-
-      throw new Error(
-        'HTTP ' +
-        response.status
-      );
-
-    }
-
-
-    const raw =
-      await response.text();
-
-
-    let data;
-
-    try{
-
-      data =
-        JSON.parse(
-          raw.trim()
-        );
-
-    }catch(error){
-
-      console.error(
-        'Response API:',
-        raw
-      );
-
-      throw new Error(
-        'Response API bukan JSON.'
-      );
-
-    }
-
-
-    if(
-      !data ||
-      data.ok === false
-    ){
-
-      throw new Error(
-        data &&
-        data.message
-          ? data.message
-          : 'Gagal mengambil data peserta.'
-      );
-
-    }
-
-
-    const peserta =
-      Array.isArray(
-        data.peserta
-      )
-      ? data.peserta
-      : [];
-
-
-    hitungDashboard(
-      peserta
-    );
-
-
-    showStatus(
-      'Dashboard diperbarui — ' +
-      peserta.length +
-      ' peserta.',
-      'ok'
-    );
-
+    hitungDashboard(peserta);
+    showStatus('Dashboard diperbarui dari Firestore — ' + peserta.length + ' peserta.', 'ok');
 
   }catch(error){
-
-    console.error(
-      error
-    );
-
-    showStatus(
-      'Gagal memuat data: ' +
-      error.message,
-      'err'
-    );
+    console.error('Gagal membaca peserta dari Firestore:', error);
+    showStatus('Gagal memuat data Firestore: ' + (error.message || error), 'err');
 
   }finally{
-
-    document.getElementById(
-      'loading'
-    ).textContent =
-      'Data diperbarui otomatis dari server.';
-
+    document.getElementById('loading').textContent =
+      'Sumber data: Firebase Firestore.';
   }
-
 }
+
 
 
 /* =========================
