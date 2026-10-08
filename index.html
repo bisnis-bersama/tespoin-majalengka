@@ -48,30 +48,12 @@ h1 span{color:#ff2020}
 
     <!-- INFORMASI ACARA: semua data dalam satu panel -->
     <div class="info-panel">
-      <div class="info-row">
-        <small>Waktu Acara</small>
-        <strong>Minggu, [TANGGAL] • [JAM]</strong>
-      </div>
-      <div class="info-row">
-        <small>Lokasi</small>
-        <strong>[NAMA TEMPAT], [KOTA]</strong>
-      </div>
-      <div class="info-row">
-        <small>Tiket</small>
-        <strong>Rp [HARGA]</strong>
-      </div>
-      <div class="info-row">
-        <small>Kuota</small>
-        <strong>[JUMLAH] Peserta</strong>
-      </div>
-      <div class="info-row">
-        <small>Fasilitas</small>
-        <strong>[KAOS • MAKAN • SERTIFIKAT]</strong>
-      </div>
-      <div class="info-row">
-        <small>Info Pendaftaran</small>
-        <strong>[NO. WA PANITIA]</strong>
-      </div>
+      <div class="info-row"><small>Waktu Acara</small><strong id="infoWaktu">Memuat...</strong></div>
+      <div class="info-row"><small>Lokasi</small><strong id="infoLokasi">Memuat...</strong></div>
+      <div class="info-row"><small>Tiket</small><strong id="infoTiket">Memuat...</strong></div>
+      <div class="info-row"><small>Kuota</small><strong id="infoKuota">Memuat...</strong></div>
+      <div class="info-row"><small>Fasilitas</small><strong id="infoBenefit">Memuat...</strong></div>
+      <div class="info-row"><small>Info Pendaftaran</small><strong id="infoWa">Memuat...</strong></div>
     </div>
 
     <!-- PAMFLET: tampil di index, klik untuk membuka halaman lain -->
@@ -87,5 +69,54 @@ h1 span{color:#ff2020}
     <div class="note">Kode unik registrasi dibuat otomatis setelah formulir dikirim.</div>
   </main>
 </section>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+
+function rupiah(v) {
+  const n = Number(String(v ?? '').replace(/[^0-9]/g,''));
+  return n ? 'Rp ' + n.toLocaleString('id-ID') : '-';
+}
+
+function esc(v) {
+  return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+async function muatPengaturan() {
+  try {
+    const r = await fetch(API_URL + '?action=pengaturan&_=' + Date.now(), {cache:'no-store'});
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.message || 'Gagal mengambil pengaturan.');
+    const p = d.pengaturan || d.data || d;
+
+    const tanggal = p.tanggal || '-';
+    const waktu = p.waktu || '-';
+    document.getElementById('infoWaktu').textContent =
+      tanggal !== '-' ? tanggal + ' • ' + waktu : waktu;
+
+    document.getElementById('infoLokasi').textContent = p.lokasi || '-';
+
+    const harga = p.hargaTiket || p.tier1Harga || p.tier2Harga || p.tier3Harga || '';
+    document.getElementById('infoTiket').textContent = rupiah(harga);
+
+    document.getElementById('infoKuota').textContent =
+      p.kuota ? p.kuota + ' Peserta' : '-';
+
+    document.getElementById('infoBenefit').textContent =
+      p.benefit || '-';
+
+    document.getElementById('infoWa').textContent =
+      p.nomorWa || p.wa || '-';
+  } catch (e) {
+    console.error(e);
+    ['infoWaktu','infoLokasi','infoTiket','infoKuota','infoBenefit','infoWa']
+      .forEach(id => document.getElementById(id).textContent = '-');
+  }
+}
+
+muatPengaturan();
+</script>
+
 </body>
 </html>
