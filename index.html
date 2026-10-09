@@ -231,17 +231,71 @@ body{
   <a href="registrasi.html" id="btnDaftar" class="btn">DAFTAR SEKARANG</a>
   <div class="desc" style="margin-top:16px">
   <b>QR CODE ATAU BUKTI REGISTRASI HILANG?</b><br>
-  Silakan hubungi Admin melalui WhatsApp untuk meminta pengiriman ulang bukti registrasi Anda.
+  Silakan isi nama dan nomor WhatsApp yang digunakan
+  saat mendaftar. Admin akan membantu mengirim ulang
+  bukti registrasi Anda.
 </div>
 
-<a
-  href="https://wa.me/6282319264646?text=Assalamualaikum%20Admin%20TESPOIN%20Majalengka%2C%20saya%20ingin%20meminta%20pengiriman%20ulang%20bukti%20registrasi%20dan%20QR%20Code%20saya.%20Nama%3A%20...%20Nomor%20WhatsApp%20saat%20daftar%3A%20..."
-  class="btn dark"
-  target="_blank"
-  rel="noopener noreferrer">
-  HUBUNGI ADMIN VIA WHATSAPP
-</a>
+<div style="margin-top:16px">
+  <label for="namaPeserta"
+    style="display:block;font-weight:700;margin-bottom:7px">
+    Nama Peserta
+  </label>
 
+  <input
+    type="text"
+    id="namaPeserta"
+    placeholder="Masukkan nama lengkap"
+    required
+    style="width:100%;padding:14px;border:1px solid #ddd;
+    border-radius:10px;font-size:16px;margin-bottom:14px">
+
+  <label for="waPeserta"
+    style="display:block;font-weight:700;margin-bottom:7px">
+    Nomor WhatsApp
+  </label>
+
+  <input
+    type="tel"
+    id="waPeserta"
+    placeholder="Contoh: 081234567890"
+    required
+    style="width:100%;padding:14px;border:1px solid #ddd;
+    border-radius:10px;font-size:16px">
+</div>
+
+<button
+  type="button"
+  class="btn dark"
+  onclick="hubungiAdminWA()"
+  style="width:100%;margin-top:16px">
+  HUBUNGI ADMIN VIA WHATSAPP
+</button>
+
+<script>
+function hubungiAdminWA() {
+  const nama = document.getElementById('namaPeserta')
+    .value.trim();
+
+  const wa = document.getElementById('waPeserta')
+    .value.trim();
+
+  if (!nama || !wa) {
+    alert('Silakan isi nama dan nomor WhatsApp terlebih dahulu.');
+    return;
+  }
+
+  const pesan =
+    'Assalamualaikum Admin TESPOIN Majalengka, saya ingin meminta pengiriman ulang bukti registrasi dan QR Code.\n\n' +
+    'Nama peserta: ' + nama + '\n' +
+    'Nomor WhatsApp saat mendaftar: ' + wa;
+
+  const url = 'https://wa.me/6282319264646?text=' +
+    encodeURIComponent(pesan);
+
+  window.open(url, '_blank');
+}
+</script>
 </section>
 
 <section class="card" style="margin-top:18px">
