@@ -482,10 +482,6 @@ button:disabled{
 
 <script>
 
-const API_URL =
-'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
-
-
 /* =========================================
    FIREBASE AUTH — OWNER / ADMIN
    Owner boleh scan/check-in.
@@ -500,7 +496,7 @@ const firebaseConfig = {
   appId: "1:983090504866:web:7879b0784b9fecad4863fb"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentRole = '';
@@ -1234,313 +1230,89 @@ document.getElementById('kodeManual').addEventListener('keydown', function(e) {
    PROSES KODE
 ========================================= */
 
-async function prosesKode(kode){
-
-  if(!aksesSiap){
-    alert('Akses belum siap. Silakan tunggu.');
-    return;
-  }
-
-  if(sedangProses)
-    return;
-
-
-  kode =
-    String(kode || '')
-      .trim()
-      .toUpperCase();
-
-
-  if(!kode){
-
-    tampil(
-
-      `
-      <div class="title">
-        ⚠ KODE BELUM DIISI
-      </div>
-
-      <div>
-        Masukkan atau scan kode registrasi peserta.
-      </div>
-      `,
-
-      'warn'
-
-    );
-
-    return;
-
-  }
-
-
-  sedangProses =
-    true;
-
-
-  setGuide(
-    '🔍 MEMERIKSA KODE ' + esc(kode) + '...',
-    ''
-  );
-
-
+async function cariPesertaFirestore(kode){
+  const bersih=String(kode||'').trim().toUpperCase();
+  const candidates=[bersih];
+  // Jika QR berisi URL yang menyertakan kode, ambil kode dari URL.
   try{
-
-    /* =====================================
-       1. CARI DATA PESERTA
-    ===================================== */
-
-    const cari =
-      await apiGet(
-
-        API_URL +
-        '?action=cari&kode=' +
-        encodeURIComponent(kode) +
-        '&_=' +
-        Date.now()
-
-      );
-
-
-    if(!cari.ok){
-
-      throw new Error(
-        cari.message ||
-        'Peserta tidak ditemukan.'
-      );
-
+    if(/^https?:\/\//i.test(bersih)){
+      const u=new URL(bersih);
+      const dariParam=u.searchParams.get('kode')||u.searchParams.get('code')||u.searchParams.get('id');
+      if(dariParam)candidates.unshift(dariParam.trim().toUpperCase());
+      const seg=u.pathname.split('/').filter(Boolean).pop();
+      if(seg && /^REG[-A-Z0-9]+$/i.test(seg))candidates.unshift(seg.toUpperCase());
     }
-
-
-    const p =
-      cari.peserta;
-
-
-    /* =====================================
-       2. CEK STATUS PEMBAYARAN
-    ===================================== */
-
-    const statusBayar =
-      String(
-        p.statusPembayaran || ''
-      )
-      .trim()
-      .toUpperCase();
-
-
-    /* =====================================
-       3. BELUM LUNAS
-    ===================================== */
-
-    if(statusBayar !== 'LUNAS'){
-
-      await tutupKamera();
-
-
-      tampil(
-
-        `
-        <div class="title">
-          ❌ REGISTRASI ULANG GAGAL
-        </div>
-
-        <div
-          style="
-            font-size:16px;
-            font-weight:700;
-            margin-bottom:12px
-          ">
-
-          Silakan lakukan pembayaran terlebih dahulu.
-
-        </div>
-
-
-        <div class="row">
-
-          <span>Kode Registrasi</span>
-
-          <b>${esc(p.kode)}</b>
-
-        </div>
-
-
-        <div class="row">
-
-          <span>Nama Peserta</span>
-
-          <b>${esc(p.nama)}</b>
-
-        </div>
-
-
-        <div class="row">
-
-          <span>Nama Toko</span>
-
-          <b>${esc(p.toko)}</b>
-
-        </div>
-
-
-        <div class="row">
-
-          <span>Status Pembayaran</span>
-
-          <b>
-
-            <span class="status belum">
-              BELUM LUNAS
-            </span>
-
-          </b>
-
-        </div>
-
-
-        <div
-          style="
-            margin-top:14px;
-            color:#9b0000;
-            font-weight:700
-          ">
-
-          Data peserta belum dicatat sebagai
-          registrasi ulang.
-
-        </div>
-
-        `,
-
-        'err'
-
-      );
-
-
-      return;
-
+  }catch(_){}
+  const unik=[...new Set(candidates)];
+  for(const kodeCari of unik){
+    // Coba ID dokumen lebih dulu, karena beberapa versi menyimpan kode sebagai ID dokumen.
+    const byId=await db.collection('peserta').doc(kodeCari).get();
+    if(byId.exists){
+      const d=byId.data()||{};
+      return {...d,_docId:byId.id,kode:d.kode||byId.id};
     }
-
-
-    /* =====================================
-       4. SUDAH LUNAS
-       CEK KEHADIRAN
-    ===================================== */
-
-    const statusHadir =
-      String(
-        p.statusKehadiran || ''
-      )
-      .trim()
-      .toUpperCase();
-
-
-    if(statusHadir === 'HADIR'){
-
-      await tutupKamera();
-
-
-      tampilData(
-        p,
-        'sudah'
-      );
-
-
-      return;
-
-    }
-
-
-    /* =====================================
-       5. CHECK-IN
-    ===================================== */
-
-    const check =
-      await apiPost({
-
-        action:'checkin',
-
-        kode:kode
-
-      });
-
-
-    if(!check.ok){
-
-      if(
-        check.alreadyCheckin &&
-        check.peserta
-      ){
-
-        await tutupKamera();
-
-
-        tampilData(
-          check.peserta,
-          'sudah'
-        );
-
-
-        return;
-
+    // Kemudian cari field kode di dalam dokumen.
+    for(const field of ['kode','kodeRegistrasi','kodePendaftaran','registrationCode']){
+      const snap=await db.collection('peserta').where(field,'==',kodeCari).limit(1).get();
+      if(!snap.empty){
+        const doc=snap.docs[0],d=doc.data()||{};
+        return {...d,_docId:doc.id,kode:d.kode||d.kodeRegistrasi||d.kodePendaftaran||doc.id};
       }
-
-
-      throw new Error(
-        check.message ||
-        'Registrasi ulang gagal.'
-      );
-
     }
-
-
-    /* =====================================
-       6. BERHASIL
-    ===================================== */
-
-    await tutupKamera();
-
-
-    tampilData(
-      check.peserta,
-      'berhasil'
-    );
-
-
   }
-
-  catch(e){
-
-    await tutupKamera();
-
-
-    tampil(
-
-      `
-      <div class="title">
-        ❌ GAGAL
-      </div>
-
-      <div>
-        ${esc(e.message)}
-      </div>
-      `,
-
-      'err'
-
-    );
-
-  }
-
-  finally{
-
-    sedangProses =
-      false;
-
-  }
-
+  return null;
 }
 
+async function prosesKode(kode){
+  if(!aksesSiap){alert('Akses belum siap. Silakan tunggu.');return;}
+  if(sedangProses)return;
+  kode=String(kode||'').trim();
+  if(!kode){
+    tampil('<div class="title">⚠ KODE BELUM DIISI</div><div>Masukkan atau scan kode registrasi peserta.</div>','warn');
+    return;
+  }
+  sedangProses=true;
+  setGuide('🔍 MEMERIKSA KODE '+esc(kode)+'...','');
+  try{
+    const p=await cariPesertaFirestore(kode);
+    if(!p)throw new Error('Peserta tidak ditemukan di Firestore. Pastikan kode pada QR sama dengan field kode atau ID dokumen di koleksi peserta.');
+    const statusBayar=String(p.statusPembayaran||'BELUM LUNAS').trim().toUpperCase();
+    if(statusBayar!=='LUNAS'){
+      await tutupKamera();
+      tampil(`<div class="title">❌ REGISTRASI ULANG GAGAL</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:12px">Silakan lakukan pembayaran terlebih dahulu.</div>
+        <div class="row"><span>Kode Registrasi</span><b>${esc(p.kode)}</b></div>
+        <div class="row"><span>Nama Peserta</span><b>${esc(p.nama||'-')}</b></div>
+        <div class="row"><span>Nama Toko</span><b>${esc(p.toko||p.namaToko||'-')}</b></div>
+        <div class="row"><span>Status Pembayaran</span><b><span class="status belum">BELUM LUNAS</span></b></div>
+        <div style="margin-top:14px;color:#9b0000;font-weight:700">Data peserta belum dicatat sebagai registrasi ulang.</div>`,'err');
+      return;
+    }
+    const statusHadir=String(p.statusKehadiran||'BELUM HADIR').trim().toUpperCase();
+    if(statusHadir==='HADIR'){
+      await tutupKamera();
+      tampilData(p,'sudah');
+      return;
+    }
+    const user=auth.currentUser;
+    if(!user)throw new Error('Sesi login berakhir. Silakan login kembali.');
+    const ref=db.collection('peserta').doc(p._docId);
+    const now=firebase.firestore.FieldValue.serverTimestamp();
+    await ref.update({
+      statusKehadiran:'HADIR',
+      jamCheckin:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'}),
+      waktuCheckin:now,
+      petugasCheckin:user.email||user.uid
+    });
+    const updated={...p,statusKehadiran:'HADIR',jamCheckin:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'})};
+    await tutupKamera();
+    tampilData(updated,'berhasil');
+  }catch(e){
+    console.error(e);
+    await tutupKamera();
+    tampil('<div class="title">❌ GAGAL</div><div>'+esc(e.message||'Terjadi kesalahan saat mencari peserta.')+'</div>','err');
+  }finally{sedangProses=false;}
+}
 
 /* =========================================
    TAMPIL DATA
