@@ -100,9 +100,9 @@ button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfPdNDppQ",
@@ -265,28 +265,39 @@ $('form').addEventListener('submit', async event => {
   }
 });
 
-// Role dibaca dari sesi login; status Firebase tetap ditunggu agar operasi Firestore sah.
-auth.onAuthStateChanged(user => {
-  const role = (sessionStorage.getItem('tespoin_role') || '').toLowerCase();
-  const email = sessionStorage.getItem('tespoin_admin_user') || '';
+// Role dibaca dari sessionStorage. Firebase Auth tetap wajib aktif untuk menyimpan ke Firestore.
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(() => new Promise(resolve => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      unsubscribe();
+      resolve(user);
+    });
+  }))
+  .then(user => {
+    const role = (sessionStorage.getItem('tespoin_role') || '').toLowerCase();
+    const email = sessionStorage.getItem('tespoin_admin_user') || '';
 
-  if (!role || !email) {
-    show('Sesi login tidak ditemukan. Silakan login melalui login.html, lalu buka kembali halaman ini.', false);
-    return;
-  }
+    if (!role || !email) {
+      show('Sesi login halaman tidak ditemukan. Buka login.html dan masuk lagi pada tab yang sama.', false);
+      return;
+    }
 
-  if (role !== 'admin') {
-    show('Akses ditolak. Halaman pengaturan khusus Admin.', false);
-    return;
-  }
+    if (role !== 'admin') {
+      show('Akses ditolak. Halaman pengaturan khusus Admin.', false);
+      return;
+    }
 
-  if (!user || user.isAnonymous) {
-    show('Sesi Firebase tidak aktif. Silakan login kembali melalui login.html.', false);
-    return;
-  }
+    if (!user || user.isAnonymous) {
+      show('Login Firebase belum terbaca. Buka login.html, masuk kembali, lalu pilih Pengaturan dari dashboard pada tab yang sama.', false);
+      return;
+    }
 
-  loadSettings(user);
-});
+    loadSettings(user);
+  })
+  .catch(error => {
+    console.error('Gagal memulihkan sesi Firebase:', error);
+    show('Gagal memeriksa sesi Firebase: ' + (error.message || error), false);
+  });
 </script>
 </body>
 </html>
