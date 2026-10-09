@@ -811,9 +811,8 @@ async function requireAdmin(){
     const snap = await db.collection('users').doc(user.uid).get();
     const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
 
-    if(role !== 'admin'){
-      alert('Akses ditolak. Halaman ini khusus Admin.');
-      await auth.signOut();
+    if(!['admin','owner'].includes(role)){
+      alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');
       location.replace('login.html');
       return false;
     }
@@ -870,11 +869,7 @@ async function load(){
         ukuran: data.ukuran || '',
         statusPembayaran: data.statusPembayaran || 'BELUM LUNAS',
         statusKehadiran: data.statusKehadiran || 'BELUM HADIR',
-        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL',
-        // Kompatibel dengan nama field bukti yang pernah dipakai.
-        buktiTransfer: data.buktiTransfer || data.buktiUrl || data.urlBukti || data.bukti || '',
-        buktiNama: data.buktiNama || data.namaPadaBukti || '',
-        buktiTeks: data.buktiTeks || data.hasilOCR || data.ocrText || ''
+        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL'
       };
     });
 
@@ -1263,14 +1258,13 @@ function render(){
           </td>
 
 
-          ${currentRole === 'admin' ? `
           <td class="action-cell">
-            ${tombol}
-            <div class="action-group">
-              <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
-              <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
-            </div>
-          </td>` : '<td class="action-cell"></td>'}
+            ${currentRole === 'admin' ? tombol + `
+              <div class="action-group">
+                <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
+                <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
+              </div>` : ''}
+          </td>
 
         </tr>
 
@@ -1287,177 +1281,73 @@ function render(){
 ================================================== */
 
 function openReview(kode){
+  selected = peserta.find(p => String(p.kode || '').toUpperCase() === String(kode || '').toUpperCase());
+  if(!selected) return;
 
-  selected =
-    peserta.find(
-      p =>
-        String(p.kode).toUpperCase() ===
-        String(kode).toUpperCase()
-    );
+  document.getElementById('mKode').textContent = selected.kode || '-';
+  document.getElementById('mNama').textContent = selected.nama || '-';
+  document.getElementById('mToko').textContent = selected.toko || '-';
+  document.getElementById('mWa').textContent = selected.wa || '-';
+  document.getElementById('mEmail').textContent = selected.email || '-';
+  document.getElementById('mUkuran').textContent = selected.ukuran || '-';
+  document.getElementById('mNominal').textContent = selected.nominalPembayaran || selected.hargaFinal || 'Belum diisi';
 
+  const bayar = String(selected.statusPembayaran || '').toUpperCase();
+  document.getElementById('mBayar').innerHTML = bayar === 'LUNAS'
+    ? '<span class="badge ok">LUNAS</span>'
+    : '<span class="badge wait">BELUM LUNAS</span>';
 
-  if(!selected)
-    return;
-
-
-
-  document.getElementById('mKode').textContent =
-    selected.kode || '-';
-
-
-  document.getElementById('mNama').textContent =
-    selected.nama || '-';
-
-
-  document.getElementById('mToko').textContent =
-    selected.toko || '-';
-
-
-  document.getElementById('mWa').textContent =
-    selected.wa || '-';
-
-
-  document.getElementById('mEmail').textContent =
-    selected.email || '-';
-
-
-  document.getElementById('mUkuran').textContent =
-    selected.ukuran || '-';
-
-
-  document.getElementById('mNominal').textContent =
-    selected.nominalPembayaran ||
-    'Belum diisi';
-
-
-
-  /* STATUS PEMBAYARAN */
-
-  const bayar =
-    String(
-      selected.statusPembayaran || ''
-    ).toUpperCase();
-
-
-  document.getElementById('mBayar').innerHTML =
-
-    bayar === 'LUNAS'
-
-      ?
-
-      '<span class="badge ok">LUNAS</span>'
-
-      :
-
-      '<span class="badge wait">BELUM LUNAS</span>';
-
-
-
-  /* STATUS KEHADIRAN */
-
-  const hadir =
-    String(
-      selected.statusKehadiran || ''
-    ).toUpperCase();
-
-
-  document.getElementById('mHadir').innerHTML =
-
-    hadir === 'HADIR'
-
-      ?
-
-      '<span class="badge hadir">HADIR</span>'
-
-      :
-
-      '<span class="badge belumhadir">BELUM HADIR</span>';
-
-
-
-  document.getElementById('mCheckin').textContent =
-    selected.jamCheckin || '-';
-
-
-
+  const hadir = String(selected.statusKehadiran || '').toUpperCase();
+  document.getElementById('mHadir').innerHTML = hadir === 'HADIR'
+    ? '<span class="badge hadir">HADIR</span>'
+    : '<span class="badge belumhadir">BELUM HADIR</span>';
+  document.getElementById('mCheckin').textContent = selected.jamCheckin || selected.jamCheckIn || '-';
   document.getElementById('modalMsg').textContent = '';
 
+  // Konfirmasi lunas hanya ditampilkan kepada Admin untuk peserta yang belum lunas.
+  const btn = document.getElementById('confirmBtn');
+  btn.style.display = currentRole === 'admin' && bayar !== 'LUNAS' ? 'block' : 'none';
 
-
-  /* ==================================================
-     TOMBOL KONFIRMASI LUNAS
-  ================================================== */
-
-  const btn =
-    document.getElementById('confirmBtn');
-
-
-  const already =
-    bayar === 'LUNAS';
-
-
-  btn.style.display =
-    already
-      ? 'none'
-      : 'block';
-
-
-
-  /* ==================================================
-     BUKTI TRANSFER / OCR
-  ================================================== */
+  // Pertahankan dukungan field bukti yang sudah tersimpan di Firestore.
   const proof = document.getElementById('proofContent');
   const buktiNama = String(selected.buktiNama || '').trim();
   const buktiTeks = String(selected.buktiTeks || '').trim();
-  const url = String(
-    selected.buktiTransfer || selected.buktiUrl || selected.urlBukti || selected.bukti || ''
-  ).trim();
+  const url = String(selected.buktiTransfer || selected.buktiUrl || selected.urlBukti || '').trim();
+  let html = '';
 
-  let proofHtml = '';
-  if (buktiNama) {
-    proofHtml += '<p><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
-  }
-  if (buktiTeks) {
-    proofHtml += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
-  }
+  if(buktiNama) html += '<p><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
+  if(buktiTeks) html += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
 
-  if (url && /^https?:\/\//i.test(url)) {
+  if(url && /^https?:\/\//i.test(url)){
     const driveId = ambilDriveId(url);
-    const imageUrl = driveId
-      ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId)
-      : url;
+    const imageUrl = driveId ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId) : url;
     const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) || !!driveId;
-    const isPdf = /\.pdf(\?|#|$)/i.test(url);
-
-    if (isImage) {
-      proofHtml += '<img style="margin-top:12px" src="' + escAttr(imageUrl) + '" alt="Bukti transfer" onerror="this.style.display=\'none\';">';
-    } else if (isPdf) {
-      proofHtml += '<iframe src="' + escAttr(url) + '" style="width:100%;height:420px;border:1px solid #ddd;border-radius:10px" title="Bukti transfer PDF"></iframe>';
+    if(isImage){
+      html += '<img style="margin-top:12px" src="' + escAttr(imageUrl) + '" alt="Bukti transfer" onerror="this.style.display=\'none\';">';
+    } else if(/\.pdf(\?|#|$)/i.test(url)){
+      html += '<iframe src="' + escAttr(url) + '" style="width:100%;height:420px;border:1px solid #ddd;border-radius:10px" title="Bukti transfer PDF"></iframe>';
     }
-    proofHtml += '<p><a href="' + escAttr(url) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
-  } else if (url && !buktiTeks) {
-    // Beberapa data lama menyimpan hasil OCR langsung di field buktiTransfer.
-    proofHtml += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere">' + esc(url) + '</div>';
+    html += '<p><a href="' + escAttr(url) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
+  } else if(url && !buktiTeks){
+    html += '<div class="proof-note" style="white-space:pre-wrap">' + esc(url) + '</div>';
   }
 
-  if (!proofHtml) {
-    proofHtml = '<div class="proof-note">Bukti transfer belum tersedia pada dokumen Firestore ini.</div>';
-  }
-  proof.innerHTML = proofHtml;
+  if(!html) html = '<div class="proof-note">Belum ada data bukti transfer atau hasil OCR pada dokumen Firestore ini.</div>';
+  proof.innerHTML = html;
 
-  document
-    .getElementById('modal')
-    .classList.add('show');
-
+  const modal = document.getElementById('modal');
+  modal.classList.add('show');
+  modal.style.display = 'block';
+  modal.style.zIndex = '99999';
+  document.body.style.overflow = 'hidden';
 }
-
-
 
 /* ==================================================
    KONFIRMASI LUNAS
 ================================================== */
 
 async function confirmLunas(){
+  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat mengonfirmasi pembayaran.'); return; }
   if(currentRole !== 'admin'){
     alert('Hanya Admin yang dapat mengonfirmasi pembayaran.');
     return;
@@ -1521,14 +1411,11 @@ async function confirmLunas(){
 ================================================== */
 
 function closeModal(){
-
-  document
-    .getElementById('modal')
-    .classList.remove('show');
-
-
+  const modal = document.getElementById('modal');
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
   selected = null;
-
 }
 
 
