@@ -870,9 +870,10 @@ async function load(){
         statusPembayaran: data.statusPembayaran || 'BELUM LUNAS',
         statusKehadiran: data.statusKehadiran || 'BELUM HADIR',
         statusBenefit: data.statusBenefit || 'BELUM DIAMBIL',
-        // Hasil OCR: kompatibel dengan beberapa nama field lama.
+        // Ambil field OCR yang benar-benar digunakan dokumen Firestore.
         buktiNama: data.buktiNama || data.namaPadaBukti || '',
-        buktiTeks: data.buktiTeks || data.buktiTransferTeks || data.hasilOCR || data.ocrText || ''
+        buktiTeks: data.buktiTeks || data.buktiTransferTeks || data.hasilOCR || data.ocrText || '',
+        nominalPembayaran: data.nominalPembayaran ?? data.hargaFinal ?? ''
       };
     });
 
@@ -1262,12 +1263,11 @@ function render(){
 
 
           <td class="action-cell">
-            ${['admin','owner'].includes(currentRole) ? tombol : ''}
-            ${currentRole === 'admin' ? `
+            ${['admin','owner'].includes(currentRole) ? tombol + (currentRole === 'admin' ? `
               <div class="action-group">
                 <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
                 <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
-              </div>` : ''}
+              </div>` : '') : ''}
           </td>
 
         </tr>
@@ -1312,7 +1312,7 @@ function openReview(kode){
   const btn = document.getElementById('confirmBtn');
   btn.style.display = currentRole === 'admin' && bayar !== 'LUNAS' ? 'block' : 'none';
 
-  // Tampilkan hanya nama file dan teks OCR dari Firestore. Tidak memanggil gambar/URL.
+  // Tampilkan nama file dan hasil OCR saja. Jangan memanggil URL/gambar bukti.
   const proof = document.getElementById('proofContent');
   const buktiNama = String(selected.buktiNama || selected.namaPadaBukti || '').trim();
   const buktiTeks = String(
@@ -1321,10 +1321,10 @@ function openReview(kode){
   let html = '';
 
   if (buktiNama) {
-    html += '<p><b>Nama file bukti:</b> ' + esc(buktiNama) + '</p>';
+    html += '<p style="margin:0 0 12px"><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
   }
   if (buktiTeks) {
-    html += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
+    html += '<div style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:16px;padding:16px;color:#222;font-size:15px;line-height:1.45">' + esc(buktiTeks) + '</div>';
   }
   if (!html) {
     html = '<div class="proof-note">Nama file dan teks hasil OCR belum tersedia pada dokumen Firestore ini.</div>';
@@ -1354,11 +1354,11 @@ async function confirmLunas(){
   msgEl.textContent = '';
 
   try{
-    const nominalRaw = selected.nominalPembayaran ?? selected.hargaFinal ?? '';
-    const nominalText = String(nominalRaw).trim();
+    const nominalRaw = selected.nominalPembayaran;
+    const nominalText = String(nominalRaw ?? '').trim();
     const nominal = Number(nominalText.replace(/[^\d.-]/g,''));
     if(!nominalText || !Number.isFinite(nominal) || nominal <= 0){
-      throw new Error('Nominal pembayaran belum diisi atau tidak valid. Periksa data peserta sebelum mengonfirmasi lunas.');
+      throw new Error('Nominal pembayaran belum valid. Periksa data nominal sebelum mengonfirmasi lunas.');
     }
     const user = auth.currentUser;
     if(!user) throw new Error('Sesi login berakhir. Silakan login kembali.');
@@ -1446,20 +1446,6 @@ function esc(v){
 }
 
 
-
-function ambilDriveId(url){
-
-  const s = String(url || '');
-
-  let m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(m) return m[1];
-
-  m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if(m) return m[1];
-
-  return '';
-
-}
 
 function escAttr(v){
 
