@@ -811,9 +811,10 @@ async function requireAdmin(){
     const snap = await db.collection('users').doc(user.uid).get();
     const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
 
-    if(role !== 'admin'){
-      alert('Akses ditolak. Halaman ini khusus Admin.');
-      await auth.signOut();
+    // Admin dan Owner boleh membuka halaman data peserta.
+    // Owner hanya dapat melihat data; tombol aksi ditampilkan untuk Admin saja.
+    if(role !== 'admin' && role !== 'owner'){
+      alert('Akses ditolak. Halaman ini khusus Admin atau Owner.');
       location.replace('login.html');
       return false;
     }
@@ -1260,11 +1261,13 @@ function render(){
 
 
           <td class="action-cell">
-            ${tombol}
-            <div class="action-group">
-              <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
-              <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
-            </div>
+            ${currentRole === 'admin' ? `
+              ${tombol}
+              <div class="action-group">
+                <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
+                <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
+              </div>
+            ` : ''}
           </td>
 
         </tr>
