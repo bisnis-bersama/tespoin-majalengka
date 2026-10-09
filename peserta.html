@@ -203,7 +203,7 @@ td{
   cursor:pointer
 }
 
-.action:disabled{
+.action-edit,.action-delete{border:0;border-radius:9px;padding:9px 11px;font-weight:800;cursor:pointer;margin:3px}.action-edit{background:#1677d2;color:#fff}.action-delete{background:#c62828;color:#fff}.action-group{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.action-cell{min-width:180px}.action:disabled{
   background:#ddd;
   color:#888;
   cursor:not-allowed
@@ -215,13 +215,6 @@ td{
   padding:30px
 }
 
-
-
-.action-cell{min-width:190px;white-space:normal}
-.action-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.action-edit,.action-delete{display:inline-block;width:auto;margin:2px 0;padding:10px 12px;border:0;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
-.action-edit{background:#1677d2;color:#fff}
-.action-delete{background:#c62828;color:#fff}
 
 /* =========================
    MODAL
@@ -804,7 +797,12 @@ let currentRole = '';
 
 async function requireAdmin(){
   try{
-    const user = auth.currentUser;
+    const user = await new Promise(resolve => {
+      const unsubscribe = auth.onAuthStateChanged(u => {
+        unsubscribe();
+        resolve(u);
+      });
+    });
     if(!user){
       location.replace('login.html');
       return false;
@@ -835,8 +833,8 @@ async function requireAdmin(){
    API
 ================================================== */
 
-const API_URL =
-'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+// Data peserta dan approval pembayaran menggunakan Firestore.
+
 
 
 let peserta = [];
@@ -852,77 +850,44 @@ let selected = null;
 ================================================== */
 
 async function load(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '<tr><td colspan="9" class="empty">Memuat data dari Firebase...</td></tr>';
 
   try{
+    const snap = await db.collection('peserta').get();
+    peserta = snap.docs.map(docSnap => {
+      const data = docSnap.data() || {};
+      return {
+        ...data,
+        kode: data.kode || docSnap.id,
+        // Simpan ID dokumen untuk operasi update Firestore.
+        _firestoreId: docSnap.id,
+        nama: data.nama || '',
+        toko: data.toko || data.namaToko || '',
+        wa: data.wa || data.noWa || '',
+        email: data.email || '',
+        alamat: data.alamat || '',
+        ukuran: data.ukuran || '',
+        statusPembayaran: data.statusPembayaran || 'BELUM LUNAS',
+        statusKehadiran: data.statusKehadiran || 'BELUM HADIR',
+        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL'
+      };
+    });
 
-    const r =
-      await fetch(
-        API_URL +
-        '?action=peserta&_=' +
-        Date.now()
-      );
-
-
-    const raw =
-      await r.text();
-
-
-    let d;
-
-
-    try{
-
-      d =
-        JSON.parse(
-          raw.trim()
-        );
-
-    }catch(e){
-
-      throw new Error(
-        'Respons API bukan JSON. Pastikan deployment Code.gs terbaru.'
-      );
-
-    }
-
-
-    if(!d.ok){
-
-      throw new Error(
-        d.message ||
-        'Gagal mengambil data peserta.'
-      );
-
-    }
-
-
-    peserta =
-      d.peserta || [];
-
+    // Urutkan berdasarkan waktu pendaftaran terbaru jika tersedia.
+    peserta.sort((a,b) => {
+      const ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    });
 
     updateStats();
-
     render();
-
-
   }catch(e){
-
-    document.getElementById('tbody').innerHTML =
-
-      '<tr>' +
-
-      '<td colspan="9" class="empty">' +
-
-      esc(e.message) +
-
-      '</td>' +
-
-      '</tr>';
-
+    console.error('Gagal membaca Firestore:', e);
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Gagal memuat data Firebase: ' + esc(e.message || 'Periksa Firestore Rules dan koneksi.') + '</td></tr>';
   }
-
 }
-
 
 
 /* ==================================================
@@ -1297,8 +1262,8 @@ function render(){
           <td class="action-cell">
             ${tombol}
             <div class="action-group">
-              <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._docId)}">EDIT</button>
-              <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._docId)}">HAPUS</button>
+              <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
+              <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
             </div>
           </td>
 
@@ -1454,8 +1419,19 @@ function openReview(kode){
       <div class="proof-note">
         <b>Bukti transfer belum tersedia.</b>
         <br><br>
-        File bukti belum tersimpan ke server atau kolom
-        <b>Bukti Transfer</b> pada Spreadsheet belum berisi URL.
+        Teks atau tautan bukti transfer belum tersedia pada data Firestore.
+      </div>
+    `;
+
+  }
+
+  else if(!/^https?:\/\//i.test(url)){
+
+    // Bukti versi OCR disimpan sebagai teks di Firestore, bukan file Storage.
+    proof.innerHTML = `
+      <div class="proof-note">
+        <b>Teks bukti transfer (hasil pembacaan):</b>
+        <div style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(url)}</div>
       </div>
     `;
 
@@ -1552,185 +1528,62 @@ function openReview(kode){
 ================================================== */
 
 async function confirmLunas(){
-
   if(currentRole !== 'admin'){
     alert('Hanya Admin yang dapat mengonfirmasi pembayaran.');
     return;
   }
+  if(!selected) return;
 
-  if(!selected)
-    return;
-
-
-  const btn =
-    document.getElementById('confirmBtn');
-
-
+  const btn = document.getElementById('confirmBtn');
   btn.disabled = true;
-
-  btn.textContent =
-    'MEMPROSES...';
-
-
-  document.getElementById('modalMsg').className =
-    'msg';
-
-
-  document.getElementById('modalMsg').textContent =
-    '';
-
+  btn.textContent = 'MEMPROSES...';
+  const msgEl = document.getElementById('modalMsg');
+  msgEl.className = 'msg';
+  msgEl.textContent = '';
 
   try{
+    const nominalRaw = selected.nominalPembayaran;
+    const nominal = Number(String(nominalRaw ?? '').replace(/[^\d.-]/g,'')) || 0;
+    const user = auth.currentUser;
+    if(!user) throw new Error('Sesi login berakhir. Silakan login kembali.');
 
-
-    const nominal =
-      selected.nominalPembayaran || '';
-
-
-
-    const r =
-      await fetch(
-
-        API_URL,
-
-        {
-
-          method:'POST',
-
-          headers:{
-
-            'Content-Type':
-            'text/plain;charset=utf-8'
-
-          },
-
-          body:
-
-            JSON.stringify({
-
-              action:
-                'verifikasiLunas',
-
-              kode:
-                selected.kode,
-
-              nominal:
-                nominal
-
-            })
-
-        }
-
-      );
-
-
-
-    const raw =
-      await r.text();
-
-
-    let d;
-
-
-    try{
-
-      d =
-        JSON.parse(
-          raw.trim()
-        );
-
-    }catch(e){
-
-      throw new Error(
-        'Approval terkirim tetapi respons API tidak terbaca.'
-      );
-
+    const docId = selected._firestoreId || selected.kode;
+    const docRef = db.collection('peserta').doc(docId);
+    const snap = await docRef.get();
+    if(!snap.exists) throw new Error('Data peserta tidak ditemukan di Firestore.');
+    if(String(snap.data().statusPembayaran || '').toUpperCase() === 'LUNAS'){
+      throw new Error('Peserta ini sudah berstatus LUNAS. Muat ulang data.');
     }
 
+    await docRef.update({
+      statusPembayaran: 'LUNAS',
+      nominalPembayaran: nominal,
+      tanggalVerifikasi: firebase.firestore.FieldValue.serverTimestamp(),
+      metodePembayaran: snap.data().metodePembayaran || 'TRANSFER',
+      petugasPembayaran: user.email || user.uid,
+      waktuPembayaran: firebase.firestore.FieldValue.serverTimestamp(),
+      petugasVerifikasi: user.email || user.uid,
+      waktuVerifikasi: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-    if(!d.ok){
-
-      throw new Error(
-        d.message ||
-        'Verifikasi gagal.'
-      );
-
-    }
-
-
-
-    document
-      .getElementById('modalMsg')
-      .className =
-      'msg okmsg';
-
-
-    document
-      .getElementById('modalMsg')
-      .textContent =
-
-      '✓ ' +
-      (
-        d.message ||
-        'Berhasil menjadi LUNAS.'
-      );
-
-
-
-    /*
-      Update data lokal
-      supaya tampilan langsung berubah.
-    */
-
-    selected.statusPembayaran =
-      'LUNAS';
-
-
-
+    msgEl.className = 'msg okmsg';
+    msgEl.textContent = '✓ Pembayaran berhasil dikonfirmasi di Firestore.';
+    selected.statusPembayaran = 'LUNAS';
+    selected.nominalPembayaran = nominal;
     updateStats();
-
     render();
-
-
-
-    /*
-      Tutup modal setelah berhasil.
-    */
-
-    setTimeout(
-      closeModal,
-      900
-    );
-
-
+    setTimeout(closeModal, 900);
   }catch(e){
-
-    document
-      .getElementById('modalMsg')
-      .className =
-      'msg err';
-
-
-    document
-      .getElementById('modalMsg')
-      .textContent =
-      e.message ||
-      'Terjadi kesalahan.';
-
-  }
-
-
-  finally{
-
+    console.error('Approval Firestore gagal:', e);
+    msgEl.className = 'msg err';
+    msgEl.textContent = e.code === 'permission-denied'
+      ? 'Izin ditolak Firestore. Periksa Rules koleksi peserta untuk role Admin.'
+      : (e.message || 'Verifikasi pembayaran gagal.');
+  }finally{
     btn.disabled = false;
-
-    btn.textContent =
-      'KONFIRMASI LUNAS';
-
+    btn.textContent = 'KONFIRMASI LUNAS';
   }
-
 }
-
 
 
 /* ==================================================
@@ -1826,82 +1679,59 @@ document
 
 
 
-
 /* ==================================================
-   EDIT DAN HAPUS DATA PESERTA FIRESTORE
+   EDIT / HAPUS PESERTA - FIRESTORE
 ================================================== */
 function normalisasiWa(value){
   let digits = String(value || '').replace(/\D/g, '');
-  if(digits.startsWith('0')) digits = '62' + digits.slice(1);
-  else if(digits.startsWith('8')) digits = '62' + digits;
+  if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+  else if (digits.startsWith('8')) digits = '62' + digits;
   return digits;
 }
 
 async function editPeserta(docId){
-  if(currentRole !== 'admin'){
-    alert('Hanya Admin yang dapat mengedit peserta.');
-    return;
-  }
-  const p = peserta.find(x => x._docId === docId);
-  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }
+  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat mengedit peserta.'); return; }
+  const p = peserta.find(x => x._firestoreId === docId);
+  if(!p){ alert('Data peserta tidak ditemukan. Silakan muat ulang halaman.'); return; }
   const nama = prompt('Nama peserta:', p.nama || ''); if(nama === null) return;
   const toko = prompt('Nama toko:', p.toko || ''); if(toko === null) return;
   const wa = prompt('Nomor WhatsApp:', p.wa || ''); if(wa === null) return;
   const alamat = prompt('Alamat:', p.alamat || ''); if(alamat === null) return;
   const email = prompt('Email:', p.email || ''); if(email === null) return;
   const ukuran = prompt('Ukuran kaos:', p.ukuran || ''); if(ukuran === null) return;
-  if(!nama.trim() || !wa.trim()){
-    alert('Nama peserta dan WhatsApp wajib diisi.');
-    return;
-  }
-  if(!confirm('Simpan perubahan data ' + p.kode + '?')) return;
+  if(!nama.trim() || !wa.trim()){ alert('Nama peserta dan WhatsApp wajib diisi.'); return; }
+  if(!confirm('Simpan perubahan data ' + (p.kode || '') + '?')) return;
   try{
-    await db.collection('peserta').doc(docId).update({
-      nama: nama.trim(),
-      toko: toko.trim(),
-      wa: wa.trim(),
-      waNormalized: normalisasiWa(wa),
-      alamat: alamat.trim(),
-      email: email.trim().toLowerCase(),
-      ukuran: ukuran.trim()
-    });
+    const patch = {nama:nama.trim(), toko:toko.trim(), wa:wa.trim(), alamat:alamat.trim(), email:email.trim().toLowerCase(), ukuran:ukuran.trim()};
+    // Simpan format normalisasi hanya sebagai field tambahan, tanpa mengubah nomor yang ditampilkan.
+    patch.waNormalized = normalisasiWa(wa);
+    await db.collection('peserta').doc(docId).update(patch);
     alert('Data peserta berhasil diperbarui.');
     await load();
-  }catch(e){
-    console.error('Edit peserta gagal:', e);
-    alert('Gagal menyimpan perubahan: ' + (e.message || e));
-  }
+  }catch(e){ console.error('Edit peserta gagal:',e); alert('Gagal menyimpan perubahan: ' + (e.message || e)); }
 }
 
 async function hapusPeserta(docId){
-  if(currentRole !== 'admin'){
-    alert('Hanya Admin yang dapat menghapus peserta.');
-    return;
-  }
-  const p = peserta.find(x => x._docId === docId);
-  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }
-  const yakin = confirm('HAPUS DATA PESERTA INI?\n\nKode: ' + p.kode + '\nNama: ' + p.nama + '\n\nData akan dihapus permanen dari Firestore.');
-  if(!yakin) return;
+  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat menghapus peserta.'); return; }
+  const p = peserta.find(x => x._firestoreId === docId);
+  if(!p){ alert('Data peserta tidak ditemukan. Silakan muat ulang halaman.'); return; }
+  if(!confirm('HAPUS DATA PESERTA INI SECARA PERMANEN?\n\nKode: ' + (p.kode || '-') + '\nNama: ' + (p.nama || '-') + '\n\nTindakan ini tidak dapat dibatalkan.')) return;
   try{
     await db.collection('peserta').doc(docId).delete();
-    if(selected && selected._docId === docId) closeModal();
+    if(selected && selected._firestoreId === docId) closeModal();
     alert('Data peserta berhasil dihapus dari Firestore.');
     await load();
-  }catch(e){
-    console.error('Hapus peserta gagal:', e);
-    alert('Gagal menghapus data: ' + (e.message || e));
-  }
+  }catch(e){ console.error('Hapus peserta gagal:',e); alert('Gagal menghapus data: ' + (e.message || e)); }
 }
 
 document.getElementById('tbody').addEventListener('click', function(e){
   const button = e.target.closest('button[data-action][data-docid]');
   if(!button) return;
   e.preventDefault();
-  const action = button.dataset.action;
   const docId = button.dataset.docid;
-  if(!docId){ alert('ID dokumen peserta tidak ditemukan.'); return; }
-  if(action === 'edit') editPeserta(docId);
-  else if(action === 'delete') hapusPeserta(docId);
+  if(!docId){ alert('ID dokumen Firestore tidak ditemukan.'); return; }
+  if(button.dataset.action === 'edit') editPeserta(docId);
+  if(button.dataset.action === 'delete') hapusPeserta(docId);
 });
 
 /* ==================================================
