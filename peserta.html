@@ -869,7 +869,10 @@ async function load(){
         ukuran: data.ukuran || '',
         statusPembayaran: data.statusPembayaran || 'BELUM LUNAS',
         statusKehadiran: data.statusKehadiran || 'BELUM HADIR',
-        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL'
+        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL',
+        // Hasil OCR: kompatibel dengan beberapa nama field lama.
+        buktiNama: data.buktiNama || data.namaPadaBukti || '',
+        buktiTeks: data.buktiTeks || data.buktiTransferTeks || data.hasilOCR || data.ocrText || ''
       };
     });
 
@@ -1259,7 +1262,8 @@ function render(){
 
 
           <td class="action-cell">
-            ${currentRole === 'admin' ? tombol + `
+            ${['admin','owner'].includes(currentRole) ? tombol : ''}
+            ${currentRole === 'admin' ? `
               <div class="action-group">
                 <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
                 <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
@@ -1340,10 +1344,6 @@ function openReview(kode){
 
 async function confirmLunas(){
   if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat mengonfirmasi pembayaran.'); return; }
-  if(currentRole !== 'admin'){
-    alert('Hanya Admin yang dapat mengonfirmasi pembayaran.');
-    return;
-  }
   if(!selected) return;
 
   const btn = document.getElementById('confirmBtn');
@@ -1354,8 +1354,12 @@ async function confirmLunas(){
   msgEl.textContent = '';
 
   try{
-    const nominalRaw = selected.nominalPembayaran;
-    const nominal = Number(String(nominalRaw ?? '').replace(/[^\d.-]/g,'')) || 0;
+    const nominalRaw = selected.nominalPembayaran ?? selected.hargaFinal ?? '';
+    const nominalText = String(nominalRaw).trim();
+    const nominal = Number(nominalText.replace(/[^\d.-]/g,''));
+    if(!nominalText || !Number.isFinite(nominal) || nominal <= 0){
+      throw new Error('Nominal pembayaran belum diisi atau tidak valid. Periksa data peserta sebelum mengonfirmasi lunas.');
+    }
     const user = auth.currentUser;
     if(!user) throw new Error('Sesi login berakhir. Silakan login kembali.');
 
