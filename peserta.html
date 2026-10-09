@@ -194,48 +194,64 @@ td{
    ACTION
 ========================= */
 
-.action{
-  border:0;
-  border-radius:10px;
-  padding:11px 14px;
-  background:#f5c400;
-  font-weight:800;
-  cursor:pointer
+
+.action-cell {
+  min-width: 190px;
+  white-space: normal;
 }
 
-.action:disabled{
-  background:#ddd;
-  color:#888;
-  cursor:not-allowed
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
 }
 
-.empty{
-  text-align:center;
-  color:#777;
-  padding:30px
+.action,
+.action-edit,
+.action-delete {
+  display: inline-block;
+  width: auto;
+  margin: 2px 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.action-edit{
-  background:#1677d2;
-  color:#fff;
-  border:0;
-  border-radius:8px;
-  padding:9px 12px;
-  font-weight:800;
-  cursor:pointer;
-  margin:2px;
+.action {
+  background: #f5c400;
+  color: #111;
 }
 
-.action-delete{
-  background:#c62828;
-  color:#fff;
-  border:0;
-  border-radius:8px;
-  padding:9px 12px;
-  font-weight:800;
-  cursor:pointer;
-  margin:2px;
+.action-edit {
+  background: #1677d2;
+  color: #fff;
 }
+
+.action-delete {
+  background: #c62828;
+  color: #fff;
+}
+
+@media (max-width: 750px) {
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 1000px;
+  }
+
+  .action-cell {
+    min-width: 190px;
+  }
+}
+
 /* =========================
    MODAL
 ========================= */
@@ -1259,21 +1275,29 @@ function render(){
           </td>
 
 
-        <td>
+        
+<td class="action-cell">
   ${tombol}
 
-  <button
-    class="action-edit"
-    onclick="editPeserta('${escAttr(p._docId)}')">
-    EDIT
-  </button>
+  <div class="action-group">
+    <button
+      type="button"
+      class="action-edit"
+      data-action="edit"
+      data-docid="${escAttr(p._docId)}">
+      EDIT
+    </button>
 
-  <button
-    class="action-delete"
-    onclick="hapusPeserta('${escAttr(p._docId)}')">
-    HAPUS
-  </button>
+    <button
+      type="button"
+      class="action-delete"
+      data-action="delete"
+      data-docid="${escAttr(p._docId)}">
+      HAPUS
+    </button>
+  </div>
 </td>
+
 
         </tr>
 
