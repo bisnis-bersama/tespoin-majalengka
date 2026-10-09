@@ -82,8 +82,8 @@ button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border
 
       <div class="section">
         <div class="section-title">🖼️ PUBLIKASI</div>
-        <label for="slideFiles">Slide Gambar (Landscape)</label><input id="slideFiles" type="file" accept="image/*" multiple>
-        <div class="note">Gambar baru diunggah ke Firebase Storage. URL disimpan di dokumen pengaturan Firestore. Jika tidak memilih gambar baru, slide lama tetap dipertahankan.</div>
+        <label for="slideFiles">Slide Gambar (tidak diunggah pada mode ini)</label><input id="slideFiles" type="file" accept="image/*" multiple disabled>
+        <div class="note">Mode ini menyimpan pengaturan tanpa mengunggah gambar. Slide lama tetap dipertahankan. Untuk menghapus daftar slide lama, gunakan tombol hapus lalu simpan.</div>
         <div id="slideList" class="small">Memuat status slide...</div>
         <button type="button" id="clearSlides" style="background:#eee;margin-top:8px">HAPUS DAFTAR SLIDE TERSIMPAN</button>
         <label for="pamflet">Link Pamflet / Poster</label><input id="pamflet" type="url" placeholder="https://...">
@@ -225,23 +225,10 @@ $('form').addEventListener('submit', async event => {
       body[key] = toNumber(body[key]);
     });
 
-    const files = Array.from($('slideFiles').files || []);
-    if (files.length) {
-      const uploaded = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (!file.type.startsWith('image/')) throw new Error('File slide harus berupa gambar.');
-        if (file.size > 10 * 1024 * 1024) throw new Error('Ukuran setiap gambar maksimal 10 MB.');
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const storageRef = storage.ref(
-          'pengaturan/acara/slides/' + Date.now() + '_' + i + '_' + safeName
-        );
-        const uploadedSnapshot = await storageRef.put(file);
-        uploaded.push(await uploadedSnapshot.ref.getDownloadURL());
-      }
-      slideUrls = uploaded;
-      removeExistingSlides = false;
-    }
+    // Mode tanpa upload gambar: pertahankan slideUrls yang sudah tersimpan.
+    // Jika tombol hapus slide ditekan, slideUrls tetap kosong dan akan disimpan.
+    $('slideFiles').value = '';
+    show('Menyimpan pengaturan tanpa mengunggah gambar...', true);
 
     body.slideUrls = slideUrls;
     body.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -256,7 +243,7 @@ $('form').addEventListener('submit', async event => {
     show('Berhasil menyimpan pengaturan ke Firestore: pengaturan/acara.', true);
   } catch (error) {
     console.error('Gagal menyimpan pengaturan:', error);
-    show('Gagal menyimpan: ' + (error.message || error), false);
+    show('Gagal menyimpan: ' + (error.code ? error.code + ' — ' : '') + (error.message || error), false);
   } finally {
     button.disabled = false;
     button.textContent = 'SIMPAN PENGATURAN';
