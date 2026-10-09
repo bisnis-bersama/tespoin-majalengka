@@ -215,7 +215,27 @@ td{
   padding:30px
 }
 
+.action-edit{
+  background:#1677d2;
+  color:#fff;
+  border:0;
+  border-radius:8px;
+  padding:9px 12px;
+  font-weight:800;
+  cursor:pointer;
+  margin:2px;
+}
 
+.action-delete{
+  background:#c62828;
+  color:#fff;
+  border:0;
+  border-radius:8px;
+  padding:9px 12px;
+  font-weight:800;
+  cursor:pointer;
+  margin:2px;
+}
 /* =========================
    MODAL
 ========================= */
@@ -1239,9 +1259,21 @@ function render(){
           </td>
 
 
-          <td>
-            ${tombol}
-          </td>
+        <td>
+  ${tombol}
+
+  <button
+    class="action-edit"
+    onclick="editPeserta('${escAttr(p._docId)}')">
+    EDIT
+  </button>
+
+  <button
+    class="action-delete"
+    onclick="hapusPeserta('${escAttr(p._docId)}')">
+    HAPUS
+  </button>
+</td>
 
         </tr>
 
@@ -1558,7 +1590,103 @@ document
 
 
 
-/* ==================================================
+/*
+async function editPeserta(docId){
+  if(currentRole !== 'admin'){
+    alert('Hanya Admin yang dapat mengedit peserta.');
+    return;
+  }
+
+  const p = peserta.find(x => x._docId === docId);
+  if(!p) return;
+
+  const nama = prompt('Nama peserta:', p.nama || '');
+  if(nama === null) return;
+
+  const toko = prompt('Nama toko:', p.toko || '');
+  if(toko === null) return;
+
+  const wa = prompt('Nomor WhatsApp:', p.wa || '');
+  if(wa === null) return;
+
+  const alamat = prompt('Alamat:', p.alamat || '');
+  if(alamat === null) return;
+
+  const email = prompt('Email:', p.email || '');
+  if(email === null) return;
+
+  const ukuran = prompt('Ukuran kaos:', p.ukuran || '');
+  if(ukuran === null) return;
+
+  if(!nama.trim() || !wa.trim()){
+    alert('Nama peserta dan nomor WhatsApp wajib diisi.');
+    return;
+  }
+
+  if(!confirm('Simpan perubahan data peserta ' + p.kode + '?')){
+    return;
+  }
+
+  try{
+    await db.collection('peserta').doc(docId).update({
+      nama: nama.trim(),
+      toko: toko.trim(),
+      wa: wa.trim(),
+      waNormalized: normalisasiWa(wa),
+      alamat: alamat.trim(),
+      email: email.trim().toLowerCase(),
+      ukuran: ukuran.trim()
+    });
+
+    alert('Data peserta berhasil diperbarui.');
+    await load();
+
+  }catch(e){
+    console.error('Gagal mengedit peserta:', e);
+    alert('Gagal mengedit data: ' + (e.message || 'Periksa Firestore Rules.'));
+  }
+}
+
+
+async function hapusPeserta(docId){
+  if(currentRole !== 'admin'){
+    alert('Hanya Admin yang dapat menghapus peserta.');
+    return;
+  }
+
+  const p = peserta.find(x => x._docId === docId);
+  if(!p) return;
+
+  const yakin = confirm(
+    'HAPUS DATA PESERTA INI?\n\n' +
+    'Kode: ' + p.kode + '\n' +
+    'Nama: ' + p.nama + '\n\n' +
+    'Data akan dihapus permanen dari Firestore.'
+  );
+
+  if(!yakin) return;
+
+  const konfirmasiKedua = confirm(
+    'Konfirmasi terakhir: hapus ' + p.kode + ' dari Firestore?'
+  );
+
+  if(!konfirmasiKedua) return;
+
+  try{
+    await db.collection('peserta').doc(docId).delete();
+
+    if(selected && selected._docId === docId){
+      closeModal();
+    }
+
+    alert('Data peserta berhasil dihapus dari Firestore.');
+    await load();
+
+  }catch(e){
+    console.error('Gagal menghapus peserta:', e);
+    alert('Gagal menghapus data: ' + (e.message || 'Periksa Firestore Rules.'));
+  }
+} ==================================================
    MULAI
 ================================================== */
 
