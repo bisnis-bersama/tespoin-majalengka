@@ -37,6 +37,7 @@
       <div id="qr"></div>
       <div id="dataRows"></div>
       <p class="muted">Simpan bukti ini untuk registrasi ulang. QR Code berisi kode registrasi.</p>
+      <button id="saveJpgButton" class="print-btn" type="button">SIMPAN BUKTI JPG</button>
       <button class="print-btn" type="button" onclick="window.print()">CETAK / SIMPAN PDF</button>
     </section>
   </div>
@@ -46,6 +47,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 /*
   Halaman ini memakai Firebase Callable Cloud Function bernama:
@@ -108,6 +110,36 @@ function renderParticipant(p) {
   const qrBox = document.getElementById("qr");
   new QRCode(qrBox, {text:kode, width:220, height:220, correctLevel:QRCode.CorrectLevel.H});
   resultEl.style.display = "block";
+
+  const saveButton = document.getElementById("saveJpgButton");
+  saveButton.onclick = async () => {
+    const oldText = saveButton.textContent;
+    saveButton.disabled = true;
+    saveButton.textContent = "MEMBUAT JPG...";
+    try {
+      // Beri waktu agar QR Code selesai dirender sebelum diambil gambarnya.
+      await new Promise(resolve => setTimeout(resolve, 200));
+      const canvas = await html2canvas(resultEl, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+        ignoreElements: element => element.classList && element.classList.contains("print-btn")
+      });
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/jpeg", 0.95);
+      link.download = kode + "-BUKTI-REGISTRASI.jpg";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error(error);
+      showStatus("Gagal menyimpan JPG. Silakan gunakan tombol Cetak / Simpan PDF.", true);
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = oldText;
+    }
+  };
 }
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
