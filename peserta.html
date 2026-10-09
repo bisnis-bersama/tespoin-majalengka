@@ -194,63 +194,34 @@ td{
    ACTION
 ========================= */
 
-
-.action-cell {
-  min-width: 190px;
-  white-space: normal;
+.action{
+  border:0;
+  border-radius:10px;
+  padding:11px 14px;
+  background:#f5c400;
+  font-weight:800;
+  cursor:pointer
 }
 
-.action-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+.action:disabled{
+  background:#ddd;
+  color:#888;
+  cursor:not-allowed
 }
 
-.action,
-.action-edit,
-.action-delete {
-  display: inline-block;
-  width: auto;
-  margin: 2px 0;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
+.empty{
+  text-align:center;
+  color:#777;
+  padding:30px
 }
 
-.action {
-  background: #f5c400;
-  color: #111;
-}
 
-.action-edit {
-  background: #1677d2;
-  color: #fff;
-}
 
-.action-delete {
-  background: #c62828;
-  color: #fff;
-}
-
-@media (max-width: 750px) {
-  .table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  table {
-    min-width: 1000px;
-  }
-
-  .action-cell {
-    min-width: 190px;
-  }
-}
+.action-cell{min-width:190px;white-space:normal}
+.action-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.action-edit,.action-delete{display:inline-block;width:auto;margin:2px 0;padding:10px 12px;border:0;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap}
+.action-edit{background:#1677d2;color:#fff}
+.action-delete{background:#c62828;color:#fff}
 
 /* =========================
    MODAL
@@ -482,7 +453,14 @@ td{
 
     <div class="stats">
 
-     
+      <div class="stat total">
+
+        <span>TOTAL PESERTA</span>
+
+        <b id="total">0</b>
+
+      </div>
+
 
       <div class="stat wait">
 
@@ -507,13 +485,6 @@ td{
         <span>SUDAH HADIR</span>
 
         <b id="hadir">0</b>
-
-      </div>
-<div class="stat total">
-
-        <span>TOTAL PESERTA</span>
-
-        <b id="total">0</b>
 
       </div>
 
@@ -833,10 +804,7 @@ let currentRole = '';
 
 async function requireAdmin(){
   try{
-    const user = await new Promise(resolve => {
-      if(auth.currentUser) return resolve(auth.currentUser);
-      const unsub = auth.onAuthStateChanged(u => { unsub(); resolve(u); });
-    });
+    const user = auth.currentUser;
     if(!user){
       location.replace('login.html');
       return false;
@@ -864,47 +832,98 @@ async function requireAdmin(){
 
 
 /* ==================================================
-   DATA FIRESTORE
+   API
 ================================================== */
 
+const API_URL =
+'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+
+
 let peserta = [];
+
 let tab = 'semua';
+
 let selected = null;
 
-function mapPeserta(doc){
-  const d = doc.data() || {};
-  return {
-    ...d,
-    _docId: doc.id,
-    kode: d.kode || doc.id,
-    nama: d.nama || '',
-    toko: d.toko || '',
-    wa: d.wa || '',
-    email: d.email || '',
-    ukuran: d.ukuran || '',
-    nominalPembayaran: d.nominalPembayaran ?? d.hargaFinal ?? '',
-    statusPembayaran: d.statusPembayaran || 'BELUM LUNAS',
-    statusKehadiran: d.statusKehadiran || 'BELUM HADIR',
-    jamCheckin: d.jamCheckin || d.jamCheckIn || '-',
-    buktiTransfer: d.buktiTransfer || d.buktiUrl || d.urlBukti || '',
-    buktiNama: d.buktiNama || '',
-    buktiTeks: d.buktiTeks || ''
-  };
-}
+
+
+/* ==================================================
+   LOAD PESERTA
+================================================== */
 
 async function load(){
-  const tb = document.getElementById('tbody');
-  tb.innerHTML = '<tr><td colspan="9" class="empty">Memuat data dari Firestore...</td></tr>';
+
   try{
-    const snap = await db.collection('peserta').get();
-    peserta = snap.docs.map(mapPeserta);
+
+    const r =
+      await fetch(
+        API_URL +
+        '?action=peserta&_=' +
+        Date.now()
+      );
+
+
+    const raw =
+      await r.text();
+
+
+    let d;
+
+
+    try{
+
+      d =
+        JSON.parse(
+          raw.trim()
+        );
+
+    }catch(e){
+
+      throw new Error(
+        'Respons API bukan JSON. Pastikan deployment Code.gs terbaru.'
+      );
+
+    }
+
+
+    if(!d.ok){
+
+      throw new Error(
+        d.message ||
+        'Gagal mengambil data peserta.'
+      );
+
+    }
+
+
+    peserta =
+      d.peserta || [];
+
+
     updateStats();
+
     render();
+
+
   }catch(e){
-    console.error('Gagal membaca Firestore peserta:', e);
-    tb.innerHTML = '<tr><td colspan="9" class="empty">Gagal memuat Firestore: ' + esc(e.message || 'Periksa Firestore Rules') + '</td></tr>';
+
+    document.getElementById('tbody').innerHTML =
+
+      '<tr>' +
+
+      '<td colspan="9" class="empty">' +
+
+      esc(e.message) +
+
+      '</td>' +
+
+      '</tr>';
+
   }
+
 }
+
+
 
 /* ==================================================
    STATISTIK
@@ -1161,11 +1180,11 @@ function render(){
 
           'class="action" ' +
 
-          'onclick="openReview(&quot;' +
+          'onclick="openReview(' +
 
-          escAttr(p.kode) +
+          JSON.stringify(p.kode) +
 
-          '&quot;)">' +
+          ')">' +
 
           'LIHAT BUKTI' +
 
@@ -1187,11 +1206,11 @@ function render(){
 
           'class="action" ' +
 
-          'onclick="openReview(&quot;' +
+          'onclick="openReview(' +
 
-          escAttr(p.kode) +
+          JSON.stringify(p.kode) +
 
-          '&quot;)">' +
+          ')">' +
 
           'LIHAT DATA' +
 
@@ -1275,29 +1294,13 @@ function render(){
           </td>
 
 
-        
-<td class="action-cell">
-  ${tombol}
-
-  <div class="action-group">
-    <button
-      type="button"
-      class="action-edit"
-      data-action="edit"
-      data-docid="${escAttr(p._docId)}">
-      EDIT
-    </button>
-
-    <button
-      type="button"
-      class="action-delete"
-      data-action="delete"
-      data-docid="${escAttr(p._docId)}">
-      HAPUS
-    </button>
-  </div>
-</td>
-
+          <td class="action-cell">
+            ${tombol}
+            <div class="action-group">
+              <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._docId)}">EDIT</button>
+              <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._docId)}">HAPUS</button>
+            </div>
+          </td>
 
         </tr>
 
@@ -1431,39 +1434,114 @@ function openReview(kode){
 
 
   /* ==================================================
-     BUKTI TRANSFER / HASIL OCR DARI FIRESTORE
+     BUKTI TRANSFER
   ================================================== */
-  const proof = document.getElementById('proofContent');
-  const buktiNama = String(selected.buktiNama || '').trim();
-  const buktiTeks = String(selected.buktiTeks || '').trim();
-  const url = String(selected.buktiTransfer || '').trim();
 
-  let proofHtml = '';
-  if(buktiNama){
-    proofHtml += '<p><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
+  const proof =
+    document.getElementById('proofContent');
+
+
+  const url =
+    String(
+      selected.buktiTransfer || ''
+    ).trim();
+
+
+
+  if(!url){
+
+    proof.innerHTML = `
+      <div class="proof-note">
+        <b>Bukti transfer belum tersedia.</b>
+        <br><br>
+        File bukti belum tersimpan ke server atau kolom
+        <b>Bukti Transfer</b> pada Spreadsheet belum berisi URL.
+      </div>
+    `;
+
   }
-  if(buktiTeks){
-    proofHtml += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
-  }
-  if(url){
+
+  else{
+
     const driveId = ambilDriveId(url);
-    const imageUrl = driveId ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId) : url;
-    const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) || !!driveId;
-    if(isImage){
-      proofHtml += '<img style="margin-top:12px" src="' + escAttr(imageUrl) + '" alt="Bukti transfer" onerror="this.style.display=\'none\';">';
-    }
-    proofHtml += '<p><a href="' + escAttr(url) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
-  }
-  if(!proofHtml){
-    proofHtml = '<div class="proof-note">Belum ada data bukti transfer atau hasil OCR pada dokumen Firestore ini.</div>';
-  }
-  proof.innerHTML = proofHtml;
 
-  const modalEl = document.getElementById('modal');
-  modalEl.classList.add('show');
-  modalEl.style.display = 'block';
-  modalEl.style.zIndex = '99999';
-  document.body.style.overflow = 'hidden';
+    const imageUrl = driveId
+      ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId)
+      : url;
+
+    const isImage =
+      /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) ||
+      !!driveId;
+
+    if(isImage){
+
+      proof.innerHTML = `
+        <img
+          src="${escAttr(imageUrl)}"
+          alt="Bukti transfer"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+
+        <div
+          class="proof-note"
+          style="display:none;margin-top:10px">
+          Gambar tidak dapat ditampilkan langsung.
+          Silakan buka bukti penuh.
+        </div>
+
+        <a
+          href="${escAttr(url)}"
+          target="_blank"
+          rel="noopener">
+          BUKA BUKTI PENUH
+        </a>
+      `;
+
+    }
+
+    else if(/\.pdf(\?|#|$)/i.test(url)){
+
+      proof.innerHTML = `
+        <iframe
+          src="${escAttr(url)}"
+          style="width:100%;height:500px;border:1px solid #ddd;border-radius:10px"
+          title="Bukti transfer PDF">
+        </iframe>
+
+        <a
+          href="${escAttr(url)}"
+          target="_blank"
+          rel="noopener">
+          BUKA PDF PENUH
+        </a>
+      `;
+
+    }
+
+    else{
+
+      proof.innerHTML = `
+        <div class="proof-note">
+          <b>File bukti tersedia.</b>
+          <br>
+          Tekan tombol di bawah untuk memeriksa bukti transfer.
+        </div>
+
+        <a
+          href="${escAttr(url)}"
+          target="_blank"
+          rel="noopener">
+          BUKA BUKTI TRANSFER
+        </a>
+      `;
+
+    }
+
+  }
+
+
+  document
+    .getElementById('modal')
+    .classList.add('show');
 
 }
 
@@ -1474,54 +1552,185 @@ function openReview(kode){
 ================================================== */
 
 async function confirmLunas(){
+
   if(currentRole !== 'admin'){
     alert('Hanya Admin yang dapat mengonfirmasi pembayaran.');
     return;
   }
-  if(!selected) return;
-  if(String(selected.statusPembayaran || '').toUpperCase() === 'LUNAS'){
-    document.getElementById('modalMsg').textContent = 'Pembayaran sudah LUNAS.';
-    return;
-  }
-  if(!confirm('Setujui pembayaran peserta ' + (selected.nama || selected.kode) + '?')) return;
 
-  const btn = document.getElementById('confirmBtn');
+  if(!selected)
+    return;
+
+
+  const btn =
+    document.getElementById('confirmBtn');
+
+
   btn.disabled = true;
-  btn.textContent = 'MEMPROSES...';
-  const msg = document.getElementById('modalMsg');
-  msg.className = 'msg';
-  msg.textContent = '';
+
+  btn.textContent =
+    'MEMPROSES...';
+
+
+  document.getElementById('modalMsg').className =
+    'msg';
+
+
+  document.getElementById('modalMsg').textContent =
+    '';
+
+
   try{
-    const uid = auth.currentUser;
-    if(!uid) throw new Error('Sesi login berakhir. Silakan login kembali.');
-    const docId = selected._docId || selected.kode;
-    const patch = {
-      statusPembayaran: 'LUNAS',
-      tanggalVerifikasi: firebase.firestore.FieldValue.serverTimestamp(),
-      waktuVerifikasi: firebase.firestore.FieldValue.serverTimestamp(),
-      petugasVerifikasi: uid.email || uid.uid,
-      petugasPembayaran: uid.email || uid.uid,
-      metodePembayaran: selected.metodePembayaran || 'TRANSFER'
-    };
-    if(selected.nominalPembayaran !== undefined && selected.nominalPembayaran !== ''){
-      patch.nominalPembayaran = selected.nominalPembayaran;
+
+
+    const nominal =
+      selected.nominalPembayaran || '';
+
+
+
+    const r =
+      await fetch(
+
+        API_URL,
+
+        {
+
+          method:'POST',
+
+          headers:{
+
+            'Content-Type':
+            'text/plain;charset=utf-8'
+
+          },
+
+          body:
+
+            JSON.stringify({
+
+              action:
+                'verifikasiLunas',
+
+              kode:
+                selected.kode,
+
+              nominal:
+                nominal
+
+            })
+
+        }
+
+      );
+
+
+
+    const raw =
+      await r.text();
+
+
+    let d;
+
+
+    try{
+
+      d =
+        JSON.parse(
+          raw.trim()
+        );
+
+    }catch(e){
+
+      throw new Error(
+        'Approval terkirim tetapi respons API tidak terbaca.'
+      );
+
     }
-    await db.collection('peserta').doc(docId).update(patch);
-    selected.statusPembayaran = 'LUNAS';
-    msg.className = 'msg okmsg';
-    msg.textContent = 'Pembayaran berhasil disetujui. Status menjadi LUNAS.';
+
+
+    if(!d.ok){
+
+      throw new Error(
+        d.message ||
+        'Verifikasi gagal.'
+      );
+
+    }
+
+
+
+    document
+      .getElementById('modalMsg')
+      .className =
+      'msg okmsg';
+
+
+    document
+      .getElementById('modalMsg')
+      .textContent =
+
+      '✓ ' +
+      (
+        d.message ||
+        'Berhasil menjadi LUNAS.'
+      );
+
+
+
+    /*
+      Update data lokal
+      supaya tampilan langsung berubah.
+    */
+
+    selected.statusPembayaran =
+      'LUNAS';
+
+
+
     updateStats();
+
     render();
-    setTimeout(() => { closeModal(); load(); }, 900);
+
+
+
+    /*
+      Tutup modal setelah berhasil.
+    */
+
+    setTimeout(
+      closeModal,
+      900
+    );
+
+
   }catch(e){
-    console.error('Approval Firestore gagal:', e);
-    msg.className = 'msg err';
-    msg.textContent = 'Approval gagal: ' + (e.message || 'Periksa Firestore Rules.');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = 'KONFIRMASI LUNAS';
+
+    document
+      .getElementById('modalMsg')
+      .className =
+      'msg err';
+
+
+    document
+      .getElementById('modalMsg')
+      .textContent =
+      e.message ||
+      'Terjadi kesalahan.';
+
   }
+
+
+  finally{
+
+    btn.disabled = false;
+
+    btn.textContent =
+      'KONFIRMASI LUNAS';
+
+  }
+
 }
+
 
 
 /* ==================================================
@@ -1529,11 +1738,14 @@ async function confirmLunas(){
 ================================================== */
 
 function closeModal(){
-  const modalEl = document.getElementById('modal');
-  modalEl.classList.remove('show');
-  modalEl.style.display = 'none';
-  document.body.style.overflow = '';
+
+  document
+    .getElementById('modal')
+    .classList.remove('show');
+
+
   selected = null;
+
 }
 
 
@@ -1614,138 +1826,7 @@ document
 
 
 
-/*
-
-/* =========================================
-   EDIT DATA PESERTA
-========================================= */
-async function editPeserta(docId) {
-  if (currentRole !== 'admin') {
-    alert('Hanya Admin yang dapat mengedit peserta.');
-    return;
-  }
-
-  const p = peserta.find(x => x._docId === docId);
-
-  if (!p) {
-    alert('Data peserta tidak ditemukan. Muat ulang halaman.');
-    return;
-  }
-
-  const nama = prompt('Nama peserta:', p.nama || '');
-  if (nama === null) return;
-
-  const toko = prompt('Nama toko:', p.toko || '');
-  if (toko === null) return;
-
-  const wa = prompt('Nomor WhatsApp:', p.wa || '');
-  if (wa === null) return;
-
-  const alamat = prompt('Alamat:', p.alamat || '');
-  if (alamat === null) return;
-
-  const email = prompt('Email:', p.email || '');
-  if (email === null) return;
-
-  const ukuran = prompt('Ukuran kaos:', p.ukuran || '');
-  if (ukuran === null) return;
-
-  if (!nama.trim() || !wa.trim()) {
-    alert('Nama peserta dan WhatsApp wajib diisi.');
-    return;
-  }
-
-  if (!confirm('Simpan perubahan data ' + p.kode + '?')) return;
-
-  try {
-    await db.collection('peserta').doc(docId).update({
-      nama: nama.trim(),
-      toko: toko.trim(),
-      wa: wa.trim(),
-      waNormalized: normalisasiWa(wa),
-      alamat: alamat.trim(),
-      email: email.trim().toLowerCase(),
-      ukuran: ukuran.trim()
-    });
-
-    alert('Data peserta berhasil diperbarui.');
-    await load();
-
-  } catch (e) {
-    console.error('Edit peserta gagal:', e);
-    alert('Gagal menyimpan perubahan: ' + (e.message || e));
-  }
-}
-
-
-/* =========================================
-   HAPUS DATA PESERTA
-========================================= */
-async function hapusPeserta(docId) {
-  if (currentRole !== 'admin') {
-    alert('Hanya Admin yang dapat menghapus peserta.');
-    return;
-  }
-
-  const p = peserta.find(x => x._docId === docId);
-
-  if (!p) {
-    alert('Data peserta tidak ditemukan. Muat ulang halaman.');
-    return;
-  }
-
-  const yakin = confirm(
-    'HAPUS DATA PESERTA INI?\n\n' +
-    'Kode: ' + p.kode + '\n' +
-    'Nama: ' + p.nama + '\n\n' +
-    'Data akan dihapus permanen dari Firestore.'
-  );
-
-  if (!yakin) return;
-
-  try {
-    await db.collection('peserta').doc(docId).delete();
-
-    if (selected && selected._docId === docId) {
-      closeModal();
-    }
-
-    alert('Data peserta berhasil dihapus dari Firestore.');
-    await load();
-
-  } catch (e) {
-    console.error('Hapus peserta gagal:', e);
-    alert('Gagal menghapus data: ' + (e.message || e));
-  }
-}
-
-
-/* =========================================
-   EVENT KLIK TOMBOL EDIT / HAPUS
-   Menggunakan event delegation.
-========================================= */
-document.getElementById('tbody').addEventListener('click', function(e) {
-  const button = e.target.closest('button[data-action][data-docid]');
-
-  if (!button) return;
-
-  e.preventDefault();
-
-  const action = button.dataset.action;
-  const docId = button.dataset.docid;
-
-  if (!docId) {
-    alert('ID dokumen peserta tidak ditemukan.');
-    return;
-  }
-
-  if (action === 'edit') {
-    editPeserta(docId);
-  } else if (action === 'delete') {
-    hapusPeserta(docId);
-  }
-});
- ==================================================
+\n/* ==================================================\n   EDIT DAN HAPUS DATA PESERTA FIRESTORE\n================================================== */\nfunction normalisasiWa(value){\n  let digits = String(value || '').replace(/\\D/g, '');\n  if(digits.startsWith('0')) digits = '62' + digits.slice(1);\n  else if(digits.startsWith('8')) digits = '62' + digits;\n  return digits;\n}\n\nasync function editPeserta(docId){\n  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat mengedit peserta.'); return; }\n  const p = peserta.find(x => x._docId === docId);\n  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }\n  const nama = prompt('Nama peserta:', p.nama || ''); if(nama === null) return;\n  const toko = prompt('Nama toko:', p.toko || ''); if(toko === null) return;\n  const wa = prompt('Nomor WhatsApp:', p.wa || ''); if(wa === null) return;\n  const alamat = prompt('Alamat:', p.alamat || ''); if(alamat === null) return;\n  const email = prompt('Email:', p.email || ''); if(email === null) return;\n  const ukuran = prompt('Ukuran kaos:', p.ukuran || ''); if(ukuran === null) return;\n  if(!nama.trim() || !wa.trim()){ alert('Nama peserta dan WhatsApp wajib diisi.'); return; }\n  if(!confirm('Simpan perubahan data ' + p.kode + '?')) return;\n  try{\n    await db.collection('peserta').doc(docId).update({nama:nama.trim(),toko:toko.trim(),wa:wa.trim(),waNormalized:normalisasiWa(wa),alamat:alamat.trim(),email:email.trim().toLowerCase(),ukuran:ukuran.trim()});\n    alert('Data peserta berhasil diperbarui.'); await load();\n  }catch(e){ console.error('Edit peserta gagal:',e); alert('Gagal menyimpan perubahan: ' + (e.message || e)); }\n}\n\nasync function hapusPeserta(docId){\n  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat menghapus peserta.'); return; }\n  const p = peserta.find(x => x._docId === docId);\n  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }\n  if(!confirm('HAPUS DATA PESERTA INI?\\n\\nKode: ' + p.kode + '\\nNama: ' + p.nama + '\\n\\nData akan dihapus permanen dari Firestore.')) return;\n  try{\n    await db.collection('peserta').doc(docId).delete();\n    if(selected && selected._docId === docId) closeModal();\n    alert('Data peserta berhasil dihapus dari Firestore.'); await load();\n  }catch(e){ console.error('Hapus peserta gagal:',e); alert('Gagal menghapus data: ' + (e.message || e)); }\n}\n\ndocument.getElementById('tbody').addEventListener('click', function(e){\n  const button = e.target.closest('button[data-action][data-docid]');\n  if(!button) return;\n  e.preventDefault();\n  const action = button.dataset.action;\n  const docId = button.dataset.docid;\n  if(!docId){ alert('ID dokumen peserta tidak ditemukan.'); return; }\n  if(action === 'edit') editPeserta(docId);\n  else if(action === 'delete') hapusPeserta(docId);\n});\n\n/* ==================================================
    MULAI
 ================================================== */
 
