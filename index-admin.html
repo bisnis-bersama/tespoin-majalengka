@@ -636,6 +636,11 @@ body{
         </div>
       </div>
 
+<div class="kaos">
+  <div class="kaos-name">XXXXL / 4XL</div>
+  <div class="kaos-number" id="kaosXXXXL">0</div>
+</div>
+
     </div>
 
   </div>
@@ -1125,16 +1130,18 @@ function hitungDashboard(
      UKURAN KAOS
   ========================== */
 
-  const kaos = {
+  
+const kaos = {
+  S: 0,
+  M: 0,
+  L: 0,
+  XL: 0,
+  XXL: 0,
+  XXXL: 0,
+  XXXXL: 0,
+  "4XL": 0
+};
 
-    S:0,
-    M:0,
-    L:0,
-    XL:0,
-    XXL:0,
-    XXXL:0
-
-  };
 
 
   peserta.forEach(
