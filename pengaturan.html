@@ -105,7 +105,7 @@ button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyBL_AE-ckPgJOhJX4X4UYC04nBvfPdNDppQ",
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain: "register-peserta.firebaseapp.com",
   projectId: "register-peserta",
   storageBucket: "register-peserta.firebasestorage.app",
@@ -157,14 +157,16 @@ function renderSlides() {
     : 'Belum ada gambar slide tersimpan.';
 }
 async function requireStaff(user) {
-  if (!user || user.isAnonymous) {
-    throw new Error('Belum login dengan akun admin atau owner. Silakan login terlebih dahulu.');
+  // Role dibaca dari sesi login seperti yang disimpan oleh login.html.
+  const role = (sessionStorage.getItem('tespoin_role') || '').toLowerCase();
+  const email = sessionStorage.getItem('tespoin_admin_user') || '';
+
+  if (role !== 'admin' || !email) {
+    throw new Error('Sesi admin tidak ditemukan. Login lewat login.html, lalu buka Pengaturan dari dashboard.');
   }
-  const userSnap = await db.collection('users').doc(user.uid).get();
-  if (!userSnap.exists) throw new Error('Dokumen users/' + user.uid + ' tidak ditemukan.');
-  const role = userSnap.data().role;
-  if (role !== 'admin') {
-    throw new Error('Akses ditolak. Halaman pengaturan khusus Admin.');
+  // Sesi browser menentukan role, tetapi Firestore tetap membutuhkan Firebase Auth aktif.
+  if (!user || user.isAnonymous) {
+    throw new Error('Autentikasi Firebase tidak aktif. Login ulang lewat login.html.');
   }
   return user;
 }
@@ -261,14 +263,32 @@ $('form').addEventListener('submit', async event => {
   }
 });
 
-// Tunggu status autentikasi Firebase selesai diperiksa; tidak melakukan login anonim.
-auth.onAuthStateChanged(user => {
-  if (!user || user.isAnonymous) {
-    show('Belum login dengan akun admin atau owner. Login terlebih dahulu, lalu buka kembali halaman ini.', false);
-    return;
-  }
-  loadSettings(user);
-});
+// Pulihkan persistensi Firebase dan tunggu Firebase selesai memulihkan akun login.
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(() => new Promise(resolve => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      unsubscribe();
+      resolve(user);
+    });
+  }))
+  .then(user => {
+    const role = (sessionStorage.getItem('tespoin_role') || '').toLowerCase();
+    const email = sessionStorage.getItem('tespoin_admin_user') || '';
+
+    if (role !== 'admin' || !email) {
+      show('Sesi admin tidak ditemukan. Login lewat login.html, lalu buka Pengaturan dari dashboard.', false);
+      return;
+    }
+    if (!user || user.isAnonymous) {
+      show('Firebase belum memulihkan akun login. Pastikan login.html dan pengaturan.html memakai konfigurasi Firebase yang sama, lalu login ulang.', false);
+      return;
+    }
+    loadSettings(user);
+  })
+  .catch(error => {
+    console.error('Gagal memulihkan sesi Firebase:', error);
+    show('Gagal memeriksa sesi Firebase: ' + (error.message || error), false);
+  });
 </script>
 </body>
 </html>
