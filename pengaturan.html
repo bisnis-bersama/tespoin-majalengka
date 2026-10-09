@@ -16,90 +16,87 @@ input,textarea,select{width:100%;padding:12px;border:1px solid #d8d8d8;border-ra
 textarea{min-height:90px;resize:vertical}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .tier{border:2px solid #eee;border-radius:14px;padding:14px;margin-top:12px}.tier h3{margin:0 0 5px}.tier small{color:#777}
 button{width:100%;border:0;border-radius:11px;padding:14px;background:#f5c400;color:#111;font-weight:900;font-size:15px;margin-top:20px;cursor:pointer}
-button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border-radius:10px;font-weight:700}.msg.ok{display:block;background:#e9f8ed;color:#087b25}.msg.err{display:block;background:#fff0f0;color:#b00000}
+button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border-radius:10px;font-weight:700;overflow-wrap:anywhere}.msg.ok{display:block;background:#e9f8ed;color:#087b25}.msg.err{display:block;background:#fff0f0;color:#b00000}
 .note{margin-top:15px;padding:12px;background:#fff8d8;border-left:4px solid #f5c400;border-radius:8px;font-size:12px;line-height:1.5}
 .back{display:block;text-align:center;margin:18px;color:#555;text-decoration:none}
-@media(max-width:560px){.grid{grid-template-columns:1fr}}
+.small{font-size:12px;color:#666;margin-top:8px;overflow-wrap:anywhere}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.wrap{padding:10px}.card{padding:14px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="header"><h1>PENGATURAN ACARA</h1><p>DPD TESPOIN MAJALENGKA • FIRESTORE</p></div>
-<div class="card">
-<form id="form">
+  <div class="header"><h1>PENGATURAN ACARA</h1><p>DPD TESPOIN MAJALENGKA • FIRESTORE</p></div>
+  <div class="card">
+    <form id="form">
+      <div class="section">
+        <div class="section-title">📅 INFORMASI ACARA</div>
+        <label for="judul">Judul Acara</label><input id="judul">
+        <label for="deskripsi">Deskripsi</label><textarea id="deskripsi"></textarea>
+        <div class="grid">
+          <div><label for="tanggal">Tanggal Acara</label><input id="tanggal" type="date"></div>
+          <div><label for="waktu">Waktu</label><input id="waktu" placeholder="10.00 WIB - selesai"></div>
+        </div>
+        <label for="lokasi">Lokasi</label><input id="lokasi">
+      </div>
 
-<div class="section">
-<div class="section-title">📅 INFORMASI ACARA</div>
-<label>Judul Acara</label><input id="judul">
-<label>Deskripsi</label><textarea id="deskripsi"></textarea>
-<div class="grid">
-<div><label>Tanggal Acara</label><input id="tanggal" type="date"></div>
-<div><label>Waktu</label><input id="waktu" placeholder="10.00 WIB - selesai"></div>
-</div>
-<label>Lokasi</label><input id="lokasi">
-</div>
+      <div class="section">
+        <div class="section-title">💰 HARGA TIKET PESERTA</div>
+        <div class="note">Peserta tidak memilih tier. Sistem menentukan tier berdasarkan tanggal. Harga saat registrasi adalah estimasi; harga final dihitung ulang saat pembayaran.</div>
+        <div class="tier">
+          <h3>TIER 1</h3><small>Harga tahap pertama</small>
+          <div class="grid"><div><label for="tier1Harga">Harga (Rp)</label><input id="tier1Harga" inputmode="numeric" placeholder="150000"></div><div><label for="tier1Mulai">Mulai</label><input id="tier1Mulai" type="date"></div></div>
+          <label for="tier1Selesai">Selesai</label><input id="tier1Selesai" type="date">
+        </div>
+        <div class="tier">
+          <h3>TIER 2</h3><small>Harga tahap kedua</small>
+          <div class="grid"><div><label for="tier2Harga">Harga (Rp)</label><input id="tier2Harga" inputmode="numeric" placeholder="200000"></div><div><label for="tier2Mulai">Mulai</label><input id="tier2Mulai" type="date"></div></div>
+          <label for="tier2Selesai">Selesai</label><input id="tier2Selesai" type="date">
+        </div>
+        <div class="tier">
+          <h3>TIER 3</h3><small>Harga tahap ketiga</small>
+          <div class="grid"><div><label for="tier3Harga">Harga (Rp)</label><input id="tier3Harga" inputmode="numeric" placeholder="300000"></div><div><label for="tier3Mulai">Mulai</label><input id="tier3Mulai" type="date"></div></div>
+          <label for="tier3Selesai">Selesai</label><input id="tier3Selesai" type="date">
+        </div>
+        <div class="tier">
+          <h3>COD — HARI ACARA</h3><small>Khusus peserta yang membayar langsung di lokasi pada hari acara.</small>
+          <label for="codHarga">Harga COD (Rp)</label><input id="codHarga" inputmode="numeric" placeholder="400000">
+        </div>
+      </div>
 
-<div class="section">
-<div class="section-title">💰 HARGA TIKET PESERTA</div>
-<div class="note">Peserta <b>tidak memilih tier</b>. Sistem otomatis menentukan tier berdasarkan tanggal. Saat registrasi, harga yang tampil adalah <b>estimasi</b>. Saat pembayaran, sistem menghitung ulang berdasarkan tanggal pembayaran.</div>
+      <div class="section">
+        <div class="section-title">📞 KONTAK & BENEFIT</div>
+        <label for="wa">Nomor WhatsApp Panitia</label><input id="wa">
+        <label for="benefit">Benefit Peserta</label><textarea id="benefit"></textarea>
+        <label for="pemberiBenefit">Pemberi Benefit</label><input id="pemberiBenefit">
+      </div>
 
-<div class="tier">
-<h3>TIER 1</h3><small>Harga tahap pertama</small>
-<div class="grid"><div><label>Harga</label><input id="tier1Harga" inputmode="numeric" placeholder="110000"></div><div><label>Mulai</label><input id="tier1Mulai" type="date"></div></div>
-<label>Selesai</label><input id="tier1Selesai" type="date">
-</div>
+      <div class="section">
+        <div class="section-title">👤 PETUGAS</div>
+        <div class="grid">
+          <div><label for="petugasRegistrasi">Petugas Registrasi</label><input id="petugasRegistrasi"></div>
+          <div><label for="petugasScan">Petugas Scan</label><input id="petugasScan"></div>
+          <div><label for="petugasPembayaran">Petugas Pembayaran / COD</label><input id="petugasPembayaran"></div>
+          <div><label for="petugasApproval">Petugas Approval</label><input id="petugasApproval"></div>
+        </div>
+      </div>
 
-<div class="tier">
-<h3>TIER 2</h3><small>Harga tahap kedua</small>
-<div class="grid"><div><label>Harga</label><input id="tier2Harga" inputmode="numeric" placeholder="200000"></div><div><label>Mulai</label><input id="tier2Mulai" type="date"></div></div>
-<label>Selesai</label><input id="tier2Selesai" type="date">
-</div>
+      <div class="section">
+        <div class="section-title">🖼️ PUBLIKASI</div>
+        <label for="slideFiles">Slide Gambar (Landscape)</label><input id="slideFiles" type="file" accept="image/*" multiple>
+        <div class="note">Gambar baru diunggah ke Firebase Storage. URL disimpan di dokumen pengaturan Firestore. Jika tidak memilih gambar baru, slide lama tetap dipertahankan.</div>
+        <div id="slideList" class="small">Memuat status slide...</div>
+        <button type="button" id="clearSlides" style="background:#eee;margin-top:8px">HAPUS DAFTAR SLIDE TERSIMPAN</button>
+        <label for="pamflet">Link Pamflet / Poster</label><input id="pamflet" type="url" placeholder="https://...">
+        <label for="status">Status Pendaftaran</label>
+        <select id="status"><option value="DIBUKA">DIBUKA</option><option value="DITUTUP">DITUTUP</option></select>
+      </div>
 
-<div class="tier">
-<h3>TIER 3</h3><small>Harga tahap ketiga</small>
-<div class="grid"><div><label>Harga</label><input id="tier3Harga" inputmode="numeric" placeholder="300000"></div><div><label>Mulai</label><input id="tier3Mulai" type="date"></div></div>
-<label>Selesai</label><input id="tier3Selesai" type="date">
-</div>
-
-<div class="tier">
-<h3>COD — HARI ACARA</h3><small>Khusus peserta yang mendaftar/membayar langsung di lokasi pada hari acara.</small>
-<label>Harga COD</label><input id="codHarga" inputmode="numeric" placeholder="400000">
-</div>
-</div>
-
-<div class="section">
-<div class="section-title">📞 KONTAK & BENEFIT</div>
-<label>Nomor WhatsApp Panitia</label><input id="wa">
-<label>Benefit Peserta</label><textarea id="benefit"></textarea>
-<label>Pemberi Benefit</label><input id="pemberiBenefit">
-</div>
-
-<div class="section">
-<div class="section-title">👤 PETUGAS</div>
-<div class="grid">
-<div><label>Petugas Registrasi</label><input id="petugasRegistrasi"></div>
-<div><label>Petugas Scan</label><input id="petugasScan"></div>
-<div><label>Petugas Pembayaran / COD</label><input id="petugasPembayaran"></div>
-<div><label>Petugas Approval</label><input id="petugasApproval"></div>
-</div>
-</div>
-
-<div class="section">
-<div class="section-title">🖼️ PUBLIKASI</div>
-<label>Slide Gambar (Landscape)</label><input id="slideFiles" type="file" accept="image/*" multiple>
-<div class="note">Gambar yang dipilih diunggah ke Firebase Storage. Tautan hasil unggahan disimpan di dokumen pengaturan Firestore.</div>
-<div id="slideList" class="small"></div>
-<label>Link Pamflet / Poster</label><input id="pamflet" type="url" placeholder="https://...">
-<label>Status Pendaftaran</label>
-<select id="status"><option value="DIBUKA">DIBUKA</option><option value="DITUTUP">DITUTUP</option></select>
-</div>
-
-<button type="submit" id="btn">SIMPAN PENGATURAN</button>
-<div id="msg" class="msg"></div>
-<div class="note"><b>Aturan:</b> tanggal daftar hanya menentukan estimasi. Harga final mengikuti tier pada <b>tanggal pembayaran</b>. COD hanya memakai harga COD pada hari acara.</div>
-</form>
-</div>
-<a href="index-admin.html" class="back">← Kembali ke Dashboard Admin</a>
+      <button type="submit" id="btn">SIMPAN PENGATURAN</button>
+      <div id="msg" class="msg"></div>
+      <div class="note"><b>Aturan:</b> tanggal daftar hanya menentukan estimasi. Harga final mengikuti tier pada tanggal pembayaran. COD memakai harga COD yang disetel di sini.</div>
+    </form>
+  </div>
+  <a href="index-admin.html" class="back">← Kembali ke Dashboard Admin</a>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -115,74 +112,163 @@ const firebaseConfig = {
   messagingSenderId: "983090504866",
   appId: "1:983090504866:web:7879b0784b9fecad4863fb"
 };
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const storage = firebase.storage();
 const SETTINGS_REF = db.collection("pengaturan").doc("acara");
-/* Legacy API removed: settings now read/write Firestore. */
-/*const API_URL='legacy';*/
-const ids=['judul','deskripsi','tanggal','waktu','lokasi','tier1Harga','tier1Mulai','tier1Selesai','tier2Harga','tier2Mulai','tier2Selesai','tier3Harga','tier3Mulai','tier3Selesai','codHarga','wa','benefit','pemberiBenefit','petugasRegistrasi','petugasScan','petugasPembayaran','petugasApproval','pamflet','status'];
-let slideUrls=[];
-function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v??'';}
-function show(t,ok){const e=document.getElementById('msg');e.textContent=t;e.className='msg '+(ok?'ok':'err');}
-function toNumber(value){const n=Number(String(value??'').replace(/[^0-9]/g,''));return Number.isFinite(n)?n:0;}
-function pick(p,...keys){for(const k of keys){if(p[k]!==undefined && p[k]!==null && p[k] !== '') return p[k];}return '';}
-async function pastikanLogin(){
-  if(auth.currentUser) return auth.currentUser;
-  // Pengaturan ini harus dibatasi melalui Firestore Rules untuk admin.
-  // Login anonim hanya membantu kompatibilitas jika proyek memang mengizinkannya.
-  const cred=await auth.signInAnonymously();
-  return cred.user;
+
+const ids = [
+  'judul','deskripsi','tanggal','waktu','lokasi',
+  'tier1Harga','tier1Mulai','tier1Selesai',
+  'tier2Harga','tier2Mulai','tier2Selesai',
+  'tier3Harga','tier3Mulai','tier3Selesai',
+  'codHarga','wa','benefit','pemberiBenefit',
+  'petugasRegistrasi','petugasScan','petugasPembayaran',
+  'petugasApproval','pamflet','status'
+];
+let slideUrls = [];
+let removeExistingSlides = false;
+const $ = id => document.getElementById(id);
+
+function setVal(id, value) {
+  const el = $(id);
+  if (el) el.value = value == null ? '' : value;
 }
-async function load(){
-  try{
-    await pastikanLogin();
-    const snap=await SETTINGS_REF.get();
-    const p=snap.exists?snap.data():{};
-    ids.forEach(id=>setVal(id,p[id]??''));
-    setVal('judul',pick(p,'judul','judulAcara'));
-    setVal('tanggal',pick(p,'tanggalAcara','tanggal'));
-    setVal('wa',pick(p,'wa','nomorWa'));
-    setVal('status',p.statusPendaftaran||'DIBUKA');
-    slideUrls=Array.isArray(p.slideUrls)?p.slideUrls:[];
-    document.getElementById('slideList').textContent=slideUrls.length?'Slide tersimpan: '+slideUrls.length+' gambar':'Belum ada gambar slide.';
-    show(snap.exists?'Pengaturan dimuat dari Firestore.':'Belum ada dokumen pengaturan. Isi data lalu simpan untuk membuat dokumen Firestore.',true);
-  }catch(e){console.error(e);show('Gagal membaca Firestore: '+(e.message||e),false);}
+function show(message, ok=false) {
+  const el = $('msg');
+  el.textContent = message;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
 }
-document.getElementById('form').addEventListener('submit',async e=>{
-  e.preventDefault();const btn=document.getElementById('btn');btn.disabled=true;btn.textContent='MENYIMPAN KE FIRESTORE...';
-  try{
-    await pastikanLogin();
-    const body={};
-    ids.forEach(id=>body[id]=document.getElementById(id).value.trim());
-    const files=Array.from(document.getElementById('slideFiles').files||[]);
-    if(files.length){
-      const uploaded=[];
-      for(let i=0;i<files.length;i++){
-        const file=files[i];
-        if(!file.type.startsWith('image/')) throw new Error('File slide harus berupa gambar.');
-        if(file.size>10*1024*1024) throw new Error('Ukuran setiap gambar maksimal 10 MB.');
-        const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-        const ref=storage.ref('pengaturan/acara/slides/'+Date.now()+'_'+i+'_'+safeName);
-        const snapUpload=await ref.put(file);
-        uploaded.push(await snapUpload.ref.getDownloadURL());
-      }
-      slideUrls=uploaded;
-    }
-    body.slideUrls=slideUrls;
-    body.judulAcara=body.judul;body.nomorWa=body.wa;body.tanggalAcara=body.tanggal;
-    ['tier1Harga','tier2Harga','tier3Harga','codHarga'].forEach(k=>body[k]=toNumber(body[k]));
-    body.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
-    body.updatedBy=auth.currentUser?auth.currentUser.uid:null;
-    await SETTINGS_REF.set(body,{merge:true});
-    const verify=await SETTINGS_REF.get();
-    if(!verify.exists) throw new Error('Dokumen pengaturan belum ditemukan setelah penyimpanan.');
-    show('Pengaturan berhasil disimpan ke Firestore (pengaturan/acara).',true);
-  }catch(e){console.error(e);show('Gagal menyimpan ke Firestore: '+(e.message||e),false);}
-  finally{btn.disabled=false;btn.textContent='SIMPAN PENGATURAN';}
+function toNumber(value) {
+  const digits = String(value ?? '').replace(/[^0-9]/g, '');
+  return digits ? Number(digits) : 0;
+}
+function pick(data, ...keys) {
+  for (const key of keys) {
+    if (data[key] !== undefined && data[key] !== null && data[key] !== '') return data[key];
+  }
+  return '';
+}
+function renderSlides() {
+  $('slideList').textContent = slideUrls.length
+    ? 'Slide tersimpan: ' + slideUrls.length + ' gambar.'
+    : 'Belum ada gambar slide tersimpan.';
+}
+async function requireStaff(user) {
+  if (!user || user.isAnonymous) {
+    throw new Error('Belum login dengan akun admin atau owner. Silakan login terlebih dahulu.');
+  }
+  const userSnap = await db.collection('users').doc(user.uid).get();
+  if (!userSnap.exists) throw new Error('Dokumen users/' + user.uid + ' tidak ditemukan.');
+  const role = userSnap.data().role;
+  if (role !== 'admin' && role !== 'owner') {
+    throw new Error('Akses ditolak. Role akun harus admin atau owner.');
+  }
+  return user;
+}
+function applySettings(data) {
+  ids.forEach(id => setVal(id, data[id] ?? ''));
+  setVal('judul', pick(data, 'judul', 'judulAcara'));
+  setVal('tanggal', pick(data, 'tanggalAcara', 'tanggal'));
+  setVal('wa', pick(data, 'wa', 'nomorWa'));
+  setVal('status', pick(data, 'statusPendaftaran', 'status') || 'DIBUKA');
+  slideUrls = Array.isArray(data.slideUrls) ? data.slideUrls : [];
+  removeExistingSlides = false;
+  renderSlides();
+}
+async function loadSettings(user) {
+  try {
+    await requireStaff(user);
+    const snap = await SETTINGS_REF.get();
+    const data = snap.exists ? snap.data() : {};
+    applySettings(data);
+    show(
+      snap.exists
+        ? 'Pengaturan berhasil dimuat dari Firestore.'
+        : 'Dokumen pengaturan/acara belum ada. Isi formulir lalu simpan untuk membuatnya.',
+      true
+    );
+  } catch (error) {
+    console.error('Gagal membaca pengaturan:', error);
+    show('Gagal membaca Firestore: ' + (error.message || error), false);
+  }
+}
+$('clearSlides').addEventListener('click', () => {
+  slideUrls = [];
+  removeExistingSlides = true;
+  $('slideFiles').value = '';
+  renderSlides();
+  show('Daftar slide akan dihapus dari pengaturan saat Anda menekan Simpan Pengaturan.', true);
 });
-load();
+
+$('form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = $('btn');
+  button.disabled = true;
+  button.textContent = 'MENYIMPAN KE FIRESTORE...';
+  try {
+    const user = await requireStaff(auth.currentUser);
+    const body = {};
+    ids.forEach(id => body[id] = $(id).value.trim());
+
+    // Field lama dipertahankan agar halaman lain yang membacanya tetap kompatibel.
+    body.judulAcara = body.judul;
+    body.nomorWa = body.wa;
+    body.tanggalAcara = body.tanggal;
+    body.statusPendaftaran = body.status;
+
+    ['tier1Harga','tier2Harga','tier3Harga','codHarga'].forEach(key => {
+      body[key] = toNumber(body[key]);
+    });
+
+    const files = Array.from($('slideFiles').files || []);
+    if (files.length) {
+      const uploaded = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) throw new Error('File slide harus berupa gambar.');
+        if (file.size > 10 * 1024 * 1024) throw new Error('Ukuran setiap gambar maksimal 10 MB.');
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storageRef = storage.ref(
+          'pengaturan/acara/slides/' + Date.now() + '_' + i + '_' + safeName
+        );
+        const uploadedSnapshot = await storageRef.put(file);
+        uploaded.push(await uploadedSnapshot.ref.getDownloadURL());
+      }
+      slideUrls = uploaded;
+      removeExistingSlides = false;
+    }
+
+    body.slideUrls = slideUrls;
+    body.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    body.updatedBy = user.uid;
+
+    // Dokumen tetap menggunakan path pengaturan/acara.
+    await SETTINGS_REF.set(body, { merge: true });
+    const verify = await SETTINGS_REF.get();
+    if (!verify.exists) throw new Error('Dokumen tidak ditemukan setelah proses penyimpanan.');
+    applySettings(verify.data());
+    $('slideFiles').value = '';
+    show('Berhasil menyimpan pengaturan ke Firestore: pengaturan/acara.', true);
+  } catch (error) {
+    console.error('Gagal menyimpan pengaturan:', error);
+    show('Gagal menyimpan: ' + (error.message || error), false);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'SIMPAN PENGATURAN';
+  }
+});
+
+// Tunggu status autentikasi Firebase selesai diperiksa; tidak melakukan login anonim.
+auth.onAuthStateChanged(user => {
+  if (!user || user.isAnonymous) {
+    show('Belum login dengan akun admin atau owner. Login terlebih dahulu, lalu buka kembali halaman ini.', false);
+    return;
+  }
+  loadSettings(user);
+});
 </script>
 </body>
 </html>
