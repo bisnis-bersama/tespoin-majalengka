@@ -105,7 +105,7 @@ button:disabled{opacity:.6}.msg{display:none;margin-top:14px;padding:12px;border
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfNDppQ",
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfPdNDppQ",
   authDomain: "register-peserta.firebaseapp.com",
   projectId: "register-peserta",
   storageBucket: "register-peserta.firebasestorage.app",
@@ -157,22 +157,17 @@ function renderSlides() {
     : 'Belum ada gambar slide tersimpan.';
 }
 async function requireStaff(user) {
-  const role = (
-    sessionStorage.getItem('tespoin_role') || ''
-  ).toLowerCase();
-
+  // Role dibaca dari sesi login yang dibuat oleh login.html.
+  const role = (sessionStorage.getItem('tespoin_role') || '').toLowerCase();
   const email = sessionStorage.getItem('tespoin_admin_user') || '';
 
-  if (!user || user.isAnonymous || !email) {
-    throw new Error(
-      'Sesi login tidak ditemukan. Silakan login kembali.'
-    );
+  // Firestore tetap membutuhkan user Firebase Authentication yang aktif.
+  if (!user || user.isAnonymous || !user.uid) {
+    throw new Error('Sesi Firebase tidak aktif. Silakan login kembali melalui login.html.');
   }
 
-  if (role !== 'admin') {
-    throw new Error(
-      'Akses ditolak. Halaman pengaturan khusus Admin.'
-    );
+  if (!email || role !== 'admin') {
+    throw new Error('Akses ditolak. Halaman pengaturan khusus Admin.');
   }
 
   return user;
@@ -270,12 +265,26 @@ $('form').addEventListener('submit', async event => {
   }
 });
 
-// Tunggu status autentikasi Firebase selesai diperiksa; tidak melakukan login anonim.
+// Role dibaca dari sesi login; status Firebase tetap ditunggu agar operasi Firestore sah.
 auth.onAuthStateChanged(user => {
-  if (!user || user.isAnonymous) {
-    show('Belum login dengan akun admin atau owner. Login terlebih dahulu, lalu buka kembali halaman ini.', false);
+  const role = (sessionStorage.getItem('tespoin_role') || '').toLowerCase();
+  const email = sessionStorage.getItem('tespoin_admin_user') || '';
+
+  if (!role || !email) {
+    show('Sesi login tidak ditemukan. Silakan login melalui login.html, lalu buka kembali halaman ini.', false);
     return;
   }
+
+  if (role !== 'admin') {
+    show('Akses ditolak. Halaman pengaturan khusus Admin.', false);
+    return;
+  }
+
+  if (!user || user.isAnonymous) {
+    show('Sesi Firebase tidak aktif. Silakan login kembali melalui login.html.', false);
+    return;
+  }
+
   loadSettings(user);
 });
 </script>
