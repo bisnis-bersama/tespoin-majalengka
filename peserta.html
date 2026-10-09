@@ -1615,43 +1615,49 @@ document
 
 
 /*
-async function editPeserta(docId){
-  if(currentRole !== 'admin'){
+
+/* =========================================
+   EDIT DATA PESERTA
+========================================= */
+async function editPeserta(docId) {
+  if (currentRole !== 'admin') {
     alert('Hanya Admin yang dapat mengedit peserta.');
     return;
   }
 
   const p = peserta.find(x => x._docId === docId);
-  if(!p) return;
+
+  if (!p) {
+    alert('Data peserta tidak ditemukan. Muat ulang halaman.');
+    return;
+  }
 
   const nama = prompt('Nama peserta:', p.nama || '');
-  if(nama === null) return;
+  if (nama === null) return;
 
   const toko = prompt('Nama toko:', p.toko || '');
-  if(toko === null) return;
+  if (toko === null) return;
 
   const wa = prompt('Nomor WhatsApp:', p.wa || '');
-  if(wa === null) return;
+  if (wa === null) return;
 
   const alamat = prompt('Alamat:', p.alamat || '');
-  if(alamat === null) return;
+  if (alamat === null) return;
 
   const email = prompt('Email:', p.email || '');
-  if(email === null) return;
+  if (email === null) return;
 
   const ukuran = prompt('Ukuran kaos:', p.ukuran || '');
-  if(ukuran === null) return;
+  if (ukuran === null) return;
 
-  if(!nama.trim() || !wa.trim()){
-    alert('Nama peserta dan nomor WhatsApp wajib diisi.');
+  if (!nama.trim() || !wa.trim()) {
+    alert('Nama peserta dan WhatsApp wajib diisi.');
     return;
   }
 
-  if(!confirm('Simpan perubahan data peserta ' + p.kode + '?')){
-    return;
-  }
+  if (!confirm('Simpan perubahan data ' + p.kode + '?')) return;
 
-  try{
+  try {
     await db.collection('peserta').doc(docId).update({
       nama: nama.trim(),
       toko: toko.trim(),
@@ -1665,21 +1671,28 @@ async function editPeserta(docId){
     alert('Data peserta berhasil diperbarui.');
     await load();
 
-  }catch(e){
-    console.error('Gagal mengedit peserta:', e);
-    alert('Gagal mengedit data: ' + (e.message || 'Periksa Firestore Rules.'));
+  } catch (e) {
+    console.error('Edit peserta gagal:', e);
+    alert('Gagal menyimpan perubahan: ' + (e.message || e));
   }
 }
 
 
-async function hapusPeserta(docId){
-  if(currentRole !== 'admin'){
+/* =========================================
+   HAPUS DATA PESERTA
+========================================= */
+async function hapusPeserta(docId) {
+  if (currentRole !== 'admin') {
     alert('Hanya Admin yang dapat menghapus peserta.');
     return;
   }
 
   const p = peserta.find(x => x._docId === docId);
-  if(!p) return;
+
+  if (!p) {
+    alert('Data peserta tidak ditemukan. Muat ulang halaman.');
+    return;
+  }
 
   const yakin = confirm(
     'HAPUS DATA PESERTA INI?\n\n' +
@@ -1688,29 +1701,51 @@ async function hapusPeserta(docId){
     'Data akan dihapus permanen dari Firestore.'
   );
 
-  if(!yakin) return;
+  if (!yakin) return;
 
-  const konfirmasiKedua = confirm(
-    'Konfirmasi terakhir: hapus ' + p.kode + ' dari Firestore?'
-  );
-
-  if(!konfirmasiKedua) return;
-
-  try{
+  try {
     await db.collection('peserta').doc(docId).delete();
 
-    if(selected && selected._docId === docId){
+    if (selected && selected._docId === docId) {
       closeModal();
     }
 
     alert('Data peserta berhasil dihapus dari Firestore.');
     await load();
 
-  }catch(e){
-    console.error('Gagal menghapus peserta:', e);
-    alert('Gagal menghapus data: ' + (e.message || 'Periksa Firestore Rules.'));
+  } catch (e) {
+    console.error('Hapus peserta gagal:', e);
+    alert('Gagal menghapus data: ' + (e.message || e));
   }
-} ==================================================
+}
+
+
+/* =========================================
+   EVENT KLIK TOMBOL EDIT / HAPUS
+   Menggunakan event delegation.
+========================================= */
+document.getElementById('tbody').addEventListener('click', function(e) {
+  const button = e.target.closest('button[data-action][data-docid]');
+
+  if (!button) return;
+
+  e.preventDefault();
+
+  const action = button.dataset.action;
+  const docId = button.dataset.docid;
+
+  if (!docId) {
+    alert('ID dokumen peserta tidak ditemukan.');
+    return;
+  }
+
+  if (action === 'edit') {
+    editPeserta(docId);
+  } else if (action === 'delete') {
+    hapusPeserta(docId);
+  }
+});
+ ==================================================
    MULAI
 ================================================== */
 
