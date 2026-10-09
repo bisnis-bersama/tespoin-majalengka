@@ -157,15 +157,24 @@ function renderSlides() {
     : 'Belum ada gambar slide tersimpan.';
 }
 async function requireStaff(user) {
-  if (!user || user.isAnonymous) {
-    throw new Error('Belum login dengan akun admin atau owner. Silakan login terlebih dahulu.');
+  const role = (
+    sessionStorage.getItem('tespoin_role') || ''
+  ).toLowerCase();
+
+  const email = sessionStorage.getItem('tespoin_admin_user') || '';
+
+  if (!user || user.isAnonymous || !email) {
+    throw new Error(
+      'Sesi login tidak ditemukan. Silakan login kembali.'
+    );
   }
-  const userSnap = await db.collection('users').doc(user.uid).get();
-  if (!userSnap.exists) throw new Error('Dokumen users/' + user.uid + ' tidak ditemukan.');
-  const role = userSnap.data().role;
+
   if (role !== 'admin') {
-    throw new Error('Akses ditolak. Halaman pengaturan khusus Admin.');
+    throw new Error(
+      'Akses ditolak. Halaman pengaturan khusus Admin.'
+    );
   }
+
   return user;
 }
 function applySettings(data) {
