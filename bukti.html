@@ -25,7 +25,7 @@
 <div class="container">
   <div class="card" style="max-width:600px;margin:auto;text-align:center">
     <h1>Cek Bukti Registrasi</h1>
-    <p class="muted">Masukkan Email atau No. WhatsApp yang digunakan saat registrasi.</p>
+    <p class="muted">Halaman khusus Admin. Masukkan email atau nomor WhatsApp peserta untuk mencari data registrasi.</p>
     <form id="lookupForm" class="lookup-form">
       <input id="keyword" type="text" autocomplete="off" required placeholder="Email atau 08xxxxxxxxxx">
       <button id="lookupButton" type="submit">CEK REGISTRASI</button>
@@ -45,18 +45,12 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*
-  Halaman ini memakai Firebase Callable Cloud Function bernama:
-  cariBuktiRegistrasi
-  Fungsi server harus memvalidasi pencarian dan hanya mengembalikan data
-  peserta yang cocok. Jangan membuka read seluruh koleksi peserta ke publik.
-*/
 const firebaseConfig = {
-  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ", 
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain: "register-peserta.firebaseapp.com",
   projectId: "register-peserta",
   storageBucket: "register-peserta.firebasestorage.app",
@@ -65,7 +59,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const functions = firebase.app().functions("asia-southeast1");
+const db = firebase.firestore();
 
 const form = document.getElementById("lookupForm");
 const button = document.getElementById("lookupButton");
@@ -92,7 +86,7 @@ function addRow(label, value) {
   document.getElementById("dataRows").appendChild(row);
 }
 function renderParticipant(p) {
-  const kode = p.kode || p.kodeRegistrasi || "";
+  const kode = p.kode || p.kodeRegistrasi || p._docId || "";
   if (!kode) throw new Error("Data peserta tidak memiliki kode registrasi.");
   document.getElementById("dataRows").replaceChildren();
   document.getElementById("qr").replaceChildren();
@@ -106,9 +100,8 @@ function renderParticipant(p) {
   addRow("Email", p.email);
   addRow("Ukuran Kaos", p.ukuran);
   addRow("Status Pembayaran", p.statusPembayaran);
-  addRow("Nominal Pembayaran", p.nominalPembayaran ? "Rp " + Number(p.nominalPembayaran).toLocaleString("id-ID") : "Belum diverifikasi");
-  const qrBox = document.getElementById("qr");
-  new QRCode(qrBox, {text:kode, width:220, height:220, correctLevel:QRCode.CorrectLevel.H});
+  addRow("Nominal Pembayaran", p.nominalPembayaran ? "Rp " + Number(String(p.nominalPembayaran).replace(/[^\d]/g, "")).toLocaleString("id-ID") : "Belum diverifikasi");
+  new QRCode(document.getElementById("qr"), {text:kode, width:220, height:220, correctLevel:QRCode.CorrectLevel.H});
   resultEl.style.display = "block";
 
   const saveButton = document.getElementById("saveJpgButton");
@@ -117,21 +110,15 @@ function renderParticipant(p) {
     saveButton.disabled = true;
     saveButton.textContent = "MEMBUAT JPG...";
     try {
-      // Beri waktu agar QR Code selesai dirender sebelum diambil gambarnya.
       await new Promise(resolve => setTimeout(resolve, 200));
       const canvas = await html2canvas(resultEl, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
+        scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,
         ignoreElements: element => element.classList && element.classList.contains("print-btn")
       });
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/jpeg", 0.95);
       link.download = kode + "-BUKTI-REGISTRASI.jpg";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      document.body.appendChild(link); link.click(); link.remove();
     } catch (error) {
       console.error(error);
       showStatus("Gagal menyimpan JPG. Silakan gunakan tombol Cetak / Simpan PDF.", true);
@@ -141,6 +128,40 @@ function renderParticipant(p) {
     }
   };
 }
+
+async function waitForAuth() {
+  return new Promise(resolve => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
+
+async function requireAdmin() {
+  const user = await waitForAuth();
+  if (!user) {
+    showStatus("Silakan login sebagai Admin terlebih dahulu.", true);
+    setTimeout(() => { window.location.href = "login.html"; }, 1200);
+    return false;
+  }
+  try {
+    const userDoc = await db.collection("users").doc(user.uid).get();
+    const role = userDoc.exists ? String(userDoc.data().role || "").toLowerCase() : "";
+    if (role !== "admin") {
+      showStatus("Akses ditolak. Halaman ini khusus Admin.", true);
+      await auth.signOut();
+      setTimeout(() => { window.location.href = "login.html"; }, 1200);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Pemeriksaan admin gagal:", error);
+    showStatus("Gagal memeriksa akses Admin. Periksa koneksi dan aturan Firestore.", true);
+    return false;
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const keyword = document.getElementById("keyword").value.trim();
@@ -148,40 +169,42 @@ form.addEventListener("submit", async (event) => {
   button.disabled = true;
   button.textContent = "MENCARI...";
   resultEl.style.display = "none";
-  showStatus("");
+  showStatus("Mencari data peserta...");
   try {
-    if (!auth.currentUser) await auth.signInAnonymously();
-    const callable = functions.httpsCallable("cariBuktiRegistrasi");
-    const response = await callable({
-      keyword: keyword.includes("@") ? keyword.toLowerCase() : normalizeWa(keyword)
+    if (!auth.currentUser) throw new Error("Sesi Admin tidak ditemukan. Silakan login ulang.");
+    const needleEmail = keyword.toLowerCase();
+    const needleWa = normalizeWa(keyword);
+    const snapshot = await db.collection("peserta").get();
+    let found = null;
+    snapshot.forEach(doc => {
+      if (found) return;
+      const p = doc.data() || {};
+      const email = String(p.email || "").trim().toLowerCase();
+      const wa = normalizeWa(p.wa || p.noWa || p.nomorWhatsApp || "");
+      if ((keyword.includes("@") && email === needleEmail) || (!keyword.includes("@") && wa && wa === needleWa)) {
+        found = {...p, _docId: doc.id};
+      }
     });
-    const p = response.data && (response.data.peserta || response.data);
-    if (!p || !(p.kode || p.kodeRegistrasi)) throw new Error("Data registrasi tidak ditemukan.");
-    renderParticipant(p);
+    if (!found) {
+      showStatus("Data registrasi tidak ditemukan. Periksa kembali email atau nomor WhatsApp.", true);
+      return;
+    }
+    renderParticipant(found);
     showStatus("Data registrasi ditemukan.");
   } catch (error) {
-    console.error(error);
-    const code = error && error.code;
-    if (code === "functions/not-found") {
-      showStatus("Data registrasi tidak ditemukan. Periksa kembali Email atau WhatsApp.", true);
-    } else if (code === "functions/unavailable") {
-      showStatus("Cloud Function tidak dapat dijangkau. Pastikan cariBuktiRegistrasi sudah di-deploy di region asia-southeast1.", true);
-    } else if (code === "functions/internal") {
-      showStatus("Terjadi kesalahan di Cloud Function. Periksa log fungsi di Firebase/Google Cloud; detail teknis ada di console browser.", true);
-    } else if (code === "functions/unauthenticated") {
-      showStatus("Login anonim Firebase gagal. Pastikan Anonymous sign-in diaktifkan pada Firebase Authentication.", true);
-    } else if (code === "functions/permission-denied") {
-      showStatus("Cloud Function tidak memiliki izin membaca data peserta. Periksa izin service account fungsi, bukan membuka Firestore untuk publik.", true);
-    } else if (code === "functions/invalid-argument") {
-      showStatus(error.message || "Email atau nomor WhatsApp tidak valid.", true);
+    console.error("Pencarian registrasi gagal:", error);
+    if (error.code === "permission-denied") {
+      showStatus("Akses Firestore ditolak. Pastikan akun Admin berhak membaca koleksi peserta.", true);
     } else {
-      showStatus((error.message || "Pencarian gagal.") + (code ? " [" + code + "]" : ""), true);
+      showStatus(error.message || "Gagal mencari data registrasi.", true);
     }
   } finally {
     button.disabled = false;
     button.textContent = "CEK REGISTRASI";
   }
 });
+
+requireAdmin();
 </script>
 </body>
 </html>
