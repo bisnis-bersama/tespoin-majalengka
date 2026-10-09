@@ -1284,9 +1284,31 @@ function render(){
    BUKA DETAIL
 ================================================== */
 
-function openReview(kode){
+async function openReview(kode){
   selected = peserta.find(p => String(p.kode || '').toUpperCase() === String(kode || '').toUpperCase());
   if(!selected) return;
+
+  // Baca ulang dokumen yang dipilih langsung dari Firestore agar field OCR terbaru
+  // tidak bergantung pada hasil pemetaan/cache tabel.
+  try {
+    const docId = selected._firestoreId || selected.kode;
+    const freshSnap = await db.collection('peserta').doc(docId).get();
+    if (freshSnap.exists) {
+      const fresh = freshSnap.data() || {};
+      selected = {
+        ...selected,
+        ...fresh,
+        _firestoreId: docId,
+        kode: fresh.kode || selected.kode,
+        buktiNama: fresh.buktiNama || fresh.namaPadaBukti || selected.buktiNama || '',
+        buktiTeks: fresh.buktiTeks || fresh.buktiTransferTeks || fresh.hasilOCR || fresh.ocrText || fresh.ocr || selected.buktiTeks || '',
+        nominalPembayaran: fresh.nominalPembayaran ?? fresh.hargaFinal ?? selected.nominalPembayaran ?? ''
+      };
+    }
+  } catch (err) {
+    console.error('Gagal membaca ulang detail peserta:', err);
+    // Tetap tampilkan data yang sudah termuat jika pembacaan ulang gagal.
+  }
 
   document.getElementById('mKode').textContent = selected.kode || '-';
   document.getElementById('mNama').textContent = selected.nama || '-';
@@ -1316,7 +1338,7 @@ function openReview(kode){
   const proof = document.getElementById('proofContent');
   const buktiNama = String(selected.buktiNama || selected.namaPadaBukti || '').trim();
   const buktiTeks = String(
-    selected.buktiTeks || selected.buktiTransferTeks || selected.hasilOCR || selected.ocrText || ''
+    selected.buktiTeks || selected.buktiTransferTeks || selected.hasilOCR || selected.ocrText || selected.ocr || ''
   ).trim();
   let html = '';
 
@@ -1325,6 +1347,9 @@ function openReview(kode){
   }
   if (buktiTeks) {
     html += '<div style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:16px;padding:16px;color:#222;font-size:15px;line-height:1.45">' + esc(buktiTeks) + '</div>';
+  }
+  if (!buktiTeks) {
+    html += '<div class="proof-note" style="margin-top:10px">Teks OCR kosong pada dokumen ini. Pastikan field buktiTeks sudah tersimpan dan tidak kosong di Firestore.</div>';
   }
   if (!html) {
     html = '<div class="proof-note">Nama file dan teks hasil OCR belum tersedia pada dokumen Firestore ini.</div>';
