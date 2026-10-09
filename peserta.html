@@ -811,10 +811,9 @@ async function requireAdmin(){
     const snap = await db.collection('users').doc(user.uid).get();
     const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
 
-    // Admin dan Owner boleh membuka halaman data peserta.
-    // Owner hanya dapat melihat data; tombol aksi ditampilkan untuk Admin saja.
-    if(role !== 'admin' && role !== 'owner'){
-      alert('Akses ditolak. Halaman ini khusus Admin atau Owner.');
+    if(role !== 'admin'){
+      alert('Akses ditolak. Halaman ini khusus Admin.');
+      await auth.signOut();
       location.replace('login.html');
       return false;
     }
@@ -871,7 +870,11 @@ async function load(){
         ukuran: data.ukuran || '',
         statusPembayaran: data.statusPembayaran || 'BELUM LUNAS',
         statusKehadiran: data.statusKehadiran || 'BELUM HADIR',
-        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL'
+        statusBenefit: data.statusBenefit || 'BELUM DIAMBIL',
+        // Kompatibel dengan nama field bukti yang pernah dipakai.
+        buktiTransfer: data.buktiTransfer || data.buktiUrl || data.urlBukti || data.bukti || '',
+        buktiNama: data.buktiNama || data.namaPadaBukti || '',
+        buktiTeks: data.buktiTeks || data.hasilOCR || data.ocrText || ''
       };
     });
 
@@ -1260,15 +1263,14 @@ function render(){
           </td>
 
 
+          ${currentRole === 'admin' ? `
           <td class="action-cell">
-            ${currentRole === 'admin' ? `
-              ${tombol}
-              <div class="action-group">
-                <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
-                <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
-              </div>
-            ` : ''}
-          </td>
+            ${tombol}
+            <div class="action-group">
+              <button type="button" class="action-edit" data-action="edit" data-docid="${escAttr(p._firestoreId)}">EDIT</button>
+              <button type="button" class="action-delete" data-action="delete" data-docid="${escAttr(p._firestoreId)}">HAPUS</button>
+            </div>
+          </td>` : '<td class="action-cell"></td>'}
 
         </tr>
 
@@ -1402,121 +1404,46 @@ function openReview(kode){
 
 
   /* ==================================================
-     BUKTI TRANSFER
+     BUKTI TRANSFER / OCR
   ================================================== */
+  const proof = document.getElementById('proofContent');
+  const buktiNama = String(selected.buktiNama || '').trim();
+  const buktiTeks = String(selected.buktiTeks || '').trim();
+  const url = String(
+    selected.buktiTransfer || selected.buktiUrl || selected.urlBukti || selected.bukti || ''
+  ).trim();
 
-  const proof =
-    document.getElementById('proofContent');
-
-
-  const url =
-    String(
-      selected.buktiTransfer || ''
-    ).trim();
-
-
-
-  if(!url){
-
-    proof.innerHTML = `
-      <div class="proof-note">
-        <b>Bukti transfer belum tersedia.</b>
-        <br><br>
-        Teks atau tautan bukti transfer belum tersedia pada data Firestore.
-      </div>
-    `;
-
+  let proofHtml = '';
+  if (buktiNama) {
+    proofHtml += '<p><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
+  }
+  if (buktiTeks) {
+    proofHtml += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
   }
 
-  else if(!/^https?:\/\//i.test(url)){
-
-    // Bukti versi OCR disimpan sebagai teks di Firestore, bukan file Storage.
-    proof.innerHTML = `
-      <div class="proof-note">
-        <b>Teks bukti transfer (hasil pembacaan):</b>
-        <div style="margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere">${esc(url)}</div>
-      </div>
-    `;
-
-  }
-
-  else{
-
+  if (url && /^https?:\/\//i.test(url)) {
     const driveId = ambilDriveId(url);
-
     const imageUrl = driveId
       ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId)
       : url;
+    const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) || !!driveId;
+    const isPdf = /\.pdf(\?|#|$)/i.test(url);
 
-    const isImage =
-      /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) ||
-      !!driveId;
-
-    if(isImage){
-
-      proof.innerHTML = `
-        <img
-          src="${escAttr(imageUrl)}"
-          alt="Bukti transfer"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
-
-        <div
-          class="proof-note"
-          style="display:none;margin-top:10px">
-          Gambar tidak dapat ditampilkan langsung.
-          Silakan buka bukti penuh.
-        </div>
-
-        <a
-          href="${escAttr(url)}"
-          target="_blank"
-          rel="noopener">
-          BUKA BUKTI PENUH
-        </a>
-      `;
-
+    if (isImage) {
+      proofHtml += '<img style="margin-top:12px" src="' + escAttr(imageUrl) + '" alt="Bukti transfer" onerror="this.style.display=\'none\';">';
+    } else if (isPdf) {
+      proofHtml += '<iframe src="' + escAttr(url) + '" style="width:100%;height:420px;border:1px solid #ddd;border-radius:10px" title="Bukti transfer PDF"></iframe>';
     }
-
-    else if(/\.pdf(\?|#|$)/i.test(url)){
-
-      proof.innerHTML = `
-        <iframe
-          src="${escAttr(url)}"
-          style="width:100%;height:500px;border:1px solid #ddd;border-radius:10px"
-          title="Bukti transfer PDF">
-        </iframe>
-
-        <a
-          href="${escAttr(url)}"
-          target="_blank"
-          rel="noopener">
-          BUKA PDF PENUH
-        </a>
-      `;
-
-    }
-
-    else{
-
-      proof.innerHTML = `
-        <div class="proof-note">
-          <b>File bukti tersedia.</b>
-          <br>
-          Tekan tombol di bawah untuk memeriksa bukti transfer.
-        </div>
-
-        <a
-          href="${escAttr(url)}"
-          target="_blank"
-          rel="noopener">
-          BUKA BUKTI TRANSFER
-        </a>
-      `;
-
-    }
-
+    proofHtml += '<p><a href="' + escAttr(url) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
+  } else if (url && !buktiTeks) {
+    // Beberapa data lama menyimpan hasil OCR langsung di field buktiTransfer.
+    proofHtml += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere">' + esc(url) + '</div>';
   }
 
+  if (!proofHtml) {
+    proofHtml = '<div class="proof-note">Bukti transfer belum tersedia pada dokumen Firestore ini.</div>';
+  }
+  proof.innerHTML = proofHtml;
 
   document
     .getElementById('modal')
