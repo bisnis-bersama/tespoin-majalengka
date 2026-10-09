@@ -30,7 +30,7 @@ service cloud.firestore {
     match /pengaturan/{docId} {
       // Public pages need to read event information and active ticket tiers.
       allow read: if docId == 'acara' || isStaff();
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isStaff();
     }
 
     match /peserta/{pesertaId} {

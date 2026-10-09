@@ -18,3 +18,11 @@ PENTING SEBELUM DIPAKAI:
 5. Halaman COD hanya untuk admin/owner, dan hanya aktif pada tanggal acara jika codHarga sudah diatur. Aturan Firestore harus mengizinkan create COD staff seperti pada file rules ini.
 6. Halaman pengaturan mengunggah gambar ke Firebase Storage pada folder slides/. Periksa storage.rules sebelum mengunggah.
 7. ZIP ini belum dapat diuji terhadap Firebase live dari lingkungan ini. Uji di project/staging terlebih dahulu: registrasi, duplikasi, tier, pengaturan, verifikasi lunas, COD, dashboard, bukti, dan check-in. Jangan menganggap deploy berhasil sebelum tes tersebut lolos.
+
+
+KOREKSI HAK AKSES (9 OKTOBER 2026)
+- Admin: seluruh fungsi termasuk edit, hapus, approval, pengaturan, dan check-in.
+- Owner: fungsi operasional termasuk pengaturan dan check-in; tidak boleh edit, hapus, atau approval.
+- Peserta: hanya halaman publik index.html dan registrasi.html.
+- Firestore Rules sudah disesuaikan agar check-in dapat dilakukan Admin maupun Owner.
+- Jangan mengganti Rules aktif sebelum memeriksa kebutuhan aplikasi dan menguji di Firebase.
