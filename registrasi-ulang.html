@@ -440,21 +440,23 @@ button:disabled{
     </div>
 
 
-    <div class="manual">
+<div class="manual">
+  <input
+    id="kodeManual"
+    type="text"
+    autocomplete="off"
+    autocapitalize="characters"
+    placeholder="Masukkan kode REG-20261008-123456"
+    aria-label="Kode registrasi peserta">
 
-      <input
-        id="kodeManual"
-        placeholder="Atau masukkan REG-0001">
-
-      <button
-        class="btn"
-        onclick="prosesKode(
-          document.getElementById('kodeManual').value
-        )">
-
-        CEK
-
-      </button>
+  <button
+    type="button"
+    class="btn"
+    id="btnCekManual"
+    onclick="cekManual()">
+    CEK
+  </button>
+</div>
 
     </div>
 
@@ -1185,7 +1187,49 @@ async function apiPost(data){
 
 }
 
+function cekManual() {
+  const input = document.getElementById('kodeManual');
+  const tombol = document.getElementById('btnCekManual');
+  const kode = input.value.trim();
 
+  if (!kode) {
+    input.focus();
+    tampil(
+      '<div class="title">⚠ KODE BELUM DIISI</div>' +
+      '<div>Masukkan kode registrasi yang tertera pada bukti peserta.</div>',
+      'warn'
+    );
+    return;
+  }
+
+  if (!aksesSiap) {
+    tampil(
+      '<div class="title">⏳ MENUNGGU AKSES</div>' +
+      '<div>Pemeriksaan akun Admin/Owner belum selesai. Silakan coba lagi.</div>',
+      'warn'
+    );
+    return;
+  }
+
+  if (sedangProses) return;
+
+  tombol.disabled = true;
+  tombol.textContent = 'MEMERIKSA...';
+
+  Promise.resolve(prosesKode(kode))
+    .finally(() => {
+      tombol.disabled = false;
+      tombol.textContent = 'CEK';
+    });
+}
+
+// Bisa menekan Enter setelah mengetik kode.
+document.getElementById('kodeManual').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    cekManual();
+  }
+});
 /* =========================================
    PROSES KODE
 ========================================= */
