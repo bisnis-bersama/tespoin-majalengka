@@ -273,14 +273,13 @@ form.addEventListener('submit', async function(e){
   }
 });
 
+
 function buatKodeRegistrasi(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  const time = String(Date.now()).slice(-6);
-  return `REG-${y}${m}${day}-${time}`;
+  return 'REG-' + String(
+    Math.floor(1000 + Math.random() * 9000)
+  );
 }
+
 
 function normalisasiWa(value){
   let n = String(value || '').replace(/[^0-9]/g,'');
