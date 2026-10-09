@@ -1826,7 +1826,85 @@ document
 
 
 
-\n/* ==================================================\n   EDIT DAN HAPUS DATA PESERTA FIRESTORE\n================================================== */\nfunction normalisasiWa(value){\n  let digits = String(value || '').replace(/\\D/g, '');\n  if(digits.startsWith('0')) digits = '62' + digits.slice(1);\n  else if(digits.startsWith('8')) digits = '62' + digits;\n  return digits;\n}\n\nasync function editPeserta(docId){\n  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat mengedit peserta.'); return; }\n  const p = peserta.find(x => x._docId === docId);\n  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }\n  const nama = prompt('Nama peserta:', p.nama || ''); if(nama === null) return;\n  const toko = prompt('Nama toko:', p.toko || ''); if(toko === null) return;\n  const wa = prompt('Nomor WhatsApp:', p.wa || ''); if(wa === null) return;\n  const alamat = prompt('Alamat:', p.alamat || ''); if(alamat === null) return;\n  const email = prompt('Email:', p.email || ''); if(email === null) return;\n  const ukuran = prompt('Ukuran kaos:', p.ukuran || ''); if(ukuran === null) return;\n  if(!nama.trim() || !wa.trim()){ alert('Nama peserta dan WhatsApp wajib diisi.'); return; }\n  if(!confirm('Simpan perubahan data ' + p.kode + '?')) return;\n  try{\n    await db.collection('peserta').doc(docId).update({nama:nama.trim(),toko:toko.trim(),wa:wa.trim(),waNormalized:normalisasiWa(wa),alamat:alamat.trim(),email:email.trim().toLowerCase(),ukuran:ukuran.trim()});\n    alert('Data peserta berhasil diperbarui.'); await load();\n  }catch(e){ console.error('Edit peserta gagal:',e); alert('Gagal menyimpan perubahan: ' + (e.message || e)); }\n}\n\nasync function hapusPeserta(docId){\n  if(currentRole !== 'admin'){ alert('Hanya Admin yang dapat menghapus peserta.'); return; }\n  const p = peserta.find(x => x._docId === docId);\n  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }\n  if(!confirm('HAPUS DATA PESERTA INI?\\n\\nKode: ' + p.kode + '\\nNama: ' + p.nama + '\\n\\nData akan dihapus permanen dari Firestore.')) return;\n  try{\n    await db.collection('peserta').doc(docId).delete();\n    if(selected && selected._docId === docId) closeModal();\n    alert('Data peserta berhasil dihapus dari Firestore.'); await load();\n  }catch(e){ console.error('Hapus peserta gagal:',e); alert('Gagal menghapus data: ' + (e.message || e)); }\n}\n\ndocument.getElementById('tbody').addEventListener('click', function(e){\n  const button = e.target.closest('button[data-action][data-docid]');\n  if(!button) return;\n  e.preventDefault();\n  const action = button.dataset.action;\n  const docId = button.dataset.docid;\n  if(!docId){ alert('ID dokumen peserta tidak ditemukan.'); return; }\n  if(action === 'edit') editPeserta(docId);\n  else if(action === 'delete') hapusPeserta(docId);\n});\n\n/* ==================================================
+
+/* ==================================================
+   EDIT DAN HAPUS DATA PESERTA FIRESTORE
+================================================== */
+function normalisasiWa(value){
+  let digits = String(value || '').replace(/\D/g, '');
+  if(digits.startsWith('0')) digits = '62' + digits.slice(1);
+  else if(digits.startsWith('8')) digits = '62' + digits;
+  return digits;
+}
+
+async function editPeserta(docId){
+  if(currentRole !== 'admin'){
+    alert('Hanya Admin yang dapat mengedit peserta.');
+    return;
+  }
+  const p = peserta.find(x => x._docId === docId);
+  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }
+  const nama = prompt('Nama peserta:', p.nama || ''); if(nama === null) return;
+  const toko = prompt('Nama toko:', p.toko || ''); if(toko === null) return;
+  const wa = prompt('Nomor WhatsApp:', p.wa || ''); if(wa === null) return;
+  const alamat = prompt('Alamat:', p.alamat || ''); if(alamat === null) return;
+  const email = prompt('Email:', p.email || ''); if(email === null) return;
+  const ukuran = prompt('Ukuran kaos:', p.ukuran || ''); if(ukuran === null) return;
+  if(!nama.trim() || !wa.trim()){
+    alert('Nama peserta dan WhatsApp wajib diisi.');
+    return;
+  }
+  if(!confirm('Simpan perubahan data ' + p.kode + '?')) return;
+  try{
+    await db.collection('peserta').doc(docId).update({
+      nama: nama.trim(),
+      toko: toko.trim(),
+      wa: wa.trim(),
+      waNormalized: normalisasiWa(wa),
+      alamat: alamat.trim(),
+      email: email.trim().toLowerCase(),
+      ukuran: ukuran.trim()
+    });
+    alert('Data peserta berhasil diperbarui.');
+    await load();
+  }catch(e){
+    console.error('Edit peserta gagal:', e);
+    alert('Gagal menyimpan perubahan: ' + (e.message || e));
+  }
+}
+
+async function hapusPeserta(docId){
+  if(currentRole !== 'admin'){
+    alert('Hanya Admin yang dapat menghapus peserta.');
+    return;
+  }
+  const p = peserta.find(x => x._docId === docId);
+  if(!p){ alert('Data peserta tidak ditemukan. Muat ulang halaman.'); return; }
+  const yakin = confirm('HAPUS DATA PESERTA INI?\n\nKode: ' + p.kode + '\nNama: ' + p.nama + '\n\nData akan dihapus permanen dari Firestore.');
+  if(!yakin) return;
+  try{
+    await db.collection('peserta').doc(docId).delete();
+    if(selected && selected._docId === docId) closeModal();
+    alert('Data peserta berhasil dihapus dari Firestore.');
+    await load();
+  }catch(e){
+    console.error('Hapus peserta gagal:', e);
+    alert('Gagal menghapus data: ' + (e.message || e));
+  }
+}
+
+document.getElementById('tbody').addEventListener('click', function(e){
+  const button = e.target.closest('button[data-action][data-docid]');
+  if(!button) return;
+  e.preventDefault();
+  const action = button.dataset.action;
+  const docId = button.dataset.docid;
+  if(!docId){ alert('ID dokumen peserta tidak ditemukan.'); return; }
+  if(action === 'edit') editPeserta(docId);
+  else if(action === 'delete') hapusPeserta(docId);
+});
+
+/* ==================================================
    MULAI
 ================================================== */
 
