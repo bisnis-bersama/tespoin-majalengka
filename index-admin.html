@@ -432,7 +432,7 @@ body{
     </button>
 
     <button
-      class="btn btn-setting"
+      id="btnPengaturanTop" class="btn btn-setting"
       onclick="location.href='pengaturan.html'">
 
       ⚙ PENGATURAN ACARA
@@ -767,7 +767,7 @@ body{
 </a>
 
 
-    <a href="pengaturan.html">
+    <a id="menuPengaturan" href="pengaturan.html">
 
       <div class="icon">
         ⚙️
@@ -865,13 +865,19 @@ async function requireAdmin(){
   try{
     const snap = await db.collection('users').doc(user.uid).get();
     const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
-    if(role !== 'admin'){
-      alert('Akses ditolak. Halaman ini khusus Admin.');
+    if(role !== 'admin' && role !== 'owner'){
+      alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');
       await auth.signOut();
       window.location.href = 'login-panitia.html';
       return false;
     }
     currentRole = role;
+    const btnPengaturanTop = document.getElementById('btnPengaturanTop');
+    const menuPengaturan = document.getElementById('menuPengaturan');
+    if(role !== 'admin'){
+      if(btnPengaturanTop) btnPengaturanTop.style.display = 'none';
+      if(menuPengaturan) menuPengaturan.style.display = 'none';
+    }
     return true;
   }catch(err){
     console.error(err);

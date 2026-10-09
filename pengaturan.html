@@ -163,8 +163,8 @@ async function requireStaff(user) {
   const userSnap = await db.collection('users').doc(user.uid).get();
   if (!userSnap.exists) throw new Error('Dokumen users/' + user.uid + ' tidak ditemukan.');
   const role = userSnap.data().role;
-  if (role !== 'admin' && role !== 'owner') {
-    throw new Error('Akses ditolak. Role akun harus admin atau owner.');
+  if (role !== 'admin') {
+    throw new Error('Akses ditolak. Halaman pengaturan khusus Admin.');
   }
   return user;
 }

@@ -1212,20 +1212,9 @@ async function prosesKode(kode){
       tampilData(p,'sudah');
       return;
     }
-    const user=auth.currentUser;
-    if(!user)throw new Error('Sesi login berakhir. Silakan login kembali.');
-    const ref=db.collection('peserta').doc(p._docId);
-    const now=firebase.firestore.FieldValue.serverTimestamp();
-    await ref.update({
-      statusKehadiran:'HADIR',
-      statusBenefit:'SUDAH DIAMBIL',
-      jamCheckIn:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'}),
-      waktuScan:now,
-      petugasScan:user.email||user.uid
-    });
-    const updated={...p,statusKehadiran:'HADIR',jamCheckIn:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'})};
+    // Mode scan hanya membaca data; tidak mengubah status kehadiran atau benefit.
     await tutupKamera();
-    tampilData(updated,'berhasil');
+    tampilData(p,'valid');
   }catch(e){
     console.error(e);
     await tutupKamera();
@@ -1260,12 +1249,22 @@ function tampilData(p,mode){
 
 
   let title =
-    '✓ REGISTRASI ULANG BERHASIL';
+    '✓ DATA PESERTA DITEMUKAN';
 
 
   let pesanBenefit =
     '';
 
+
+  if(mode === 'valid'){
+    cls = 'ok';
+    title = '✓ DATA PESERTA DITEMUKAN';
+    pesanBenefit = `<div class="benefit-warning">
+      Pemindaian hanya menampilkan data. Status kehadiran: <b>${esc(hadir)}</b>.
+      <br>Status benefit: <b>${esc(String(p.statusBenefit || 'BELUM DIAMBIL').toUpperCase())}</b>.
+      <br>Tidak ada perubahan data yang disimpan.
+    </div>`;
+  }
 
   if(mode === 'berhasil'){
 
