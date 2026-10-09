@@ -164,12 +164,18 @@ form.addEventListener("submit", async (event) => {
     const code = error && error.code;
     if (code === "functions/not-found") {
       showStatus("Data registrasi tidak ditemukan. Periksa kembali Email atau WhatsApp.", true);
-    } else if (code === "functions/unavailable" || code === "functions/internal") {
-      showStatus("Layanan pencarian Firebase belum siap atau terjadi kesalahan server.", true);
+    } else if (code === "functions/unavailable") {
+      showStatus("Cloud Function tidak dapat dijangkau. Pastikan cariBuktiRegistrasi sudah di-deploy di region asia-southeast1.", true);
+    } else if (code === "functions/internal") {
+      showStatus("Terjadi kesalahan di Cloud Function. Periksa log fungsi di Firebase/Google Cloud; detail teknis ada di console browser.", true);
     } else if (code === "functions/unauthenticated") {
-      showStatus("Autentikasi Firebase gagal. Coba muat ulang halaman.", true);
+      showStatus("Login anonim Firebase gagal. Pastikan Anonymous sign-in diaktifkan pada Firebase Authentication.", true);
+    } else if (code === "functions/permission-denied") {
+      showStatus("Cloud Function tidak memiliki izin membaca data peserta. Periksa izin service account fungsi, bukan membuka Firestore untuk publik.", true);
+    } else if (code === "functions/invalid-argument") {
+      showStatus(error.message || "Email atau nomor WhatsApp tidak valid.", true);
     } else {
-      showStatus(error.message || "Pencarian gagal. Periksa konfigurasi Firebase.", true);
+      showStatus((error.message || "Pencarian gagal.") + (code ? " [" + code + "]" : ""), true);
     }
   } finally {
     button.disabled = false;
