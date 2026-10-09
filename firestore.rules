@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userExists() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function isAdmin() {
+      return userExists() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isOwner() {
+      return userExists() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+    }
+    function isStaff() { return isAdmin() || isOwner(); }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin() || (
+        signedIn() && request.auth.uid == uid &&
+        request.resource.data.keys().hasOnly(['nama','email','role','createdAt']) &&
+        request.resource.data.keys().hasAll(['nama','email','role','createdAt']) &&
+        request.resource.data.role == 'owner' &&
+        request.resource.data.nama is string &&
+        request.resource.data.email is string &&
+        request.resource.data.createdAt == request.time
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    match /pengaturan/{docId} {
+      // Public pages need to read event information and active ticket tiers.
+      allow read: if docId == 'acara' || isStaff();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /peserta/{pesertaId} {
+      allow read: if isStaff();
+      // Public participant registration: only pending payment records.
+      allow create: if signedIn() &&
+        request.resource.data.kode == pesertaId &&
+        request.resource.data.statusPembayaran == 'BELUM LUNAS' &&
+        request.resource.data.statusKehadiran == 'BELUM HADIR' &&
+        request.resource.data.statusBenefit == 'BELUM DIAMBIL' &&
+        request.resource.data.nama is string &&
+        request.resource.data.wa is string &&
+        request.resource.data.email is string &&
+        request.resource.data.alamat is string &&
+        request.resource.data.ukuran is string;
+      // Staff-entered COD registrations are immediately paid, but only staff can create them.
+      allow create: if isStaff() &&
+        request.resource.data.kode == pesertaId &&
+        request.resource.data.metodePembayaran == 'COD' &&
+        request.resource.data.statusPembayaran == 'LUNAS' &&
+        request.resource.data.statusKehadiran == 'BELUM HADIR' &&
+        request.resource.data.statusBenefit == 'BELUM DIAMBIL' &&
+        request.resource.data.nama is string &&
+        request.resource.data.wa is string &&
+        request.resource.data.email is string &&
+        request.resource.data.alamat is string &&
+        request.resource.data.ukuran is string;
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nama','toko','wa','waNormalized','alamat','email','ukuran',
+          'statusPembayaran','nominalPembayaran','tanggalVerifikasi',
+          'metodePembayaran','petugasPembayaran','waktuPembayaran',
+          'petugasVerifikasi','waktuVerifikasi','tierPembayaran','hargaFinal','catatan'
+        ]);
+      allow update: if isOwner() &&
+        resource.data.statusPembayaran == 'LUNAS' &&
+        resource.data.statusKehadiran != 'HADIR' &&
+        request.resource.data.statusKehadiran == 'HADIR' &&
+        request.resource.data.statusBenefit == 'SUDAH DIAMBIL' &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'statusKehadiran','jamCheckIn','petugasScan','waktuScan','statusBenefit','catatan'
+        ]);
+      allow delete: if isAdmin();
+    }
+
+    // Create-only reservations prevent new public registrations reusing a normalized email/WA.
+    // Existing legacy participants need reservation documents backfilled by an administrator.
+    match /uniqueEmail/{emailKey} {
+      allow create: if signedIn() && request.resource.data.email is string && request.resource.data.kode is string;
+      allow read, update, delete: if false;
+    }
+    match /uniqueWa/{waKey} {
+      allow create: if signedIn() && request.resource.data.waNormalized is string && request.resource.data.kode is string;
+      allow read, update, delete: if false;
+    }
+    match /logAktivitas/{logId} {
+      allow read: if isStaff();
+      allow create, update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

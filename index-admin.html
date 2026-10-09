@@ -698,6 +698,11 @@ body{
 
   <div class="menu">
 
+    <a href="registrasi-cod.html">
+      <div class="menu-icon">💵</div>
+      <div><b>Registrasi COD</b><small>Daftarkan peserta COD pada hari acara</small></div>
+    </a>
+
     <a href="peserta.html">
 
       <div class="icon">
@@ -853,7 +858,7 @@ function waitForAuth(){
 async function requireAdmin(){
   const user = await waitForAuth();
   if(!user){
-    window.location.href = 'login.html';
+    window.location.href = 'login-panitia.html';
     return false;
   }
 
@@ -863,7 +868,7 @@ async function requireAdmin(){
     if(role !== 'admin'){
       alert('Akses ditolak. Halaman ini khusus Admin.');
       await auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
       return false;
     }
     currentRole = role;
@@ -872,7 +877,7 @@ async function requireAdmin(){
     console.error(err);
     alert('Gagal memeriksa hak akses Admin.');
     await auth.signOut();
-    window.location.href = 'login.html';
+    window.location.href = 'login-panitia.html';
     return false;
   }
 }
@@ -1287,7 +1292,7 @@ function logout(){
   ){
 
     auth.signOut().finally(() => {
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
     });
 
   }

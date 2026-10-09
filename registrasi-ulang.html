@@ -516,7 +516,7 @@ async function requireStaff(){
     const user = await tungguAuth();
 
     if(!user){
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
       return false;
     }
 
@@ -525,7 +525,7 @@ async function requireStaff(){
     if(!snap.exists){
       alert('Akun belum memiliki role Owner/Admin.');
       await auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
       return false;
     }
 
@@ -534,7 +534,7 @@ async function requireStaff(){
     if(currentRole !== 'owner' && currentRole !== 'admin'){
       alert('Akses hanya untuk Owner atau Admin.');
       await auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
       return false;
     }
 
@@ -544,7 +544,7 @@ async function requireStaff(){
   }catch(e){
     console.error(e);
     alert('Gagal memeriksa akses akun.');
-    window.location.href = 'login.html';
+    window.location.href = 'login-panitia.html';
     return false;
   }
 }
@@ -1101,88 +1101,6 @@ function onScanFailure(errorMessage){
 }
 
 
-/* =========================================
-   API GET
-========================================= */
-
-async function apiGet(url){
-
-  const r =
-    await fetch(url);
-
-
-  const raw =
-    await r.text();
-
-
-  try{
-
-    return JSON.parse(
-      raw.trim()
-    );
-
-  }
-
-  catch(e){
-
-    throw new Error(
-      'Respons API tidak dapat dibaca.'
-    );
-
-  }
-
-}
-
-
-/* =========================================
-   API POST
-========================================= */
-
-async function apiPost(data){
-
-  const r =
-    await fetch(
-
-      API_URL,
-
-      {
-        method:'POST',
-
-        headers:{
-          'Content-Type':
-          'text/plain;charset=utf-8'
-        },
-
-        body:
-          JSON.stringify(data)
-
-      }
-
-    );
-
-
-  const raw =
-    await r.text();
-
-
-  try{
-
-    return JSON.parse(
-      raw.trim()
-    );
-
-  }
-
-  catch(e){
-
-    throw new Error(
-      'Respons API tidak dapat dibaca.'
-    );
-
-  }
-
-}
-
 function cekManual() {
   const input = document.getElementById('kodeManual');
   const tombol = document.getElementById('btnCekManual');
@@ -1300,11 +1218,12 @@ async function prosesKode(kode){
     const now=firebase.firestore.FieldValue.serverTimestamp();
     await ref.update({
       statusKehadiran:'HADIR',
-      jamCheckin:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'}),
-      waktuCheckin:now,
-      petugasCheckin:user.email||user.uid
+      statusBenefit:'SUDAH DIAMBIL',
+      jamCheckIn:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'}),
+      waktuScan:now,
+      petugasScan:user.email||user.uid
     });
-    const updated={...p,statusKehadiran:'HADIR',jamCheckin:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'})};
+    const updated={...p,statusKehadiran:'HADIR',jamCheckIn:new Date().toLocaleString('id-ID',{timeZone:'Asia/Jakarta'})};
     await tutupKamera();
     tampilData(updated,'berhasil');
   }catch(e){
@@ -1610,7 +1529,7 @@ function tampilData(p,mode){
       <span>Jam Check-in</span>
 
       <b>
-        ${esc(p.jamCheckin || '-')}
+        ${esc((p.jamCheckIn||p.jamCheckin) || '-')}
       </b>
 
     </div>

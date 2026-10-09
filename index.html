@@ -322,8 +322,19 @@ function hubungiAdminWA() {
 
 </main>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
+const firebaseConfig = {
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfPdNDppQ",
+  authDomain: "register-peserta.firebaseapp.com",
+  projectId: "register-peserta",
+  storageBucket: "register-peserta.firebasestorage.app",
+  messagingSenderId: "983090504866",
+  appId: "1:983090504866:web:7879b0784b9fecad4863fb"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 function formatTanggal(value){
   if(value === undefined || value === null || String(value).trim() === '') return '-';
@@ -492,20 +503,15 @@ function tampilkanPengaturan(data){
 
 async function muatPengaturan(){
   try{
-    const r = await fetch(API_URL + '?action=pengaturan&_=' + Date.now(), {cache:'no-store'});
-    const raw = await r.text();
-    const result = JSON.parse(raw.trim());
-
-    if(!result || result.ok === false){
-      throw new Error(result?.message || 'Gagal mengambil pengaturan.');
-    }
-
-    // Backend yang digunakan dapat mengembalikan {pengaturan:{...}}
-    // atau langsung object pengaturan. Keduanya didukung.
-    const data = result.pengaturan || result.data || result;
+    // Pengaturan publik dibaca langsung dari Firestore, bukan Apps Script.
+    const snap = await db.collection('pengaturan').doc('acara').get();
+    if (!snap.exists) throw new Error('Dokumen pengaturan/acara belum tersedia di Firestore.');
+    const data = snap.data() || {};
     tampilkanPengaturan(data);
   }catch(err){
-    console.error('Gagal memuat pengaturan:', err);
+    console.error('Gagal memuat pengaturan Firestore:', err);
+    const statusText = document.getElementById('statusText');
+    if (statusText) statusText.textContent = 'PENGATURAN BELUM DAPAT DIMUAT';
   }
 }
 

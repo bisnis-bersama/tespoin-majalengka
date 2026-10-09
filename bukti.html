@@ -193,7 +193,7 @@ async function requireAdmin() {
   const user = await waitForAuth();
   if (!user) {
     showStatus("Silakan login sebagai Admin terlebih dahulu.", true);
-    setTimeout(() => { window.location.href = "login.html"; }, 1200);
+    setTimeout(() => { window.location.href = "login-panitia.html"; }, 1200);
     return false;
   }
   try {
@@ -202,7 +202,7 @@ async function requireAdmin() {
     if (role !== "admin") {
       showStatus("Akses ditolak. Halaman ini khusus Admin.", true);
       await auth.signOut();
-      setTimeout(() => { window.location.href = "login.html"; }, 1200);
+      setTimeout(() => { window.location.href = "login-panitia.html"; }, 1200);
       return false;
     }
     return true;

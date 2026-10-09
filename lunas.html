@@ -50,13 +50,13 @@ function getAuthUser(){
 }
 async function requireStaff(){
   const user=await getAuthUser();
-  if(!user){ location.href='login.html'; return false; }
+  if(!user){ location.href='login-panitia.html'; return false; }
   const snap=await db.collection('users').doc(user.uid).get();
   const role=snap.exists ? String(snap.data().role||'').toLowerCase() : '';
   if(role!=='admin' && role!=='owner'){
     alert('Akses ditolak. Halaman ini hanya untuk Admin atau Owner.');
     await auth.signOut();
-    location.href='login.html';
+    location.href='login-panitia.html';
     return false;
   }
   return true;
@@ -89,17 +89,18 @@ async function requireStaff(){
 </div>
 
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbxPM09axMCDYVMpMjGya5aoCDIhcs5MrcdeP0AlGB2BSzH8a2NigppNmAjV3lSH0-XH/exec';
 let dataLunas=[];
 
 async function load(){
   try{
-    const r=await fetch(API_URL+'?action=lunas&_='+Date.now());
-    const raw=await r.text();
-    let data;
-    try{data=JSON.parse(raw.trim())}catch(e){throw new Error('Respons API tidak dapat dibaca.')}
-    if(!data.ok)throw new Error(data.message||'Gagal mengambil data.');
-    dataLunas=data.peserta||[];
+    const snap=await db.collection('peserta').get();
+    dataLunas=snap.docs.map(doc=>{
+      const p=doc.data()||{};
+      return {...p,_docId:doc.id,kode:p.kode||doc.id,
+        jamCheckin:p.jamCheckIn||p.jamCheckin||'',
+        waktuCheckin:p.waktuScan||p.waktuCheckin||'',
+        petugasCheckin:p.petugasScan||p.petugasCheckin||''};
+    }).filter(p=>String(p.statusPembayaran||'').toUpperCase()==='LUNAS');
     updateSummary();
     render();
   }catch(e){

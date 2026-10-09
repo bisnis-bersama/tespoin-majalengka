@@ -33,10 +33,10 @@ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;',
 function roleName(v){return String(v||'').trim().toLowerCase();}
 async function requireAccess(){
   const user=await new Promise(resolve=>{const unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u);});});
-  if(!user){location.replace('login.html');return false;}
+  if(!user){location.replace('login-panitia.html');return false;}
   const s=await db.collection('users').doc(user.uid).get();
   currentRole=s.exists?roleName(s.data().role):'';
-  if(!['admin','owner'].includes(currentRole)){alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');location.replace('login.html');return false;}
+  if(!['admin','owner'].includes(currentRole)){alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');location.replace('login-panitia.html');return false;}
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
@@ -82,6 +82,6 @@ async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Adm
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='review'){const p=peserta.find(x=>x._docId===id);if(!p){alert('Data peserta tidak ditemukan. Muat ulang halaman.');return;}openReview(p.kode);return;}if(b.dataset.action==='edit')editPeserta(id);else if(b.dataset.action==='delete')hapusPeserta(id);});
 // Pastikan fungsi yang dipanggil dari atribut HTML tersedia pada window.
 window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;
-(async()=>{try{if(await requireAccess())await load();}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login.html');}})();
+(async()=>{try{if(await requireAccess())await load();}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
 </body></html>
