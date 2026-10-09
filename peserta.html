@@ -1308,31 +1308,23 @@ function openReview(kode){
   const btn = document.getElementById('confirmBtn');
   btn.style.display = currentRole === 'admin' && bayar !== 'LUNAS' ? 'block' : 'none';
 
-  // Pertahankan dukungan field bukti yang sudah tersimpan di Firestore.
+  // Tampilkan hanya nama file dan teks OCR dari Firestore. Tidak memanggil gambar/URL.
   const proof = document.getElementById('proofContent');
-  const buktiNama = String(selected.buktiNama || '').trim();
-  const buktiTeks = String(selected.buktiTeks || '').trim();
-  const url = String(selected.buktiTransfer || selected.buktiUrl || selected.urlBukti || '').trim();
+  const buktiNama = String(selected.buktiNama || selected.namaPadaBukti || '').trim();
+  const buktiTeks = String(
+    selected.buktiTeks || selected.buktiTransferTeks || selected.hasilOCR || selected.ocrText || ''
+  ).trim();
   let html = '';
 
-  if(buktiNama) html += '<p><b>Nama pada bukti:</b> ' + esc(buktiNama) + '</p>';
-  if(buktiTeks) html += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
-
-  if(url && /^https?:\/\//i.test(url)){
-    const driveId = ambilDriveId(url);
-    const imageUrl = driveId ? 'https://drive.google.com/uc?export=view&id=' + encodeURIComponent(driveId) : url;
-    const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|#|$)/i.test(url) || !!driveId;
-    if(isImage){
-      html += '<img style="margin-top:12px" src="' + escAttr(imageUrl) + '" alt="Bukti transfer" onerror="this.style.display=\'none\';">';
-    } else if(/\.pdf(\?|#|$)/i.test(url)){
-      html += '<iframe src="' + escAttr(url) + '" style="width:100%;height:420px;border:1px solid #ddd;border-radius:10px" title="Bukti transfer PDF"></iframe>';
-    }
-    html += '<p><a href="' + escAttr(url) + '" target="_blank" rel="noopener">BUKA BUKTI TRANSFER</a></p>';
-  } else if(url && !buktiTeks){
-    html += '<div class="proof-note" style="white-space:pre-wrap">' + esc(url) + '</div>';
+  if (buktiNama) {
+    html += '<p><b>Nama file bukti:</b> ' + esc(buktiNama) + '</p>';
   }
-
-  if(!html) html = '<div class="proof-note">Belum ada data bukti transfer atau hasil OCR pada dokumen Firestore ini.</div>';
+  if (buktiTeks) {
+    html += '<div class="proof-note" style="white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222">' + esc(buktiTeks) + '</div>';
+  }
+  if (!html) {
+    html = '<div class="proof-note">Nama file dan teks hasil OCR belum tersedia pada dokumen Firestore ini.</div>';
+  }
   proof.innerHTML = html;
 
   const modal = document.getElementById('modal');
