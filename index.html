@@ -223,11 +223,6 @@ body{
     <div><div class="label">Tiket</div><div id="harga" class="value">Memuat...</div></div>
   </div>
 
-  <div class="item" id="kuotaItem">
-    <div class="icon">👥</div>
-    <div><div class="label">Kuota</div><div id="kuota" class="value">-</div></div>
-  </div>
-
   <a href="registrasi.html" id="btnDaftar" class="btn">DAFTAR SEKARANG</a>
   <div class="desc" style="margin-top:16px">
   <b>QR CODE ATAU BUKTI REGISTRASI HILANG?</b><br>
@@ -290,7 +285,8 @@ function hubungiAdminWA() {
     'Nama peserta: ' + nama + '\n' +
     'Nomor WhatsApp saat mendaftar: ' + wa;
 
-  const url = 'https://wa.me/6282319264646?text=' +
+  const tujuanWA = String(nomorPanitiaWA || '6282319264646').replace(/\D/g, '');
+  const url = 'https://wa.me/' + tujuanWA + '?text=' +
     encodeURIComponent(pesan);
 
   window.open(url, '_blank');
@@ -380,41 +376,41 @@ function nilaiAngka(value){
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function parseTanggalKey(value){
-  const s = String(value ?? '').trim();
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(!m) return null;
-  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+function tanggalHariIniWIB(){
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone:'Asia/Jakarta', year:'numeric', month:'2-digit', day:'2-digit'
+  }).format(new Date());
 }
 
 function ambilHargaTiket(data){
-  // Prioritas utama mengikuti struktur PENGATURAN saat ini: tier 1/2/3.
-  // Jika periode tier tersedia, pilih tier yang sedang aktif.
-  const sekarang = new Date();
+  const today = tanggalHariIniWIB();
   const tiers = [
-    {harga:data.tier1Harga, mulai:data.tier1Mulai, selesai:data.tier1Selesai},
-    {harga:data.tier2Harga, mulai:data.tier2Mulai, selesai:data.tier2Selesai},
-    {harga:data.tier3Harga, mulai:data.tier3Mulai, selesai:data.tier3Selesai}
+    {nama:'TIER 1', harga:data.tier1Harga, mulai:data.tier1Mulai, selesai:data.tier1Selesai},
+    {nama:'TIER 2', harga:data.tier2Harga, mulai:data.tier2Mulai, selesai:data.tier2Selesai},
+    {nama:'TIER 3', harga:data.tier3Harga, mulai:data.tier3Mulai, selesai:data.tier3Selesai}
   ];
 
   for(const tier of tiers){
     const harga = nilaiAngka(tier.harga);
-    if(!harga) continue;
-    const mulai = parseTanggalKey(tier.mulai);
-    const selesai = parseTanggalKey(tier.selesai);
-    if(mulai && selesai){
-      const akhir = new Date(selesai);
-      akhir.setHours(23,59,59,999);
-      if(sekarang >= mulai && sekarang <= akhir) return harga;
+    const mulai = String(tier.mulai || '').slice(0,10);
+    const selesai = String(tier.selesai || '').slice(0,10);
+    if(harga && /^\d{4}-\d{2}-\d{2}$/.test(mulai) &&
+       /^\d{4}-\d{2}-\d{2}$/.test(selesai) &&
+       today >= mulai && today <= selesai){
+      return {harga, nama:tier.nama};
     }
   }
 
-  // Fallback agar tetap kompatibel dengan pengaturan lama.
-  return nilaiAngka(data.tiket) || nilaiAngka(data.hargaTiket) || nilaiAngka(data.harga) ||
-         nilaiAngka(data.tier1Harga) || nilaiAngka(data.tier2Harga) || nilaiAngka(data.tier3Harga);
+  const fallback = nilaiAngka(data.tiket) || nilaiAngka(data.hargaTiket) ||
+    nilaiAngka(data.harga) || nilaiAngka(data.tier1Harga) ||
+    nilaiAngka(data.tier2Harga) || nilaiAngka(data.tier3Harga);
+  if(fallback) return {harga:fallback, nama:'Harga tiket'};
+
+  const cod = nilaiAngka(data.codHarga);
+  return cod ? {harga:cod, nama:'COD — hari acara'} : {harga:0, nama:''};
 }
 
-let slideTimer=null,slideIndex=0,slideUrls=[],slideTouchStartX=0;
+let slideTimer=null,slideIndex=0,slideUrls=[],slideTouchStartX=0,nomorPanitiaWA='6282319264646';
 function normalisasiSlide(value){
  if(Array.isArray(value))return value.filter(Boolean);if(!value)return [];
  try{const a=JSON.parse(String(value));if(Array.isArray(a))return a.filter(Boolean)}catch(e){}
@@ -439,51 +435,46 @@ function goToSlide(index){
 function tampilkanPengaturan(data){
   if(!data) return;
 
-  renderSlider(data.slideGambar);
+  // Pengaturan acara menyimpan gambar pada slideUrls.
+  // slideGambar didukung untuk kompatibilitas dengan data lama.
+  renderSlider(data.slideUrls || data.slideGambar || []);
 
   document.getElementById('judulAcara').textContent =
     data.judul || data.judulAcara || 'INFORMASI ACARA';
-
   document.getElementById('deskripsi').textContent =
-    data.deskripsi || '';
-
+    data.deskripsi || 'Informasi acara akan diumumkan panitia.';
   document.getElementById('tanggal').textContent =
-    formatTanggal((data.tanggalAcara || data.tanggal));
+    formatTanggal(data.tanggalAcara || data.tanggal);
+  document.getElementById('waktu').textContent = data.waktu || '-';
+  document.getElementById('lokasi').textContent = data.lokasi || '-';
 
-  document.getElementById('waktu').textContent =
-    data.waktu || '-';
+  const infoHarga = ambilHargaTiket(data);
+  document.getElementById('harga').textContent = infoHarga.harga
+    ? formatRupiah(infoHarga.harga) + (infoHarga.nama ? ' • ' + infoHarga.nama : '')
+    : 'Harga belum diatur';
 
-  document.getElementById('lokasi').textContent =
-    data.lokasi || '-';
-
-  const hargaTiket = ambilHargaTiket(data);
-  document.getElementById('harga').textContent = formatRupiah(hargaTiket);
-
-  const kuotaItem = document.getElementById('kuotaItem');
-  if(data.kuota !== undefined && data.kuota !== null && String(data.kuota).trim() !== ''){
-    document.getElementById('kuota').textContent = data.kuota;
-    kuotaItem.style.display = '';
-  }else{
-    kuotaItem.style.display = 'none';
-  }
+  const rawWA = String(data.wa || data.nomorWa || '').replace(/\D/g, '');
+  nomorPanitiaWA = rawWA
+    ? (rawWA.startsWith('0') ? '62' + rawWA.slice(1) :
+       rawWA.startsWith('62') ? rawWA : '62' + rawWA)
+    : '6282319264646';
 
   const box = document.getElementById('benefit');
-
   const items = String(data.benefit || '')
     .split(/[,;\n]+/)
     .map(x => x.trim())
     .filter(Boolean);
 
-  if(items.length){
-    box.innerHTML = items.map(x => `
-      <div class="benefit">
-        <span class="check">✓</span>
-        <span>${escapeHtml(x)}</span>
-      </div>
-    `).join('');
-  }
+  box.innerHTML = items.length
+    ? items.map(x => `
+        <div class="benefit">
+          <span class="check">✓</span>
+          <span>${escapeHtml(x)}</span>
+        </div>
+      `).join('')
+    : '<div class="desc">Benefit peserta akan diumumkan panitia.</div>';
 
-  const status = String(data.statusPendaftaran || 'DIBUKA').toUpperCase();
+  const status = String(data.statusPendaftaran || data.status || 'DIBUKA').toUpperCase();
   const badge = document.getElementById('status');
   const text = document.getElementById('statusText');
   const btn = document.getElementById('btnDaftar');
@@ -493,26 +484,32 @@ function tampilkanPengaturan(data){
     text.textContent = 'PENDAFTARAN DITUTUP';
     btn.classList.add('disabled');
     btn.textContent = 'PENDAFTARAN DITUTUP';
+    btn.setAttribute('aria-disabled','true');
+    btn.href = '#';
   }else{
     badge.classList.remove('tutup');
     text.textContent = 'PENDAFTARAN DIBUKA';
     btn.classList.remove('disabled');
     btn.textContent = 'DAFTAR SEKARANG';
+    btn.removeAttribute('aria-disabled');
+    btn.href = 'registrasi.html';
   }
 }
 
-async function muatPengaturan(){
-  try{
-    // Pengaturan publik dibaca langsung dari Firestore, bukan Apps Script.
-    const snap = await db.collection('pengaturan').doc('acara').get();
-    if (!snap.exists) throw new Error('Dokumen pengaturan/acara belum tersedia di Firestore.');
-    const data = snap.data() || {};
-    tampilkanPengaturan(data);
-  }catch(err){
+function muatPengaturan(){
+  // Perubahan pada pengaturan/acara langsung tampil tanpa refresh.
+  db.collection('pengaturan').doc('acara').onSnapshot(snap => {
+    if (!snap.exists) {
+      document.getElementById('statusText').textContent = 'PENGATURAN BELUM TERSEDIA';
+      console.error('Dokumen pengaturan/acara belum tersedia di Firestore.');
+      return;
+    }
+    tampilkanPengaturan(snap.data() || {});
+  }, err => {
     console.error('Gagal memuat pengaturan Firestore:', err);
     const statusText = document.getElementById('statusText');
     if (statusText) statusText.textContent = 'PENGATURAN BELUM DAPAT DIMUAT';
-  }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', muatPengaturan);
