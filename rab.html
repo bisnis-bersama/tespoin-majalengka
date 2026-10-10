@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RAB Acara | DPD TESPOIN Majalengka</title>
+<style>
+*{box-sizing:border-box}
+:root{--navy:#101820;--gold:#f5c400;--green:#198754;--red:#dc3545;--blue:#087ac2;--muted:#64748b;--line:#e5eaf0}
+body{margin:0;background:#f1f3f6;color:#18212b;font-family:Arial,Helvetica,sans-serif}
+.wrap{max-width:1400px;margin:auto;padding:14px}
+header{background:var(--navy);color:#fff;text-align:center;border-radius:16px;padding:18px}
+header h1{font-size:clamp(21px,3vw,30px);margin:0;color:var(--gold)}
+header p{font-size:12px;color:#d4d8dc;margin:7px 0 0}
+.top-actions,.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}
+button,select,input,textarea{font:inherit}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:800;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
+.btn-dark{background:#111;color:#fff}.btn-gold{background:var(--gold);color:#111}.btn-green{background:var(--green);color:#fff}.btn-light{background:#e5e7eb;color:#111}.btn-red{background:#fee2e2;color:#991b1b}
+.status{display:none;padding:11px 13px;border-radius:9px;font-size:13px;font-weight:700;margin:10px 0}
+.status.show{display:block}.status.ok{background:#dcfce7;color:#166534}.status.err{background:#fee2e2;color:#991b1b}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.metric{background:#fff;border-radius:13px;padding:15px;box-shadow:0 3px 12px #00000008;border-left:4px solid #222;min-width:0}
+.metric small{display:block;color:#64748b;font-size:11px;font-weight:800;text-transform:uppercase;line-height:1.4}
+.metric strong{display:block;font-size:clamp(18px,2.7vw,27px);margin-top:7px;overflow-wrap:anywhere}
+.metric.green{border-color:var(--green)}.metric.red{border-color:var(--red)}.metric.gold{border-color:var(--gold)}.metric.blue{border-color:var(--blue)}
+.panel{background:#fff;border-radius:14px;padding:15px;margin-top:13px;box-shadow:0 3px 12px #00000008}
+.panel h2{font-size:16px;margin:0 0 12px}
+.tabs button{background:#e5e7eb;color:#111}.tabs button.active{background:#111;color:var(--gold)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:12px;font-weight:800;color:#475569}
+.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #d7dde5;border-radius:9px;background:#fff;min-width:0}
+.field textarea{min-height:76px;resize:vertical}
+.full{grid-column:1/-1}
+.form-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.table-wrap{overflow:auto;width:100%;border:1px solid var(--line);border-radius:10px;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}
+th{background:#111;color:var(--gold);text-align:left;padding:12px 9px;white-space:nowrap}
+td{padding:11px 9px;border-bottom:1px solid #edf0f3;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+.badge{display:inline-block;border-radius:20px;padding:4px 7px;font-size:10px;font-weight:800;white-space:nowrap}
+.badge.ok{background:#d1fae5;color:#166534}.badge.pending{background:#fef3c7;color:#92400e}.badge.cancel{background:#fee2e2;color:#991b1b}.badge.info{background:#dbeafe;color:#1e40af}
+.note{font-size:12px;color:#64748b;line-height:1.55}
+.breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.breakdown>div{background:#f7f8fa;padding:13px;border-radius:10px;min-width:0}
+.breakdown small{display:block;color:#64748b;font-size:11px}.breakdown strong{display:block;margin-top:6px;font-size:17px;overflow-wrap:anywhere}
+footer{text-align:center;font-size:11px;color:#788391;padding:18px}
+@media(max-width:760px){.wrap{padding:9px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid,.breakdown{grid-template-columns:1fr}.panel{padding:12px}.metric{padding:12px}.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>RAB ROADSHOW & SERTIFIKASI BNSP</h1>
+  <p>DPD TESPOIN MAJALENGKA • ANGGARAN, PEMASUKAN, PENGELUARAN</p>
+</header>
+<div class="top-actions">
+  <button class="btn-dark" onclick="location.href='index-admin.html'">← Dashboard Admin</button>
+  <button id="refreshBtn" class="btn-green">↻ Muat Ulang</button>
+</div>
+<div id="status" class="status" role="status" aria-live="polite"></div>
+
+<section class="cards">
+  <div class="metric"><small>Total RAB Disetujui</small><strong id="mAnggaran">Rp0</strong></div>
+  <div class="metric red"><small>Realisasi Pengeluaran</small><strong id="mKeluar">Rp0</strong></div>
+  <div class="metric green"><small>Pemasukan Diterima</small><strong id="mMasuk">Rp0</strong></div>
+  <div class="metric blue"><small>Saldo Kas Acara</small><strong id="mSaldo">Rp0</strong></div>
+</section>
+
+<div class="tabs">
+  <button class="active" data-tab="dashboard">Ringkasan</button>
+  <button data-tab="rab">Rencana Anggaran</button>
+  <button data-tab="masuk">Pemasukan</button>
+  <button data-tab="keluar">Pengeluaran</button>
+  <button data-tab="laporan">Laporan & Ekspor</button>
+</div>
+
+<section id="tab-dashboard" class="tab-panel active">
+  <div class="panel">
+    <h2>Ringkasan Anggaran dan Kas</h2>
+    <div class="breakdown">
+      <div><small>Sisa anggaran (bukan saldo kas)</small><strong id="sisaAnggaran">Rp0</strong></div>
+      <div><small>Transaksi menunggu konfirmasi</small><strong id="menunggu">Rp0</strong></div>
+      <div><small>Jumlah transaksi terkonfirmasi</small><strong id="jmlTransaksi">0</strong></div>
+    </div>
+    <p class="note">Saldo kas = pemasukan terkonfirmasi − pengeluaran terkonfirmasi. Sisa anggaran = total RAB disetujui − realisasi pengeluaran. Kedua angka ini berbeda.</p>
+  </div>
+  <div class="panel">
+    <h2>Identitas Acara</h2>
+    <div class="form-grid">
+      <div class="field"><label>Nama acara</label><input id="eventName" value="Roadshow DPW Jabar dan Sertifikasi Profesi BNSP"></div>
+      <div class="field"><label>Lokasi</label><input id="eventLocation" value="Islamic Center Majalengka"></div>
+      <div class="field"><label>Tanggal mulai</label><input id="eventStart" type="date"></div>
+      <div class="field"><label>Tanggal selesai</label><input id="eventEnd" type="date"></div>
+      <div class="field"><label>Status acara</label><select id="eventStatus"><option value="PERSIAPAN">Persiapan</option><option value="BERLANGSUNG">Berlangsung</option><option value="SELESAI">Selesai</option></select></div>
+    </div>
+    <div class="form-actions"><button id="saveEventBtn" class="btn-gold">Simpan Identitas Acara</button></div>
+  </div>
+</section>
+
+<section id="tab-rab" class="tab-panel">
+  <div class="panel">
+    <h2>Tambah / Ubah Item RAB</h2>
+    <form id="rabForm">
+      <input type="hidden" id="rabId">
+      <div class="form-grid">
+        <div class="field"><label>Nama item</label><input id="rabName" required placeholder="Contoh: Sewa gedung"></div>
+        <div class="field"><label>Kategori</label><select id="rabCategory" required>
+          <option value="TEMPAT">Tempat dan fasilitas</option><option value="KONSUMSI">Konsumsi</option><option value="PERLENGKAPAN">Perlengkapan peserta</option><option value="BNSP">Sertifikasi BNSP</option><option value="PUBLIKASI">Dokumentasi dan publikasi</option><option value="PERALATAN">Peralatan acara</option><option value="OPERASIONAL">Transportasi dan operasional</option><option value="CADANGAN">Dana cadangan</option><option value="LAINNYA">Lainnya</option>
+        </select></div>
+        <div class="field"><label>Volume</label><input id="rabVolume" type="number" min="0.01" step="any" required value="1"></div>
+        <div class="field"><label>Satuan</label><input id="rabUnit" required placeholder="hari, orang, paket, unit"></div>
+        <div class="field"><label>Harga satuan (Rp)</label><input id="rabPrice" type="number" min="0" step="1" required value="0"></div>
+        <div class="field"><label>Status item</label><select id="rabState"><option value="DIAJUKAN">Diajukan</option><option value="DISETUJUI">Disetujui</option><option value="DITOLAK">Ditolak</option></select></div>
+        <div class="field full"><label>Catatan</label><textarea id="rabNote" placeholder="Keterangan tambahan"></textarea></div>
+      </div>
+      <p class="note">Total item dihitung otomatis dari volume × harga satuan. Hanya item berstatus DISETUJUI yang masuk total RAB disetujui.</p>
+      <div class="form-actions"><button class="btn-gold" type="submit">Simpan Item RAB</button><button id="cancelRabEdit" class="btn-light" type="button">Batal / Kosongkan</button></div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Daftar Rencana Anggaran</h2>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Kategori</th><th>Volume</th><th>Harga Satuan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="rabRows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<section id="tab-masuk" class="tab-panel">
+  <div class="panel">
+    <h2>Catat Pemasukan</h2>
+    <form id="inForm">
+      <input type="hidden" id="inId">
+      <div class="form-grid">
+        <div class="field"><label>Sumber pemasukan</label><select id="inCategory" required><option value="TIKET">Tiket peserta</option><option value="SPONSOR">Sponsor</option><option value="BANTUAN_DPW">Bantuan DPW</option><option value="DONASI">Donasi</option><option value="LAINNYA">Lainnya</option></select></div>
+        <div class="field"><label>Nominal (Rp)</label><input id="inAmount" type="number" min="1" step="1" required></div>
+        <div class="field"><label>Tanggal diterima</label><input id="inDate" type="date" required></div>
+        <div class="field"><label>Metode</label><select id="inMethod"><option value="TRANSFER">Transfer</option><option value="TUNAI">Tunai</option><option value="LAINNYA">Lainnya</option></select></div>
+        <div class="field"><label>Status pencatatan</label><select id="inState"><option value="TERKONFIRMASI">Terkonfirmasi / sudah diterima</option><option value="MENUNGGU">Menunggu konfirmasi</option></select></div>
+        <div class="field"><label>Referensi / nama penyetor</label><input id="inReference" placeholder="Nama sponsor / nomor bukti"></div>
+        <div class="field full"><label>Keterangan</label><textarea id="inNote" placeholder="Keterangan pemasukan"></textarea></div>
+      </div>
+      <div class="form-actions"><button class="btn-green" type="submit">Simpan Pemasukan</button><button id="cancelInEdit" class="btn-light" type="button">Batal / Kosongkan</button></div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Riwayat Pemasukan</h2>
+    <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Sumber</th><th>Keterangan</th><th>Nominal</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="inRows"><tr><td colspan="6">Belum ada data.</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<section id="tab-keluar" class="tab-panel">
+  <div class="panel">
+    <h2>Catat Pengeluaran</h2>
+    <form id="outForm">
+      <input type="hidden" id="outId">
+      <div class="form-grid">
+        <div class="field"><label>Kategori biaya</label><select id="outCategory" required><option value="TEMPAT">Tempat dan fasilitas</option><option value="KONSUMSI">Konsumsi</option><option value="PERLENGKAPAN">Perlengkapan peserta</option><option value="BNSP">Sertifikasi BNSP</option><option value="PUBLIKASI">Dokumentasi dan publikasi</option><option value="PERALATAN">Peralatan acara</option><option value="OPERASIONAL">Transportasi dan operasional</option><option value="CADANGAN">Dana cadangan</option><option value="LAINNYA">Lainnya</option></select></div>
+        <div class="field"><label>Nominal (Rp)</label><input id="outAmount" type="number" min="1" step="1" required></div>
+        <div class="field"><label>Tanggal transaksi</label><input id="outDate" type="date" required></div>
+        <div class="field"><label>Metode</label><select id="outMethod"><option value="TRANSFER">Transfer</option><option value="TUNAI">Tunai</option><option value="LAINNYA">Lainnya</option></select></div>
+        <div class="field"><label>Status pencatatan</label><select id="outState"><option value="TERKONFIRMASI">Terkonfirmasi / sudah dibayar</option><option value="MENUNGGU">Menunggu konfirmasi</option></select></div>
+        <div class="field"><label>Item RAB terkait</label><select id="outRabItem"><option value="">Tidak ditautkan</option></select></div>
+        <div class="field"><label>Penerima / vendor</label><input id="outVendor" placeholder="Nama toko / penerima"></div>
+        <div class="field full"><label>Keterangan</label><textarea id="outNote" placeholder="Rincian pengeluaran"></textarea></div>
+      </div>
+      <div class="form-actions"><button class="btn-green" type="submit">Simpan Pengeluaran</button><button id="cancelOutEdit" class="btn-light" type="button">Batal / Kosongkan</button></div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Riwayat Pengeluaran</h2>
+    <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Kategori</th><th>Penerima / Keterangan</th><th>Nominal</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="outRows"><tr><td colspan="6">Belum ada data.</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<section id="tab-laporan" class="tab-panel">
+  <div class="panel">
+    <h2>Laporan Anggaran</h2>
+    <div class="breakdown">
+      <div><small>Total RAB disetujui</small><strong id="repBudget">Rp0</strong></div>
+      <div><small>Realisasi biaya terkonfirmasi</small><strong id="repSpent">Rp0</strong></div>
+      <div><small>Sisa anggaran</small><strong id="repRemain">Rp0</strong></div>
+    </div>
+    <p class="note">Laporan ini menggabungkan seluruh transaksi pada acara ini. Ekspor CSV dapat dibuka dengan Excel atau diimpor ke Google Sheets.</p>
+    <div class="form-actions"><button id="exportRab" class="btn-gold">Ekspor RAB CSV</button><button id="exportTx" class="btn-dark">Ekspor Transaksi CSV</button></div>
+  </div>
+</section>
+<footer>RAB acara • Firebase Firestore • DPD TESPOIN Majalengka</footer>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore(),$=id=>document.getElementById(id);
+const EVENT_ID='roadshow_bnsp_2026';
+const eventRef=()=>db.collection('events').doc(EVENT_ID);
+const rabRef=()=>eventRef().collection('rab_items');
+const txRef=()=>eventRef().collection('transactions');
+const auditRef=()=>eventRef().collection('audit_logs');
+let userRole='',currentUser=null,rabItems=[],transactions=[],eventData={};
+
+function clean(v){return String(v==null?'':v).trim()}
+function up(v){return clean(v).toUpperCase()}
+function rupiah(v){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(v)||0)}
+function money(v){const n=Number(v);return Number.isFinite(n)&&n>=0?n:0}
+function today(){return new Date().toLocaleDateString('en-CA')}
+function showStatus(message,error=false){$('status').textContent=message;$('status').className='status show '+(error?'err':'ok')}
+function categoryName(v){return ({TEMPAT:'Tempat/fasilitas',KONSUMSI:'Konsumsi',PERLENGKAPAN:'Perlengkapan',BNSP:'Sertifikasi BNSP',PUBLIKASI:'Publikasi/dokumentasi',PERALATAN:'Peralatan',OPERASIONAL:'Operasional',CADANGAN:'Dana cadangan',LAINNYA:'Lainnya',TIKET:'Tiket peserta',SPONSOR:'Sponsor',BANTUAN_DPW:'Bantuan DPW',DONASI:'Donasi'})[v]||v||'-'}
+function stateBadge(state){
+  const span=document.createElement('span');span.className='badge '+(state==='TERKONFIRMASI'||state==='DISETUJUI'?'ok':state==='DIBATALKAN'||state==='DITOLAK'?'cancel':'pending');
+  span.textContent=state==='TERKONFIRMASI'?'TERKONFIRMASI':state==='MENUNGGU'?'MENUNGGU':state||'-';return span;
+}
+function addAudit(action,targetId,reason){
+  return auditRef().add({action,targetId,reason:reason||'',userUid:currentUser.uid,userEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+}
+function makeCell(tr,value){const td=document.createElement('td');td.textContent=value==null?'':String(value);tr.appendChild(td);return td}
+function makeAction(td,label,cls,fn){const b=document.createElement('button');b.textContent=label;b.className=cls;b.style.padding='6px 8px';b.style.margin='2px';b.addEventListener('click',fn);td.appendChild(b)}
+function approvedBudget(){return rabItems.filter(x=>x.status==='DISETUJUI').reduce((s,x)=>s+money(x.volume)*money(x.hargaSatuan),0)}
+function confirmedTransactions(kind){return transactions.filter(x=>x.jenis===kind&&x.status==='TERKONFIRMASI')}
+function totalTx(kind){return confirmedTransactions(kind).reduce((s,x)=>s+money(x.nominal),0)}
+function renderSummary(){
+  const budget=approvedBudget(),out=totalTx('PENGELUARAN'),incoming=totalTx('PEMASUKAN');
+  $('mAnggaran').textContent=rupiah(budget);$('mKeluar').textContent=rupiah(out);$('mMasuk').textContent=rupiah(incoming);$('mSaldo').textContent=rupiah(incoming-out);
+  $('sisaAnggaran').textContent=rupiah(budget-out);
+  $('menunggu').textContent=rupiah(transactions.filter(x=>x.status==='MENUNGGU').reduce((s,x)=>s+money(x.nominal),0));
+  $('jmlTransaksi').textContent=confirmedTransactions('PEMASUKAN').length+confirmedTransactions('PENGELUARAN').length;
+  $('repBudget').textContent=rupiah(budget);$('repSpent').textContent=rupiah(out);$('repRemain').textContent=rupiah(budget-out);
+}
+function fillRabOptions(){
+  const select=$('outRabItem'),old=select.value;select.replaceChildren();
+  const opt=document.createElement('option');opt.value='';opt.textContent='Tidak ditautkan';select.appendChild(opt);
+  rabItems.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.namaItem+' — '+rupiah(money(item.volume)*money(item.hargaSatuan));select.appendChild(o)});
+  select.value=old;
+}
+function renderRab(){
+  const body=$('rabRows');body.replaceChildren();
+  if(!rabItems.length){const tr=document.createElement('tr');makeCell(tr,'Belum ada item RAB.');const td=tr.lastChild;td.colSpan=7;body.appendChild(tr)}
+  rabItems.forEach(item=>{
+    const tr=document.createElement('tr');
+    makeCell(tr,item.namaItem);makeCell(tr,categoryName(item.kategori));makeCell(tr,String(item.volume)+' '+(item.satuan||''));makeCell(tr,rupiah(item.hargaSatuan));makeCell(tr,rupiah(money(item.volume)*money(item.hargaSatuan)));
+    const td=tr.insertCell();td.appendChild(stateBadge(item.status));
+    const action=tr.insertCell();
+    if(canWrite()){makeAction(action,'Edit','btn-light',()=>editRab(item));makeAction(action,'Status','btn-gold',()=>changeRabState(item));}
+    body.appendChild(tr);
+  });
+  fillRabOptions();
+}
+function renderTx(kind){
+  const body=$(kind==='PEMASUKAN'?'inRows':'outRows');body.replaceChildren();
+  const list=transactions.filter(t=>t.jenis===kind).sort((a,b)=>clean(b.tanggal).localeCompare(clean(a.tanggal)));
+  if(!list.length){const tr=document.createElement('tr');makeCell(tr,'Belum ada transaksi.');tr.lastChild.colSpan=kind==='PEMASUKAN'?6:6;body.appendChild(tr)}
+  list.forEach(t=>{
+    const tr=document.createElement('tr');
+    makeCell(tr,t.tanggal||'-');makeCell(tr,categoryName(t.kategori));
+    makeCell(tr,kind==='PEMASUKAN'?(t.referensi||t.keterangan||'-'):(t.vendor||t.keterangan||'-'));
+    makeCell(tr,rupiah(t.nominal));
+    const statusTd=tr.insertCell();statusTd.appendChild(stateBadge(t.status));
+    const action=tr.insertCell();
+    if(canWrite()){
+      if(t.status==='MENUNGGU')makeAction(action,'Konfirmasi','btn-green',()=>confirmTx(t));
+      if(t.status!=='DIBATALKAN')makeAction(action,'Batalkan','btn-red',()=>cancelTx(t));
+      makeAction(action,'Edit','btn-light',()=>editTx(t));
+    }
+    body.appendChild(tr);
+  });
+}
+function renderAll(){renderSummary();renderRab();renderTx('PEMASUKAN');renderTx('PENGELUARAN')}
+function canWrite(){return userRole==='ADMIN'||userRole==='BENDAHARA'}
+function setWriteAccess(){
+  document.querySelectorAll('#rabForm input,#rabForm select,#rabForm textarea,#rabForm button,#inForm input,#inForm select,#inForm textarea,#inForm button,#outForm input,#outForm select,#outForm textarea,#outForm button,#saveEventBtn').forEach(el=>el.disabled=!canWrite());
+  $('exportRab').disabled=false;$('exportTx').disabled=false;
+  if(userRole==='OWNER')showStatus('Mode Owner: hanya melihat laporan, tidak dapat mengubah data.');
+}
+function tab(name){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+}
+function resetRab(){ $('rabForm').reset();$('rabId').value='';$('rabVolume').value='1';$('rabPrice').value='0'; }
+function editRab(item){
+  $('rabId').value=item.id;$('rabName').value=item.namaItem||'';$('rabCategory').value=item.kategori||'LAINNYA';$('rabVolume').value=item.volume??1;$('rabUnit').value=item.satuan||'';$('rabPrice').value=item.hargaSatuan??0;$('rabState').value=item.status||'DIAJUKAN';$('rabNote').value=item.catatan||'';tab('rab');window.scrollTo({top:0,behavior:'smooth'});
+}
+async function changeRabState(item){
+  const next=prompt('Masukkan status: DIAJUKAN, DISETUJUI, atau DITOLAK',item.status);
+  if(!next)return;const state=up(next);
+  if(!['DIAJUKAN','DISETUJUI','DITOLAK'].includes(state)){showStatus('Status tidak valid.',true);return}
+  try{await rabRef().doc(item.id).update({status:state,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid});await addAudit('STATUS_RAB_DIUBAH',item.id,'Status: '+state);await reloadData();showStatus('Status item RAB diperbarui.')}catch(e){showStatus('Gagal mengubah status: '+e.message,true)}
+}
+async function saveRab(e){
+  e.preventDefault();if(!canWrite())return;
+  const volume=Number($('rabVolume').value),price=Number($('rabPrice').value);
+  if(!Number.isFinite(volume)||volume<=0||!Number.isFinite(price)||price<0){showStatus('Volume atau harga tidak valid.',true);return}
+  const data={namaItem:$('rabName').value.trim(),kategori:$('rabCategory').value,volume,satuan:$('rabUnit').value.trim(),hargaSatuan:price,status:$('rabState').value,catatan:$('rabNote').value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
+  try{
+    const id=$('rabId').value;
+    if(id){await rabRef().doc(id).update(data);await addAudit('RAB_DIUBAH',id,data.namaItem)}
+    else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();data.createdBy=currentUser.uid;const ref=await rabRef().add(data);await addAudit('RAB_DITAMBAHKAN',ref.id,data.namaItem)}
+    resetRab();await reloadData();showStatus('Item RAB berhasil disimpan.');
+  }catch(e){console.error(e);showStatus('Gagal menyimpan RAB: '+e.message,true)}
+}
+function resetTx(kind){
+  const form=$(kind==='PEMASUKAN'?'inForm':'outForm');form.reset();
+  $(kind==='PEMASUKAN'?'inId':'outId').value='';
+  $(kind==='PEMASUKAN'?'inDate':'outDate').value=today();
+}
+function editTx(t){
+  if(!canWrite())return;
+  if(t.jenis==='PEMASUKAN'){
+    $('inId').value=t.id;$('inCategory').value=t.kategori||'LAINNYA';$('inAmount').value=t.nominal||0;$('inDate').value=t.tanggal||today();$('inMethod').value=t.metode||'TRANSFER';$('inState').value=t.status||'MENUNGGU';$('inReference').value=t.referensi||'';$('inNote').value=t.keterangan||'';tab('masuk');
+  }else{
+    $('outId').value=t.id;$('outCategory').value=t.kategori||'LAINNYA';$('outAmount').value=t.nominal||0;$('outDate').value=t.tanggal||today();$('outMethod').value=t.metode||'TRANSFER';$('outState').value=t.status||'MENUNGGU';$('outRabItem').value=t.rabItemId||'';$('outVendor').value=t.vendor||'';$('outNote').value=t.keterangan||'';tab('keluar');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function saveTx(e,kind){
+  e.preventDefault();if(!canWrite())return;
+  const incoming=kind==='PEMASUKAN',id=$(incoming?'inId':'outId').value;
+  const amount=Number($(incoming?'inAmount':'outAmount').value),date=$(incoming?'inDate':'outDate').value;
+  if(!Number.isSafeInteger(amount)||amount<=0){showStatus('Nominal harus berupa bilangan rupiah positif.',true);return}
+  if(!date){showStatus('Tanggal transaksi wajib diisi.',true);return}
+  const data={
+    jenis:kind,kategori:$(incoming?'inCategory':'outCategory').value,nominal:amount,tanggal:date,
+    metode:$(incoming?'inMethod':'outMethod').value,status:$(incoming?'inState':'outState').value,
+    keterangan:$(incoming?'inNote':'outNote').value.trim(),
+    referensi:incoming?$( 'inReference').value.trim():'',
+    vendor:incoming?'':$('outVendor').value.trim(),
+    rabItemId:incoming?'':$('outRabItem').value||null,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid
+  };
+  try{
+    if(id){await txRef().doc(id).update(data);await addAudit('TRANSAKSI_DIUBAH',id,kind+' '+amount)}
+    else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();data.createdBy=currentUser.uid;const ref=await txRef().add(data);await addAudit('TRANSAKSI_DITAMBAHKAN',ref.id,kind+' '+amount)}
+    resetTx(kind);await reloadData();showStatus('Transaksi berhasil disimpan.');
+  }catch(e){console.error(e);showStatus('Gagal menyimpan transaksi: '+e.message,true)}
+}
+async function confirmTx(t){
+  if(!canWrite()||t.status!=='MENUNGGU')return;
+  if(!confirm('Konfirmasi transaksi '+rupiah(t.nominal)+' sebagai sudah diterima/dibayar?'))return;
+  try{await txRef().doc(t.id).update({status:'TERKONFIRMASI',updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid});await addAudit('TRANSAKSI_DIKONFIRMASI',t.id,rupiah(t.nominal));await reloadData();showStatus('Transaksi dikonfirmasi.')}catch(e){showStatus('Gagal mengonfirmasi: '+e.message,true)}
+}
+async function cancelTx(t){
+  if(!canWrite())return;
+  const reason=prompt('Alasan pembatalan transaksi:');if(!reason||!reason.trim())return;
+  try{await txRef().doc(t.id).update({status:'DIBATALKAN',alasanPembatalan:reason.trim(),cancelledAt:firebase.firestore.FieldValue.serverTimestamp(),cancelledBy:currentUser.uid,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});await addAudit('TRANSAKSI_DIBATALKAN',t.id,reason.trim());await reloadData();showStatus('Transaksi dibatalkan; catatan tetap tersimpan.')}catch(e){showStatus('Gagal membatalkan transaksi: '+e.message,true)}
+}
+async function saveEvent(){
+  if(!canWrite())return;
+  const data={namaAcara:$('eventName').value.trim(),lokasi:$('eventLocation').value.trim(),tanggalMulai:$('eventStart').value||null,tanggalSelesai:$('eventEnd').value||null,status:$('eventStatus').value,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
+  try{await eventRef().set({...data,createdAt:eventData.createdAt||firebase.firestore.FieldValue.serverTimestamp(),createdBy:eventData.createdBy||currentUser.uid},{merge:true});await addAudit('INFO_ACARA_DIUBAH',EVENT_ID,data.namaAcara);await reloadData();showStatus('Identitas acara berhasil disimpan.')}catch(e){showStatus('Gagal menyimpan identitas acara: '+e.message,true)}
+}
+async function reloadData(){
+  const [eventSnap,rabSnap,txSnap]=await Promise.all([eventRef().get(),rabRef().get(),txRef().get()]);
+  eventData=eventSnap.exists?eventSnap.data():{};
+  rabItems=rabSnap.docs.map(d=>({id:d.id,...d.data()}));
+  transactions=txSnap.docs.map(d=>({id:d.id,...d.data()}));
+  if(eventData.namaAcara)$('eventName').value=eventData.namaAcara;
+  if(eventData.lokasi)$('eventLocation').value=eventData.lokasi;
+  $('eventStart').value=eventData.tanggalMulai||'';$('eventEnd').value=eventData.tanggalSelesai||'';$('eventStatus').value=eventData.status||'PERSIAPAN';
+  renderAll();
+}
+async function loadPage(){
+  $('refreshBtn').disabled=true;showStatus('Memeriksa login dan memuat RAB...');
+  try{
+    currentUser=await new Promise((resolve,reject)=>{let unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u)},reject)});
+    if(!currentUser){location.href='login-panitia.html';return}
+    const snap=await db.collection('users').doc(currentUser.uid).get();
+    userRole=snap.exists?up(snap.data().role):'';
+    if(!['ADMIN','BENDAHARA','OWNER'].includes(userRole)){showStatus('Akses ditolak. Halaman khusus Admin, Bendahara, dan Owner.',true);return}
+    await reloadData();setWriteAccess();
+    showStatus(userRole==='OWNER'?'Login sebagai Owner: mode lihat saja.':'RAB berhasil dimuat. Role: '+userRole);
+  }catch(e){console.error(e);showStatus('Gagal memuat RAB. Periksa login dan Firestore Rules: '+e.message,true)}
+  finally{$('refreshBtn').disabled=false}
+}
+function csvDownload(name,rows){
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function exportRAB(){csvDownload('RAB-Roadshow-BNSP.csv',[['Nama Item','Kategori','Volume','Satuan','Harga Satuan','Total Anggaran','Status','Catatan'],...rabItems.map(x=>[x.namaItem,categoryName(x.kategori),x.volume,x.satuan,x.hargaSatuan,money(x.volume)*money(x.hargaSatuan),x.status,x.catatan])])}
+function exportTransactions(){csvDownload('Transaksi-Roadshow-BNSP.csv',[['Tanggal','Jenis','Kategori','Keterangan','Nominal','Metode','Status','Vendor/Referensi'],...transactions.map(x=>[x.tanggal,x.jenis,categoryName(x.kategori),x.keterangan,x.nominal,x.metode,x.status,x.vendor||x.referensi])])}
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
+$('refreshBtn').addEventListener('click',async()=>{try{await reloadData();showStatus('Data berhasil diperbarui.')}catch(e){showStatus('Gagal memuat ulang: '+e.message,true)}});
+$('rabForm').addEventListener('submit',saveRab);
+$('cancelRabEdit').addEventListener('click',resetRab);
+$('inForm').addEventListener('submit',e=>saveTx(e,'PEMASUKAN'));
+$('outForm').addEventListener('submit',e=>saveTx(e,'PENGELUARAN'));
+$('cancelInEdit').addEventListener('click',()=>resetTx('PEMASUKAN'));
+$('cancelOutEdit').addEventListener('click',()=>resetTx('PENGELUARAN'));
+$('saveEventBtn').addEventListener('click',saveEvent);
+$('exportRab').addEventListener('click',exportRAB);
+$('exportTx').addEventListener('click',exportTransactions);
+resetTx('PEMASUKAN');resetTx('PENGELUARAN');loadPage();
+</script>
+</body>
+</html>
