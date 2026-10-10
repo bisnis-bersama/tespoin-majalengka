@@ -133,13 +133,17 @@ button:disabled{opacity:.6;cursor:not-allowed}
         <div class="detail-row"><span>Kode Registrasi</span><b id="rKode">-</b></div>
         <div class="detail-row"><span>Metode Pembayaran</span><b id="rMetode">COD</b></div>
         <div class="detail-row"><span>Status Pembayaran</span><b id="rStatus">LUNAS</b></div>
+        <div class="detail-row"><span>Status Kehadiran</span><b id="rKehadiran">BELUM HADIR</b></div>
+        <div class="detail-row"><span>Status Benefit</span><b id="rBenefit">BELUM DIAMBIL</b></div>
         <div class="detail-row"><span>Nominal</span><b id="rNominal">-</b></div>
       </div>
 
       <div class="save-note">
         <b>PENTING:</b> Simpan bukti registrasi dalam bentuk JPG. QR Code jangan dihapus
         karena akan digunakan saat registrasi ulang. Tanda <b>COD</b> membedakan bukti ini
-        dari registrasi peserta biasa.
+        dari registrasi peserta biasa. Status kehadiran baru berubah menjadi <b>HADIR</b>
+        saat QR Code dipindai pada halaman registrasi ulang. Status benefit tetap
+        <b>BELUM DIAMBIL</b> sampai benefit benar-benar diberikan.
       </div>
 
       <div class="proof-actions">
@@ -205,13 +209,8 @@ function makeCode(){
 }
 
 async function init(){
-  // Pertahankan alur login seperti halaman COD semula.
   user = await new Promise(resolve => {
-    let unsub = null;
-    unsub = auth.onAuthStateChanged(x => {
-      if (unsub) unsub();
-      resolve(x);
-    });
+    const unsub = auth.onAuthStateChanged(x => {unsub();resolve(x)});
   });
 
   if(!user){
@@ -236,14 +235,12 @@ async function init(){
 
   $('harga').textContent = rupiah(codPrice);
 
-  // Halaman ini khusus Admin/Owner, jadi tidak dibatasi tanggal acara.
-  // Harga COD tetap wajib sudah diatur.
   if(codPrice <= 0){
     $('btnDaftar').disabled = true;
     setMsg('Harga COD belum diatur pada Pengaturan Acara.', true);
   }else{
     $('btnDaftar').disabled = false;
-    setMsg('Silakan isi data peserta COD. Admin/Owner dapat mendaftar kapan saja.', false);
+    setMsg('Silakan isi data peserta COD.', false);
   }
 }
 
@@ -257,7 +254,6 @@ $('formRegistrasi').addEventListener('submit', async e => {
   b.textContent = 'MENYIMPAN...';
 
   try{
-    // Admin/Owner boleh registrasi COD kapan saja; tanggal acara tidak menjadi syarat.
     if(codPrice <= 0) throw new Error('Harga COD belum diatur.');
 
     const nama = $('nama').value.trim();
@@ -338,7 +334,7 @@ $('formRegistrasi').addEventListener('submit', async e => {
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // Tombol hanya dinonaktifkan jika harga COD belum diatur.
+    // COD tidak dibatasi tanggal; tombol hanya terkunci jika harga belum diatur.
     if(codPrice <= 0) b.disabled = true;
   }
 });
@@ -353,6 +349,8 @@ function tampilkanBukti(p){
   $('rKode').textContent = p.kode || '-';
   $('rMetode').textContent = 'COD';
   $('rStatus').textContent = 'LUNAS';
+  $('rKehadiran').textContent = 'BELUM HADIR';
+  $('rBenefit').textContent = 'BELUM DIAMBIL';
   $('rNominal').textContent = rupiah(p.nominal);
 
   const qr = $('qrcode');
