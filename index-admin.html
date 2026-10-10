@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -55,7 +54,9 @@ body{
   font-weight:900;
 }
 
-/* TOMBOL */
+/* =========================
+   TOMBOL
+========================= */
 
 .top-button{
   display:flex;
@@ -83,7 +84,9 @@ body{
   color:#111;
 }
 
-/* STATUS */
+/* =========================
+   STATUS
+========================= */
 
 .status{
   display:none;
@@ -94,11 +97,23 @@ body{
   font-weight:700;
 }
 
-.status.show{display:block}
-.status.ok{background:#dff5e4;color:#087b25}
-.status.err{background:#ffe1e1;color:#a00000}
+.status.show{
+  display:block;
+}
 
-/* KARTU UTAMA */
+.status.ok{
+  background:#dff5e4;
+  color:#087b25;
+}
+
+.status.err{
+  background:#ffe1e1;
+  color:#a00000;
+}
+
+/* =========================
+   KARTU UTAMA
+========================= */
 
 .stats{
   display:grid;
@@ -114,11 +129,25 @@ body{
   border-left:5px solid #111;
 }
 
-.stat.green{border-left-color:#198754}
-.stat.red{border-left-color:#dc3545}
-.stat.orange{border-left-color:#f59e0b}
-.stat.blue{border-left-color:#0d6efd}
-.stat.gray{border-left-color:#64748b}
+.stat.green{
+  border-left-color:#198754;
+}
+
+.stat.red{
+  border-left-color:#dc3545;
+}
+
+.stat.orange{
+  border-left-color:#f59e0b;
+}
+
+.stat.blue{
+  border-left-color:#0d6efd;
+}
+
+.stat.gray{
+  border-left-color:#64748b;
+}
 
 .label{
   font-size:12px;
@@ -139,15 +168,9 @@ body{
   font-weight:800;
 }
 
-/* Nominal estimasi belum lunas */
-.nominal-estimasi{
-  margin-top:5px;
-  color:#dc3545;
-  font-size:14px;
-  font-weight:800;
-}
-
-/* SECTION */
+/* =========================
+   SECTION
+========================= */
 
 .section{
   margin-top:17px;
@@ -163,7 +186,9 @@ body{
   margin-bottom:15px;
 }
 
-/* KAOS */
+/* =========================
+   KAOS
+========================= */
 
 .kaos-grid{
   display:grid;
@@ -191,7 +216,9 @@ body{
   margin-top:5px;
 }
 
-/* KEHADIRAN */
+/* =========================
+   KEHADIRAN
+========================= */
 
 .attendance{
   display:grid;
@@ -218,7 +245,9 @@ body{
   margin-top:6px;
 }
 
-/* MENU */
+/* =========================
+   MENU
+========================= */
 
 .menu{
   display:grid;
@@ -240,7 +269,9 @@ body{
   transition:.15s;
 }
 
-.menu a:active{transform:scale(.98)}
+.menu a:active{
+  transform:scale(.98);
+}
 
 .icon{
   width:50px;
@@ -266,7 +297,9 @@ body{
   line-height:1.4;
 }
 
-/* CATATAN */
+/* =========================
+   CATATAN
+========================= */
 
 .note{
   margin-top:16px;
@@ -291,7 +324,9 @@ body{
   cursor:pointer;
 }
 
-/* LOADING */
+/* =========================
+   LOADING
+========================= */
 
 .loading{
   text-align:center;
@@ -300,225 +335,495 @@ body{
   margin-top:14px;
 }
 
-/* RESPONSIVE */
+/* =========================
+   RESPONSIVE
+========================= */
 
 @media(max-width:800px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .kaos-grid{grid-template-columns:repeat(3,1fr)}
+
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .kaos-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
 }
 
 @media(max-width:650px){
-  .menu{grid-template-columns:1fr}
+
+  .menu{
+    grid-template-columns:1fr;
+  }
+
 }
 
 @media(max-width:450px){
-  .wrap{padding:12px}
-  .header{padding:20px 15px}
-  .header h1{font-size:21px}
-  .stats{grid-template-columns:1fr 1fr;gap:10px}
-  .stat{padding:14px}
-  .number{font-size:24px}
-  .kaos{padding:12px 5px}
-  .kaos-number{font-size:24px}
+
+  .wrap{
+    padding:12px;
+  }
+
+  .header{
+    padding:20px 15px;
+  }
+
+  .header h1{
+    font-size:21px;
+  }
+
+  .stats{
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .stat{
+    padding:14px;
+  }
+
+  .number{
+    font-size:24px;
+  }
+
+  .kaos{
+    padding:12px 5px;
+  }
+
+  .kaos-number{
+    font-size:24px;
+  }
+
 }
 </style>
 </head>
 
 <body>
+
 <div class="wrap">
 
   <!-- HEADER -->
+
   <div class="header">
+
     <h1>DPD TESPOIN MAJALENGKA</h1>
-    <p>ADMIN PANITIA — SISTEM REGISTRASI PESERTA</p>
-    <div class="badge">HALAMAN ADMIN</div>
+
+    <p>
+      ADMIN PANITIA — SISTEM REGISTRASI PESERTA
+    </p>
+
+    <div class="badge">
+      HALAMAN ADMIN
+    </div>
+
   </div>
+
 
   <!-- TOMBOL -->
+
   <div class="top-button">
-    <button class="btn btn-refresh" onclick="loadDashboard()">
+
+    <button
+      class="btn btn-refresh"
+      onclick="loadDashboard()">
+
       ↻ MUAT ULANG DATA
+
     </button>
 
-    <button id="btnPengaturanTop"
+    <button
       class="btn btn-setting"
       onclick="location.href='pengaturan.html'">
+
       ⚙ PENGATURAN ACARA
+
     </button>
+
   </div>
 
-  <div id="status" class="status"></div>
 
-  <!-- RINGKASAN -->
+  <div
+    id="status"
+    class="status">
+  </div>
+
+
+  <!-- =========================
+       RINGKASAN
+  ========================== -->
+
   <div class="stats">
 
+    <!-- TOTAL -->
+
     <div class="stat">
-      <div class="label">TOTAL PESERTA</div>
-      <div class="number" id="total">0</div>
+
+      <div class="label">
+        TOTAL PESERTA
+      </div>
+
+      <div
+        class="number"
+        id="total">
+        0
+      </div>
+
     </div>
+
+
+    <!-- LUNAS -->
 
     <div class="stat green">
-      <div class="label">TOTAL LUNAS</div>
-      <div class="number" id="lunas">0</div>
-      <div class="nominal" id="nominalLunas">Rp 0</div>
+
+      <div class="label">
+        TOTAL LUNAS
+      </div>
+
+      <div
+        class="number"
+        id="lunas">
+        0
+      </div>
+
+      <div
+        class="nominal"
+        id="nominalLunas">
+        Rp 0
+      </div>
+
     </div>
+
+
+    <!-- BELUM LUNAS -->
 
     <div class="stat red">
-      <div class="label">BELUM LUNAS</div>
-      <div class="number" id="belum">0</div>
-      <div class="nominal-estimasi" id="nominalBelum">
-        Estimasi Rp 0
+
+      <div class="label">
+        BELUM LUNAS
       </div>
+
+      <div
+        class="number"
+        id="belum">
+        0
+      </div>
+
     </div>
+
+
+    <!-- COD -->
 
     <div class="stat orange">
-      <div class="label">COD</div>
-      <div class="number" id="cod">0</div>
-      <div class="nominal" id="nominalCOD">Rp 0</div>
+
+      <div class="label">
+        COD
+      </div>
+
+      <div
+        class="number"
+        id="cod">
+        0
+      </div>
+
+      <div
+        class="nominal"
+        id="nominalCOD">
+        Rp 0
+      </div>
+
     </div>
+
+
+    <!-- HADIR -->
 
     <div class="stat blue">
-      <div class="label">SUDAH HADIR</div>
-      <div class="number" id="hadir">0</div>
+
+      <div class="label">
+        SUDAH HADIR
+      </div>
+
+      <div
+        class="number"
+        id="hadir">
+        0
+      </div>
+
     </div>
 
+
+    <!-- BELUM HADIR -->
+
     <div class="stat gray">
-      <div class="label">BELUM HADIR</div>
-      <div class="number" id="belumHadir">0</div>
+
+      <div class="label">
+        BELUM HADIR
+      </div>
+
+      <div
+        class="number"
+        id="belumHadir">
+        0
+      </div>
+
     </div>
 
   </div>
 
-  <!-- UKURAN KAOS -->
+
+  <!-- =========================
+       UKURAN KAOS
+  ========================== -->
+
   <div class="section">
-    <div class="section-title">👕 UKURAN KAOS PESERTA</div>
+
+    <div class="section-title">
+      👕 UKURAN KAOS PESERTA
+    </div>
 
     <div class="kaos-grid">
+
       <div class="kaos">
         <div class="kaos-name">S</div>
-        <div class="kaos-number" id="kaosS">0</div>
+        <div
+          class="kaos-number"
+          id="kaosS">
+          0
+        </div>
       </div>
 
       <div class="kaos">
         <div class="kaos-name">M</div>
-        <div class="kaos-number" id="kaosM">0</div>
+        <div
+          class="kaos-number"
+          id="kaosM">
+          0
+        </div>
       </div>
 
       <div class="kaos">
         <div class="kaos-name">L</div>
-        <div class="kaos-number" id="kaosL">0</div>
+        <div
+          class="kaos-number"
+          id="kaosL">
+          0
+        </div>
       </div>
 
       <div class="kaos">
         <div class="kaos-name">XL</div>
-        <div class="kaos-number" id="kaosXL">0</div>
+        <div
+          class="kaos-number"
+          id="kaosXL">
+          0
+        </div>
       </div>
 
       <div class="kaos">
         <div class="kaos-name">XXL</div>
-        <div class="kaos-number" id="kaosXXL">0</div>
+        <div
+          class="kaos-number"
+          id="kaosXXL">
+          0
+        </div>
       </div>
 
       <div class="kaos">
         <div class="kaos-name">XXXL</div>
-        <div class="kaos-number" id="kaosXXXL">0</div>
+        <div
+          class="kaos-number"
+          id="kaosXXXL">
+          0
+        </div>
       </div>
 
-      <div class="kaos">
-        <div class="kaos-name">XXXXL / 4XL</div>
-        <div class="kaos-number" id="kaosXXXXL">0</div>
-      </div>
     </div>
+
   </div>
 
-  <!-- KEHADIRAN -->
+
+  <!-- =========================
+       KEHADIRAN
+  ========================== -->
+
   <div class="section">
-    <div class="section-title">📋 KEHADIRAN PESERTA</div>
+
+    <div class="section-title">
+      📋 KEHADIRAN PESERTA
+    </div>
 
     <div class="attendance">
-      <div class="att-card">
-        <div class="att-title">SUDAH HADIR</div>
-        <div class="att-number" id="hadir2">0</div>
-      </div>
 
       <div class="att-card">
-        <div class="att-title">BELUM HADIR</div>
-        <div class="att-number" id="belumHadir2">0</div>
+
+        <div class="att-title">
+          SUDAH HADIR
+        </div>
+
+        <div
+          class="att-number"
+          id="hadir2">
+          0
+        </div>
+
       </div>
+
+
+      <div class="att-card">
+
+        <div class="att-title">
+          BELUM HADIR
+        </div>
+
+        <div
+          class="att-number"
+          id="belumHadir2">
+          0
+        </div>
+
+      </div>
+
     </div>
+
   </div>
 
-  <!-- MENU ADMIN -->
+
+  <!-- =========================
+       MENU ADMIN
+  ========================== -->
+
   <div class="menu">
 
-    <a href="registrasi-cod.html">
-      <div class="icon">💵</div>
-      <div>
-        <h3>Registrasi COD</h3>
-        <p>Daftarkan peserta COD pada hari acara.</p>
+    <a href="peserta.html">
+
+      <div class="icon">
+        👥
       </div>
+
+      <div>
+
+        <h3>
+          Approval Peserta
+        </h3>
+
+        <p>
+          Lihat peserta dan konfirmasi
+          pembayaran.
+        </p>
+
+      </div>
+
     </a>
 
-    <a href="peserta.html">
-      <div class="icon">👥</div>
-      <div>
-        <h3>Approval Peserta</h3>
-        <p>Lihat peserta dan konfirmasi pembayaran.</p>
-      </div>
-    </a>
 
     <a href="registrasi-ulang.html">
-      <div class="icon">📷</div>
-      <div>
-        <h3>Registrasi Ulang</h3>
-        <p>Scan QR peserta saat hari acara dan catat kehadiran.</p>
+
+      <div class="icon">
+        📷
       </div>
+
+      <div>
+
+        <h3>
+          Registrasi Ulang
+        </h3>
+
+        <p>
+          Scan QR peserta saat hari acara
+          dan catat kehadiran.
+        </p>
+
+      </div>
+
     </a>
 
-    <a href="bukti.html">
-      <div class="icon">🔎</div>
-      <div>
-        <h3>Cek Registrasi</h3>
-        <p>Memeriksa bukti registrasi dan kode registrasi peserta.</p>
+
+    <a href="lunas.html">
+
+      <div class="icon">
+        💰
       </div>
+
+      <div>
+
+        <h3>
+          Peserta Lunas
+        </h3>
+
+        <p>
+          Melihat daftar peserta yang
+          pembayaran sudah disetujui.
+        </p>
+
+      </div>
+
     </a>
 
-    <a id="menuPengaturan" href="pengaturan.html">
-      <div class="icon">⚙️</div>
-      <div>
-        <h3>Pengaturan Acara</h3>
-        <p>Atur tanggal, lokasi, harga tiket, benefit, petugas dan status pendaftaran.</p>
-      </div>
-    </a>
 
-    <a href="pengundian.html">
-      <div class="icon">🎁</div>
-      <div>
-        <h3>Pemutaran Doorprize</h3>
-        <p>Buka halaman pengundian untuk menentukan pemenang doorprize.</p>
+    <a href="pengaturan.html">
+
+      <div class="icon">
+        ⚙️
       </div>
+
+      <div>
+
+        <h3>
+          Pengaturan Acara
+        </h3>
+
+        <p>
+          Atur tanggal, lokasi, harga tiket,
+          benefit, petugas dan status
+          pendaftaran.
+        </p>
+
+      </div>
+
     </a>
 
   </div>
+
 
   <!-- CATATAN -->
+
   <div class="note">
+
     <b>Catatan:</b>
-    QR peserta hanya digunakan sebagai identitas saat registrasi ulang.
+
+    QR peserta hanya digunakan sebagai
+    identitas saat registrasi ulang.
+
     Scan QR tidak mengubah status pembayaran.
+
   </div>
 
-  <button class="logout" onclick="logout()">KELUAR ADMIN</button>
 
-  <div id="loading" class="loading">Memuat data...</div>
+  <button
+    class="logout"
+    onclick="logout()">
+
+    KELUAR ADMIN
+
+  </button>
+
+
+  <div
+    id="loading"
+    class="loading">
+
+    Memuat data...
+
+  </div>
 
 </div>
+
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain: "register-peserta.firebaseapp.com",
@@ -528,10 +833,7 @@ const firebaseConfig = {
   appId: "1:983090504866:web:7879b0784b9fecad4863fb"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentRole = '';
@@ -547,118 +849,123 @@ function waitForAuth(){
 
 async function requireAdmin(){
   const user = await waitForAuth();
-
   if(!user){
-    window.location.href = 'login-panitia.html';
+    window.location.href = 'login.html';
     return false;
   }
 
   try{
     const snap = await db.collection('users').doc(user.uid).get();
-    const role = snap.exists
-      ? String(snap.data().role || '').toLowerCase()
-      : '';
-
-    if(role !== 'admin' && role !== 'owner'){
-      alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');
+    const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
+    if(role !== 'admin'){
+      alert('Akses ditolak. Halaman ini khusus Admin.');
       await auth.signOut();
-      window.location.href = 'login-panitia.html';
+      window.location.href = 'login.html';
       return false;
     }
-
     currentRole = role;
-
-    const btnPengaturanTop =
-      document.getElementById('btnPengaturanTop');
-    const menuPengaturan =
-      document.getElementById('menuPengaturan');
-
-    if(role !== 'admin'){
-      if(btnPengaturanTop) btnPengaturanTop.style.display = 'none';
-      if(menuPengaturan) menuPengaturan.style.display = 'none';
-    }
-
     return true;
-
   }catch(err){
     console.error(err);
     alert('Gagal memeriksa hak akses Admin.');
     await auth.signOut();
-    window.location.href = 'login-panitia.html';
+    window.location.href = 'login.html';
     return false;
   }
 }
 
-/* HELPER */
+/* =========================
+   HELPER
+========================= */
 
 function clean(value){
-  return String(value ?? '').trim();
+
+  return String(
+    value ?? ''
+  ).trim();
+
 }
+
 
 function upper(value){
-  return clean(value).toUpperCase();
+
+  return clean(value)
+    .toUpperCase();
+
 }
 
-/*
-  Mendukung nilai numerik Firestore maupun string rupiah.
-*/
-function angka(value){
-  if(typeof value === 'number'){
-    return Number.isFinite(value) ? value : 0;
-  }
-
-  if(value === null || value === undefined || value === ''){
-    return 0;
-  }
-
-  const hasil = Number(String(value).replace(/[^\d-]/g,''));
-  return Number.isFinite(hasil) ? hasil : 0;
-}
 
 function rupiah(value){
-  return 'Rp ' + angka(value).toLocaleString('id-ID');
+
+  /*
+   * Mengatasi angka:
+   * 150000
+   * "150000"
+   * "Rp 150.000"
+   */
+
+  const number =
+    Number(
+      String(value ?? '')
+        .replace(/[^\d]/g,'')
+    ) || 0;
+
+  return (
+    'Rp ' +
+    number.toLocaleString('id-ID')
+  );
+
 }
 
-/* STATUS */
 
-function showStatus(message, type){
-  const el = document.getElementById('status');
-  el.textContent = message;
-  el.className = 'status show ' + (type || '');
+/* =========================
+   STATUS
+========================= */
+
+function showStatus(
+  message,
+  type
+){
+
+  const el =
+    document.getElementById(
+      'status'
+    );
+
+  el.textContent =
+    message;
+
+  el.className =
+    'status show ' +
+    (type || '');
+
 }
 
-/* LOAD DASHBOARD */
+
+/* =========================
+   LOAD DASHBOARD
+========================= */
 
 async function loadDashboard(){
+
   document.getElementById('loading').textContent =
     'Mengambil data peserta dari Firestore...';
-
   showStatus('Mengambil data peserta dari Firestore...', '');
 
   try{
-    const snapshot = await db.collection('peserta').get();
-
+    // Baca langsung dari koleksi Firestore, bukan Apps Script/Spreadsheet.
+    const snapshot = await db.collection('peserta').get({ source: 'server' });
     const peserta = snapshot.docs.map(docSnap => {
       const data = docSnap.data() || {};
       return { ...data, _docId: docSnap.id };
     });
 
     hitungDashboard(peserta);
-
-    showStatus(
-      'Dashboard diperbarui dari Firestore — ' +
-      peserta.length + ' peserta.',
-      'ok'
-    );
+    showStatus('Dashboard diperbarui dari Firestore — ' + peserta.length + ' peserta.', 'ok');
 
   }catch(error){
     console.error('Gagal membaca peserta dari Firestore:', error);
-
-    showStatus(
-      'Gagal memuat data Firestore: ' +
-      (error.message || error),
-      'err'
-    );
+    showStatus('Gagal memuat data Firestore: ' + (error.message || error), 'err');
 
   }finally{
     document.getElementById('loading').textContent =
@@ -666,193 +973,341 @@ async function loadDashboard(){
   }
 }
 
-/* HITUNG DASHBOARD */
 
-function hitungDashboard(peserta){
 
-  /* TOTAL */
+/* =========================
+   HITUNG DASHBOARD
+========================= */
 
-  const total = peserta.length;
+function hitungDashboard(
+  peserta
+){
 
-  /* STATUS PEMBAYARAN */
+  /* =========================
+     TOTAL
+  ========================== */
 
-  const lunas = peserta.filter(function(p){
-    return upper(p.statusPembayaran) === 'LUNAS';
-  });
+  const total =
+    peserta.length;
 
-  const belumLunas = peserta.filter(function(p){
-    return upper(p.statusPembayaran) !== 'LUNAS';
-  });
 
-  /* COD */
+  /* =========================
+     STATUS PEMBAYARAN
+  ========================== */
 
-  const pesertaCOD = peserta.filter(function(p){
-    return upper(p.metodePembayaran) === 'COD';
-  });
+  const lunas =
+    peserta.filter(
+      function(p){
 
-  const codLunas = pesertaCOD.filter(function(p){
-    return upper(p.statusPembayaran) === 'LUNAS';
-  });
+        return upper(
+          p.statusPembayaran
+        ) === 'LUNAS';
 
-  /* NOMINAL LUNAS */
+      }
+    );
 
-  const nominalLunas = lunas.reduce(function(totalNominal, p){
-    return totalNominal + angka(p.nominalPembayaran);
-  }, 0);
 
-  /*
-    NOMINAL ESTIMASI BELUM LUNAS
+  const belumLunas =
+    peserta.filter(
+      function(p){
 
-    Berdasarkan struktur Firestore yang diberikan:
-    field estimasiNominal adalah nilai estimasi,
-    misalnya 150000.
+        return upper(
+          p.statusPembayaran
+        ) !== 'LUNAS';
 
-    Field hargaFinal menjadi cadangan bila
-    estimasiNominal tidak tersedia atau bernilai kosong.
-  */
+      }
+    );
 
-  const nominalBelum = belumLunas.reduce(function(totalNominal, p){
-    let estimasi;
 
-    if(
-      p.estimasiNominal !== undefined &&
-      p.estimasiNominal !== null &&
-      String(p.estimasiNominal).trim() !== ''
-    ){
-      estimasi = p.estimasiNominal;
-    }else{
-      estimasi = p.hargaFinal;
-    }
+  /* =========================
+     COD
+     
+     COD hanya dihitung dari
+     metode pembayaran COD.
 
-    return totalNominal + angka(estimasi);
-  }, 0);
+     Nominal hanya dijumlahkan
+     bila pembayaran sudah LUNAS.
+  ========================== */
 
-  /* NOMINAL COD YANG SUDAH LUNAS */
+  const pesertaCOD =
+    peserta.filter(
+      function(p){
+        // Kompatibel dengan dokumen lama/baru: COD bisa tercatat
+        // di metodePembayaran, tierPembayaran, tierRegistrasi, atau kode.
+        return [
+          p.metodePembayaran,
+          p.tierPembayaran,
+          p.tierRegistrasi,
+          p.jenisRegistrasi,
+          p.jenisPembayaran
+        ].some(function(nilai){
+          return upper(nilai) === 'COD';
+        }) || upper(p.kode || p._docId).startsWith('COD-');
+      }
+    );
 
-  const nominalCOD = codLunas.reduce(function(totalNominal, p){
-    return totalNominal + angka(p.nominalPembayaran);
-  }, 0);
 
-  /* KEHADIRAN */
+  const codLunas =
+    pesertaCOD.filter(
+      function(p){
 
-  const hadir = peserta.filter(function(p){
-    return upper(p.statusKehadiran) === 'HADIR';
-  });
+        return upper(
+          p.statusPembayaran
+        ) === 'LUNAS';
 
-  const belumHadir = peserta.filter(function(p){
-    return upper(p.statusKehadiran) !== 'HADIR';
-  });
+      }
+    );
 
-  /*
-    UKURAN KAOS
 
-    Variasi 4XL, XXXXL, XXXXL / 4XL,
-    serta spasi yang berbeda disatukan.
-  */
+  /* =========================
+     NOMINAL LUNAS
+  ========================== */
+
+  const nominalLunas =
+    lunas.reduce(
+      function(total,p){
+
+        return total +
+          Number(
+            String(
+              p.nominalPembayaran ?? ''
+            ).replace(/[^\d]/g,'')
+          );
+
+      },
+      0
+    );
+
+
+  /* =========================
+     NOMINAL COD
+  ========================== */
+
+  const nominalCOD =
+    codLunas.reduce(
+      function(total,p){
+
+        const nilai =
+          p.nominalPembayaran !== undefined &&
+          p.nominalPembayaran !== null &&
+          String(p.nominalPembayaran).trim() !== ''
+            ? p.nominalPembayaran
+            : p.hargaFinal;
+        return total + (
+          Number(String(nilai ?? '').replace(/[^\d]/g,'')) || 0
+        );
+
+      },
+      0
+    );
+
+
+  /* =========================
+     KEHADIRAN
+  ========================== */
+
+  const hadir =
+    peserta.filter(
+      function(p){
+
+        return upper(
+          p.statusKehadiran
+        ) === 'HADIR';
+
+      }
+    );
+
+
+  const belumHadir =
+    peserta.filter(
+      function(p){
+
+        return upper(
+          p.statusKehadiran
+        ) !== 'HADIR';
+
+      }
+    );
+
+
+  /* =========================
+     UKURAN KAOS
+  ========================== */
 
   const kaos = {
-    S: 0,
-    M: 0,
-    L: 0,
-    XL: 0,
-    XXL: 0,
-    XXXL: 0,
-    XXXXL: 0
+
+    S:0,
+    M:0,
+    L:0,
+    XL:0,
+    XXL:0,
+    XXXL:0
+
   };
 
-  peserta.forEach(function(p){
-    const ukuranAsli = upper(p.ukuran);
 
-    const ukuranNormal = ukuranAsli
-      .replace(/\s+/g, '')
-      .replace(/4XL/g, 'XXXXL');
+  peserta.forEach(
+    function(p){
 
-    if(
-      ukuranNormal === 'XXXXL' ||
-      ukuranNormal === 'XXXXL/XXXXL'
-    ){
-      kaos.XXXXL++;
-      return;
+      const ukuran =
+        upper(
+          p.ukuran
+        );
+
+
+      if(
+        Object.prototype
+          .hasOwnProperty
+          .call(
+            kaos,
+            ukuran
+          )
+      ){
+
+        kaos[ukuran]++;
+
+      }
+
     }
+  );
 
-    if(
-      Object.prototype.hasOwnProperty.call(kaos, ukuranNormal)
-    ){
-      kaos[ukuranNormal]++;
-    }
-  });
 
-  /* TAMPILKAN RINGKASAN */
+  /* =========================
+     TAMPILKAN
+  ========================== */
 
-  document.getElementById('total').textContent = total;
+  document.getElementById(
+    'total'
+  ).textContent =
+    total;
 
-  document.getElementById('lunas').textContent = lunas.length;
 
-  document.getElementById('nominalLunas').textContent =
-    rupiah(nominalLunas);
+  document.getElementById(
+    'lunas'
+  ).textContent =
+    lunas.length;
 
-  document.getElementById('belum').textContent =
+
+  document.getElementById(
+    'nominalLunas'
+  ).textContent =
+    rupiah(
+      nominalLunas
+    );
+
+
+  document.getElementById(
+    'belum'
+  ).textContent =
     belumLunas.length;
 
-  document.getElementById('nominalBelum').textContent =
-    'Estimasi ' + rupiah(nominalBelum);
 
-  document.getElementById('cod').textContent =
+  document.getElementById(
+    'cod'
+  ).textContent =
     pesertaCOD.length;
 
-  document.getElementById('nominalCOD').textContent =
-    rupiah(nominalCOD);
 
-  document.getElementById('hadir').textContent =
+  document.getElementById(
+    'nominalCOD'
+  ).textContent =
+    rupiah(
+      nominalCOD
+    );
+
+
+  document.getElementById(
+    'hadir'
+  ).textContent =
     hadir.length;
 
-  document.getElementById('belumHadir').textContent =
+
+  document.getElementById(
+    'belumHadir'
+  ).textContent =
     belumHadir.length;
 
-  document.getElementById('hadir2').textContent =
+
+  document.getElementById(
+    'hadir2'
+  ).textContent =
     hadir.length;
 
-  document.getElementById('belumHadir2').textContent =
+
+  document.getElementById(
+    'belumHadir2'
+  ).textContent =
     belumHadir.length;
 
-  document.getElementById('kaosS').textContent =
+
+  document.getElementById(
+    'kaosS'
+  ).textContent =
     kaos.S;
 
-  document.getElementById('kaosM').textContent =
+
+  document.getElementById(
+    'kaosM'
+  ).textContent =
     kaos.M;
 
-  document.getElementById('kaosL').textContent =
+
+  document.getElementById(
+    'kaosL'
+  ).textContent =
     kaos.L;
 
-  document.getElementById('kaosXL').textContent =
+
+  document.getElementById(
+    'kaosXL'
+  ).textContent =
     kaos.XL;
 
-  document.getElementById('kaosXXL').textContent =
+
+  document.getElementById(
+    'kaosXXL'
+  ).textContent =
     kaos.XXL;
 
-  document.getElementById('kaosXXXL').textContent =
+
+  document.getElementById(
+    'kaosXXXL'
+  ).textContent =
     kaos.XXXL;
 
-  document.getElementById('kaosXXXXL').textContent =
-    kaos.XXXXL;
 }
 
-/* LOGOUT */
+
+/* =========================
+   LOGOUT
+========================= */
 
 function logout(){
-  if(confirm('Keluar dari halaman admin?')){
+
+  if(
+    confirm(
+      'Keluar dari halaman admin?'
+    )
+  ){
+
     auth.signOut().finally(() => {
-      window.location.href = 'login-panitia.html';
+      window.location.href = 'login.html';
     });
+
   }
+
 }
 
-/* START */
+
+/* =========================
+   START
+========================= */
 
 (async function(){
   const ok = await requireAdmin();
   if(ok) loadDashboard();
 })();
+
 </script>
 
 </body>
