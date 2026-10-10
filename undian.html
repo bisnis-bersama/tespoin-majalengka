@@ -41,6 +41,13 @@ body{min-height:100vh}
 .history{padding-left:22px;margin-bottom:0}.history li{margin:8px 0;overflow-wrap:anywhere}
 .footer{font-size:11px;color:#777;text-align:center;padding:14px}
 .side-panel{display:flex;flex-direction:column;gap:14px}.side-panel .panel{margin-top:0}
+.celebration{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.celebration.show{display:flex}
+.celebration-message{position:relative;z-index:2;background:#101820;color:#f5c400;border:3px solid #f5c400;border-radius:22px;padding:24px 30px;text-align:center;font-weight:900;font-size:clamp(25px,5vw,54px);box-shadow:0 12px 45px #0005;animation:popCelebrate .65s cubic-bezier(.2,1.6,.4,1) both}
+.celebration-message small{display:block;color:#fff;font-size:clamp(13px,2vw,19px);margin-top:8px;letter-spacing:2px}
+.confetti{position:absolute;top:-24px;width:10px;height:16px;opacity:.95;animation:confettiFall var(--fall,3s) linear forwards;left:var(--left,50%);background:var(--color,#f5c400);transform:rotate(var(--rot,0deg))}
+@keyframes confettiFall{to{transform:translate3d(var(--drift,30px),110vh,0) rotate(900deg);opacity:1}}
+@keyframes popCelebrate{0%{transform:scale(.35);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
 @media(min-width:1000px) and (orientation:landscape){
   .wrap{padding:12px 20px}.header{padding:13px 20px}
   .main-grid{grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)}
@@ -101,6 +108,12 @@ body{min-height:100vh}
   </div>
   <div class="footer">Sumber data: Firebase Firestore • Koleksi peserta</div>
 </div>
+<div id="celebration" class="celebration" aria-hidden="true">
+  <div class="celebration-message">🎉 SELAMAT! 🎉<small>PEMENANG DOORPRIZE</small></div>
+</div>
+<audio id="applauseAudio" preload="auto">
+  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_783f6a1f3d.mp3" type="audio/mpeg">
+</audio>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -232,16 +245,16 @@ function stopSpin(){
   const startAngle=currentAngle;
   const endAngle=startAngle+delta;
   const startTime=performance.now();
-  const duration=5000;
+  const duration=7000;
   $('stop').disabled=true;
-  showStatus('STOP ditekan. Roda melambat secara bertahap selama 5 detik...');
+  showStatus('STOP ditekan. Roda melambat perlahan selama 7 detik...');
 
-  // Ease-out quint: tetap bergerak pada awal pengereman,
-  // lalu melambat sangat halus dan paling lambat di detik terakhir.
+  // Ease-out quintic yang lebih panjang: penurunan kecepatan makin
+  // terasa di bagian akhir, lalu berhenti tanpa koreksi sudut mendadak.
   function slowFrame(now){
     const t=Math.min(1,(now-startTime)/duration);
     const remaining=1-t;
-    const eased=1-Math.pow(remaining,5);
+    const eased=1-Math.pow(remaining,7);
     currentAngle=startAngle+(endAngle-startAngle)*eased;
     $('wheel').style.transform=`rotate(${currentAngle}deg)`;
 
@@ -255,20 +268,63 @@ function stopSpin(){
     currentAngle=endAngle;
     $('wheel').style.transform=`rotate(${endAngle}deg)`;
 
-    winners[type].add(kode(selectedWinner));
-    $('namaMenang').textContent=nama(selectedWinner);
-    $('kodeMenang').textContent=kode(selectedWinner);
-    $('hasil').classList.add('show');
-    const li=document.createElement('li');
-    li.textContent=nama(selectedWinner)+' — '+kode(selectedWinner);
-    const list=$('riwayat');
-    if(list.querySelector('li.small'))list.replaceChildren();
-    list.prepend(li);
-    isSlowing=false;
-    showStatus('Roda berhenti. Pemenang: '+nama(selectedWinner));
-    finishSpin();
+    // Roda benar-benar sudah berhenti. Tahan 2 detik sebelum
+    // nama pemenang ditampilkan, lalu jalankan efek perayaan.
+    showStatus('Roda sudah berhenti. Menyiapkan pengumuman pemenang...');
+    setTimeout(()=>{
+      winners[type].add(kode(selectedWinner));
+      $('namaMenang').textContent=nama(selectedWinner);
+      $('kodeMenang').textContent=kode(selectedWinner);
+      $('hasil').classList.add('show');
+
+      const li=document.createElement('li');
+      li.textContent=nama(selectedWinner)+' — '+kode(selectedWinner);
+      const list=$('riwayat');
+      if(list.querySelector('li.small'))list.replaceChildren();
+      list.prepend(li);
+
+      playCelebration();
+      isSlowing=false;
+      showStatus('Pemenang: '+nama(selectedWinner));
+      finishSpin();
+    },2000);
   }
   requestAnimationFrame(slowFrame);
+}
+function playCelebration(){
+  const overlay=$('celebration');
+  overlay.replaceChildren();
+  const message=document.createElement('div');
+  message.className='celebration-message';
+  message.innerHTML='🎉 SELAMAT! 🎉<small>PEMENANG DOORPRIZE</small>';
+  overlay.appendChild(message);
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden','false');
+
+  const colors=['#f5c400','#198754','#ef4444','#3b82f6','#ec4899','#ffffff'];
+  for(let i=0;i<110;i++){
+    const piece=document.createElement('i');
+    piece.className='confetti';
+    piece.style.setProperty('--left',Math.random()*100+'%');
+    piece.style.setProperty('--color',colors[i%colors.length]);
+    piece.style.setProperty('--fall',(2.5+Math.random()*2.5)+'s');
+    piece.style.setProperty('--drift',((Math.random()-.5)*260)+'px');
+    piece.style.setProperty('--rot',(Math.random()*360)+'deg');
+    piece.style.animationDelay=(Math.random()*.8)+'s';
+    overlay.appendChild(piece);
+  }
+  const audio=$('applauseAudio');
+  if(audio){
+    audio.currentTime=0;
+    const promise=audio.play();
+    if(promise&&promise.catch)promise.catch(()=>{});
+  }
+  setTimeout(()=>{
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    overlay.replaceChildren();
+    if(audio){audio.pause();audio.currentTime=0;}
+  },5000);
 }
 function finishSpin(){
   isSpinning=false;isSlowing=false;
