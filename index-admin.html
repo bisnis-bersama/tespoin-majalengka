@@ -636,6 +636,15 @@ body{
         </div>
       </div>
 
+      <div class="kaos">
+        <div class="kaos-name">XXXXL / 4XL</div>
+        <div
+          class="kaos-number"
+          id="kaosXXXXL">
+          0
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -1141,7 +1150,8 @@ function hitungDashboard(
     L:0,
     XL:0,
     XXL:0,
-    XXXL:0
+    XXXL:0,
+    XXXXL:0
 
   };
 
@@ -1149,11 +1159,14 @@ function hitungDashboard(
   peserta.forEach(
     function(p){
 
-      const ukuran =
-        upper(
-          p.ukuran
-        );
+      const ukuran = upper(p.ukuran)
+        .replace(/\s+/g, '')
+        .replace(/4XL/g, 'XXXXL');
 
+      if(ukuran === 'XXXXL' || ukuran === 'XXXXL/XXXXL'){
+        kaos.XXXXL++;
+        return;
+      }
 
       if(
         Object.prototype
@@ -1274,6 +1287,11 @@ function hitungDashboard(
     'kaosXXXL'
   ).textContent =
     kaos.XXXL;
+
+  document.getElementById(
+    'kaosXXXXL'
+  ).textContent =
+    kaos.XXXXL;
 
 }
 
