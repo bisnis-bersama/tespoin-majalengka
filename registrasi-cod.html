@@ -203,10 +203,11 @@ function rupiah(value){
   return 'Rp ' + (Number(value) || 0).toLocaleString('id-ID');
 }
 function keyEmail(v){return encodeURIComponent(normEmail(v))}
+
 function makeCode(){
-  return 'COD-' + Date.now().toString().slice(-8) + '-' +
-    Math.floor(100 + Math.random() * 900);
+  return String(Math.floor(1000 + Math.random() * 9000));
 }
+
 
 async function init(){
   user = await new Promise(resolve => {
