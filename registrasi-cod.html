@@ -17,8 +17,8 @@
   <button type="button" id="btnSimpanQR">SIMPAN BUKTI REGISTRASI</button>
 </section>
 <div class="links"><a href="peserta.html">Data Peserta</a><a href="index-admin.html">Dashboard</a></div></main></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
-const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
+const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
 if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore(),auth=firebase.auth();
 let user=null,role='',settings={},codPrice=0,ready=false,lastParticipant=null;
@@ -68,7 +68,7 @@ $('form').addEventListener('submit',async e=>{
     if(waNormalized.length<10)throw new Error('Nomor WhatsApp tidak valid.');
     const kode=await kodeUnik();
     const now=firebase.firestore.FieldValue.serverTimestamp();
-    const peserta={kode,nama,toko,wa,waNormalized,alamat,email,ukuran,buktiTransfer:'',buktiNama:'',buktiTeks:'',statusPembayaran:'LUNAS',nominalPembayaran:codPrice,estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',hargaFinal:codPrice,metodePembayaran:'COD',tanggalVerifikasi:now,petugasPembayaran:user.email||user.uid,waktuPembayaran:now,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now,statusKehadiran:'BELUM HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now};
+    const peserta={kode,nama,toko,wa,waNormalized,alamat,email,ukuran,buktiTransfer:'',buktiNama:'',buktiTeks:'',statusPembayaran:'LUNAS',nominalPembayaran:codPrice,estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',hargaFinal:codPrice,metodePembayaran:'COD',tanggalVerifikasi:now,petugasPembayaran:user.email||user.uid,waktuPembayaran:now,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now,statusKehadiran:'HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now};
     const batch=db.batch();
     batch.set(db.collection('peserta').doc(kode),peserta);
     batch.set(db.collection('uniqueWa').doc(keyWa(waNormalized)),{waNormalized,kode,createdAt:now});
