@@ -141,8 +141,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
       <div class="save-note">
         <b>PENTING:</b> Simpan bukti registrasi dalam bentuk JPG. QR Code jangan dihapus
         karena akan digunakan saat registrasi ulang. Tanda <b>COD</b> membedakan bukti ini
-        dari registrasi peserta biasa. Status kehadiran baru berubah menjadi <b>HADIR</b>
-        saat QR Code dipindai pada halaman registrasi ulang. Status benefit tetap
+        dari registrasi peserta biasa. Status kehadiran COD langsung tercatat <b>HADIR</b> karena peserta didaftarkan di lokasi. Status benefit tetap
         <b>BELUM DIAMBIL</b> sampai benefit benar-benar diberikan.
       </div>
 
@@ -204,7 +203,6 @@ function rupiah(value){
 }
 function keyEmail(v){return encodeURIComponent(normEmail(v))}
 function makeCode(){
-  // Kode registrasi COD berupa 4 digit saja, tanpa tanggal.
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
@@ -214,7 +212,8 @@ async function init(){
   });
 
   if(!user){
-    location.replace('login-panitia.html');
+    setMsg('Sesi login belum terbaca. Silakan login melalui halaman login-panitia.html, lalu buka kembali halaman ini. Halaman tidak akan mengalihkan Anda otomatis.', true);
+    $('btnDaftar').disabled = true;
     return;
   }
 
@@ -222,8 +221,8 @@ async function init(){
   role = us.exists ? String(us.data().role || '').toLowerCase() : '';
 
   if(!['admin','owner'].includes(role)){
-    alert('Akses hanya untuk Admin atau Owner.');
-    location.replace('login-panitia.html');
+    setMsg('Akses ditolak. Akun ini bukan Admin atau Owner. Silakan gunakan akun panitia yang berwenang.', true);
+    $('btnDaftar').disabled = true;
     return;
   }
 
@@ -269,13 +268,34 @@ $('formRegistrasi').addEventListener('submit', async e => {
     }
     if(waNormalized.length < 10) throw new Error('Nomor WhatsApp tidak valid.');
 
-    // Reservasi nomor WhatsApp dan email disimpan dalam batch.
-    // Rules Firestore pada uniqueWa/uniqueEmail menolak read/update/delete,
-    // sehingga tidak dilakukan pembacaan dokumen reservasi dari browser.
+    // Periksa nomor WhatsApp dan email sebelum menyimpan data.
     const waKey = waNormalized;
     const emailKey = keyEmail(email);
 
-    const kode = makeCode();
+    let cekWa, cekEmail;
+    try {
+      cekWa = await db.collection('uniqueWa').doc(waKey).get();
+      if(cekWa.exists) throw new Error('Nomor WhatsApp ini sudah terdaftar. Gunakan nomor WhatsApp lain.');
+      if(email){
+        cekEmail = await db.collection('uniqueEmail').doc(emailKey).get();
+        if(cekEmail.exists) throw new Error('Email ini sudah terdaftar. Gunakan email lain.');
+      }
+    } catch(checkErr) {
+      if(checkErr.message && (checkErr.message.includes('sudah terdaftar'))) throw checkErr;
+      if(checkErr.code === 'permission-denied') {
+        throw new Error('Pemeriksaan duplikat ditolak oleh Rules Firestore. Aturan akses uniqueWa dan uniqueEmail perlu diperbaiki agar admin/owner dapat memeriksa data.');
+      }
+      throw checkErr;
+    }
+
+    // Pastikan kode 4 digit belum dipakai.
+    let kode = makeCode();
+    for(let i=0;i<10;i++){
+      const cekKode = await db.collection('peserta').doc(kode).get();
+      if(!cekKode.exists) break;
+      kode = makeCode();
+      if(i===9) throw new Error('Gagal membuat kode registrasi unik. Silakan coba lagi.');
+    }
     const now = firebase.firestore.FieldValue.serverTimestamp();
 
     const p = {
@@ -302,7 +322,7 @@ $('formRegistrasi').addEventListener('submit', async e => {
       waktuPembayaran:now,
       petugasVerifikasi:user.email || user.uid,
       waktuVerifikasi:now,
-      statusKehadiran:'BELUM HADIR',
+      statusKehadiran:'HADIR',
       statusBenefit:'BELUM DIAMBIL',
       createdAt:now
     };
@@ -330,12 +350,16 @@ $('formRegistrasi').addEventListener('submit', async e => {
 
   }catch(err){
     console.error(err);
-    setMsg(err.message || 'Registrasi COD gagal. Periksa Rules Firebase.',true);
+    if(err && (err.code === 'permission-denied' || /missing or insufficient permissions/i.test(err.message || ''))){
+      setMsg('PENDAFTARAN TIDAK TERSIMPAN. Nomor WhatsApp atau email mungkin sudah terdaftar, atau izin Firestore untuk koleksi uniqueWa/uniqueEmail belum sesuai. Tidak ada data peserta yang disimpan.', true);
+    }else{
+      setMsg(err.message || 'Registrasi COD gagal. Periksa koneksi dan aturan Firestore.',true);
+    }
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // COD tidak dibatasi tanggal; tombol hanya terkunci jika harga belum diatur.
-    b.disabled = codPrice <= 0;
+    // Tombol hanya dinonaktifkan jika harga COD belum tersedia.
+    if(codPrice <= 0) b.disabled = true;
   }
 });
 
@@ -349,7 +373,7 @@ function tampilkanBukti(p){
   $('rKode').textContent = p.kode || '-';
   $('rMetode').textContent = 'COD';
   $('rStatus').textContent = 'LUNAS';
-  $('rKehadiran').textContent = 'BELUM HADIR';
+  $('rKehadiran').textContent = 'HADIR';
   $('rBenefit').textContent = 'BELUM DIAMBIL';
   $('rNominal').textContent = rupiah(p.nominal);
 
