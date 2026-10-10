@@ -203,11 +203,10 @@ function rupiah(value){
   return 'Rp ' + (Number(value) || 0).toLocaleString('id-ID');
 }
 function keyEmail(v){return encodeURIComponent(normEmail(v))}
-
 function makeCode(){
-  return String(Math.floor(1000 + Math.random() * 9000));
+  return 'COD-' + Date.now().toString().slice(-8) + '-' +
+    Math.floor(100 + Math.random() * 900);
 }
-
 
 async function init(){
   user = await new Promise(resolve => {
@@ -270,36 +269,11 @@ $('formRegistrasi').addEventListener('submit', async e => {
     }
     if(waNormalized.length < 10) throw new Error('Nomor WhatsApp tidak valid.');
 
-    
-
-const waKey = waNormalized;
-const emailKey = keyEmail(email);
-
-// Periksa nomor WhatsApp
-const cekWa = await db
-  .collection('uniqueWa')
-  .doc(waKey)
-  .get();
-
-if (cekWa.exists) {
-  throw new Error(
-    'PENDAFTARAN DITOLAK! Nomor WhatsApp ini sudah terdaftar. Silakan gunakan nomor lain.'
-  );
-}
-
-// Periksa email jika diisi
-if (email) {
-  const cekEmail = await db
-    .collection('uniqueEmail')
-    .doc(emailKey)
-    .get();
-
-  if (cekEmail.exists) {
-    throw new Error(
-      'PENDAFTARAN DITOLAK! Email ini sudah terdaftar. Silakan gunakan email lain.'
-    );
-  }
-}
+    // Reservasi nomor WhatsApp dan email disimpan dalam batch.
+    // Rules Firestore pada uniqueWa/uniqueEmail menolak read/update/delete,
+    // sehingga tidak dilakukan pembacaan dokumen reservasi dari browser.
+    const waKey = waNormalized;
+    const emailKey = keyEmail(email);
 
     const kode = makeCode();
     const now = firebase.firestore.FieldValue.serverTimestamp();
