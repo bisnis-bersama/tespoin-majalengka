@@ -270,7 +270,12 @@ $('formRegistrasi').addEventListener('submit', async e => {
     }
     if(waNormalized.length < 10) throw new Error('Nomor WhatsApp tidak valid.');
 
-    const cekWa = await db
+    
+const waKey = waNormalized;
+const emailKey = keyEmail(email);
+
+// Cek nomor WhatsApp
+const cekWa = await db
   .collection('uniqueWa')
   .doc(waKey)
   .get();
@@ -281,6 +286,7 @@ if (cekWa.exists) {
   );
 }
 
+// Cek email jika diisi
 if (email) {
   const cekEmail = await db
     .collection('uniqueEmail')
