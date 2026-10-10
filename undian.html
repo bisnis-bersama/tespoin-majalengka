@@ -26,12 +26,11 @@ body{min-height:100vh}
 .main-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:14px;align-items:start}
 .wheel-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:560px}
 .wheel-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 18px;width:100%}
-.pointer{font-size:32px;color:#dc2626;line-height:1;position:relative;z-index:2;margin-bottom:-2px;text-shadow:0 2px 3px #0002}
-.wheel{width:min(62vh, min(66vw,520px));aspect-ratio:1;border-radius:50%;border:9px solid #111;box-shadow:0 7px 20px #0002;position:relative;overflow:hidden;background:conic-gradient(#f5c400 0deg 30deg,#fff 30deg 60deg,#111 60deg 90deg,#f5c400 90deg 120deg,#fff 120deg 150deg,#111 150deg 180deg,#f5c400 180deg 210deg,#fff 210deg 240deg,#111 240deg 270deg,#f5c400 270deg 300deg,#fff 300deg 330deg,#111 330deg 360deg);will-change:transform}
-.wheel:after{content:'TESPOIN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(76px,10vh,112px);height:clamp(76px,10vh,112px);border-radius:50%;background:#111;color:#f5c400;border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(13px,1.6vw,18px);box-shadow:0 2px 8px #0003}
-.wheel-label{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:7%;font-size:clamp(10px,1.3vw,14px);font-weight:900;color:#111;text-align:center;pointer-events:none}
-.wheel.spinning{animation:spinContinuously .8s linear infinite}
-@keyframes spinContinuously{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.pointer{font-size:32px;color:#dc2626;line-height:1;position:relative;z-index:5;margin-bottom:-2px;text-shadow:0 2px 3px #0002}
+.wheel{width:min(62vh, min(66vw,520px));aspect-ratio:1;border-radius:50%;border:9px solid #111;box-shadow:0 7px 20px #0002;position:relative;overflow:hidden;background:#fff;will-change:transform;transform:rotate(0deg)}
+.wheel:after{content:'TESPOIN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(76px,10vh,112px);height:clamp(76px,10vh,112px);border-radius:50%;background:#111;color:#f5c400;border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(13px,1.6vw,18px);box-shadow:0 2px 8px #0003;z-index:3}
+.wheel-labels{position:absolute;inset:0;border-radius:50%;overflow:hidden}
+.wheel-label{position:absolute;left:50%;top:50%;width:42%;margin-left:-21%;height:24px;margin-top:-12px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transform-origin:50% 50%;font-weight:900;font-size:clamp(7px,1vw,12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;text-shadow:0 1px 1px #ffffff70}
 .spin-controls{display:flex;justify-content:center;gap:12px;width:100%;max-width:560px}
 .spin-controls button{flex:1;min-height:52px;font-size:16px}
 .result{display:none;text-align:center;border:2px solid var(--gold);background:#fffbea;border-radius:14px;padding:20px}
@@ -43,23 +42,18 @@ body{min-height:100vh}
 .footer{font-size:11px;color:#777;text-align:center;padding:14px}
 .side-panel{display:flex;flex-direction:column;gap:14px}.side-panel .panel{margin-top:0}
 @media(min-width:1000px) and (orientation:landscape){
-  .wrap{padding:12px 20px}
-  .header{padding:13px 20px}
+  .wrap{padding:12px 20px}.header{padding:13px 20px}
   .main-grid{grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)}
   .wheel-panel{min-height:calc(100vh - 150px);padding:10px 18px}
   .wheel{width:min(61vh,520px)}
 }
-@media(max-width:850px){
-  .main-grid{grid-template-columns:1fr}
-  .wheel-panel{min-height:auto}
-  .wheel{width:min(78vw,480px)}
-}
+@media(max-width:850px){.main-grid{grid-template-columns:1fr}.wheel-panel{min-height:auto}.wheel{width:min(78vw,480px)}}
 @media(max-width:500px){
   .wrap{padding:10px}.header h1{font-size:20px}.panel{padding:14px}
   .controls select,.controls button{width:100%}
   .spin-controls{gap:8px}.spin-controls button{font-size:14px;padding:12px 8px}
 }
-@media(prefers-reduced-motion:reduce){.wheel.spinning{animation-duration:1.5s}}
+@media(prefers-reduced-motion:reduce){.wheel{transition:none!important}}
 </style>
 </head>
 <body>
@@ -68,7 +62,6 @@ body{min-height:100vh}
     <h1>DPD TESPOIN MAJALENGKA</h1>
     <p>PUTARAN SPIN UNDIAN DOORPRIZE</p>
   </header>
-
   <section class="panel">
     <div class="controls">
       <select id="jenisUndian" aria-label="Pilih jenis undian">
@@ -81,28 +74,23 @@ body{min-height:100vh}
     <div class="statline" id="jumlah">Data peserta belum dimuat.</div>
     <p class="small">Peserta yang masuk undian adalah peserta dengan status pembayaran <b>LUNAS</b>. Peserta gratis tidak diikutsertakan. Pemenang yang sudah keluar tidak akan diundi kembali pada jenis undian yang sama.</p>
   </section>
-
   <div class="main-grid">
     <section class="panel wheel-panel">
       <div class="wheel-wrap">
         <div class="pointer">▼</div>
-        <div id="wheel" class="wheel" aria-label="Roda undian">
-          <div class="wheel-label">PUTARAN<br>UNDIAN</div>
-        </div>
+        <div id="wheel" class="wheel" aria-label="Roda undian"><div id="wheelLabels" class="wheel-labels"></div></div>
       </div>
       <div class="controls spin-controls">
         <button id="putar" class="btn green" disabled>▶ PUTAR SPIN</button>
         <button id="stop" class="btn dark" disabled>■ STOP</button>
       </div>
     </section>
-
     <div class="side-panel">
       <section id="hasil" class="panel result" aria-live="polite">
         <div class="caption">PEMENANG UNDIAN</div>
         <div id="namaMenang" class="winner-name">—</div>
         <div class="small">Nomor Registrasi</div>
         <div id="kodeMenang" class="winner-code">—</div>
-        <div id="hadiahMenang" class="statline"></div>
       </section>
       <section class="panel">
         <b>Riwayat pemenang</b>
@@ -113,21 +101,21 @@ body{min-height:100vh}
   </div>
   <div class="footer">Sumber data: Firebase Firestore • Koleksi peserta</div>
 </div>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
-firebase.initializeApp(firebaseConfig);
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore();
 const $=id=>document.getElementById(id);
-let peserta=[],eligible=[],winners={motor:new Set(),listrik:new Set()},isSpinning=false;
+let peserta=[],eligible=[],winners={motor:new Set(),listrik:new Set()};
+let isSpinning=false,isSlowing=false,spinFrame=null,spinStarted=0,currentAngle=0,lastFrame=0,selectedWinner=null;
 
 function showStatus(msg,type='ok'){$('status').textContent=msg;$('status').className='status show '+(type==='err'?'err':'ok')}
 function clean(v){return String(v==null?'':v).trim()}
 function upper(v){return clean(v).toUpperCase()}
-function kode(p){return clean(p.kode||p.nomorRegistrasi||p._docId||'-')}
+function kode(p){return clean(p.kode||p.kodeRegistrasi||p.nomorRegistrasi||p._docId||'-')}
 function nama(p){return clean(p.nama||p.namaPeserta||p.name||'Nama tidak tersedia')}
 function isFree(p){
   const fields=[p.tierRegistrasi,p.tierPembayaran,p.jenisRegistrasi,p.jenisPembayaran,p.tipeTiket,p.kategoriTiket];
@@ -147,8 +135,32 @@ function updateEligible(){
   if(type==='listrik')eligible=eligible.filter(isMajalengka);
   eligible=eligible.filter(p=>!winners[type].has(kode(p)));
   $('jumlah').textContent='Peserta yang memenuhi syarat: '+eligible.length;
-  $('putar').disabled=eligible.length===0||isSpinning;
+  $('putar').disabled=eligible.length===0||isSpinning||isSlowing;
   $('stop').disabled=!isSpinning;
+  drawWheel();
+}
+function drawWheel(){
+  const wheel=$('wheel'),labels=$('wheelLabels');
+  labels.replaceChildren();
+  const list=eligible.length?eligible:[];
+  if(!list.length){
+    wheel.style.background='conic-gradient(#f5c400 0deg 90deg,#fff 90deg 180deg,#111 180deg 270deg,#f5c400 270deg 360deg)';
+    return;
+  }
+  const colors=['#f5c400','#ffffff','#111111','#f4d35e','#dbeafe','#e5e7eb'];
+  const step=360/list.length;
+  const stops=list.map((p,i)=>`${colors[i%colors.length]} ${i*step}deg ${(i+1)*step}deg`).join(',');
+  wheel.style.background=`conic-gradient(${stops})`;
+  list.forEach((p,i)=>{
+    const label=document.createElement('div');
+    label.className='wheel-label';
+    label.textContent=nama(p);
+    label.title=nama(p)+' — '+kode(p);
+    const angle=i*step+step/2;
+    label.style.transform=`rotate(${angle}deg) translateY(${-Math.min(wheel.clientWidth*.37,190)}px) rotate(90deg)`;
+    label.style.color=colors[i%colors.length]==='#111111'?'#fff':'#111';
+    labels.appendChild(label);
+  });
 }
 async function loadData(){
   $('muat').disabled=true;
@@ -175,47 +187,79 @@ async function loadData(){
     showStatus('Gagal memuat data: '+(e.message||e),'err');
   }finally{$('muat').disabled=false}
 }
+function animateSpin(timestamp){
+  if(!isSpinning)return;
+  if(!lastFrame)lastFrame=timestamp;
+  const dt=Math.min((timestamp-lastFrame)/1000,.05);
+  lastFrame=timestamp;
+  const elapsed=(timestamp-spinStarted)/1000;
+  // Awal sangat cepat, lalu stabil pada kecepatan sedang-cepat.
+  const speed=elapsed<1.25?1500:900;
+  currentAngle=(currentAngle+speed*dt)%360;
+  $('wheel').style.transform=`rotate(${currentAngle}deg)`;
+  spinFrame=requestAnimationFrame(animateSpin);
+}
 function startSpin(){
-  if(!eligible.length||isSpinning)return;
+  if(!eligible.length||isSpinning||isSlowing)return;
   isSpinning=true;
+  selectedWinner=null;
   $('hasil').classList.remove('show');
-  $('wheel').classList.add('spinning');
-  $('putar').disabled=true;
-  $('stop').disabled=false;
-  $('muat').disabled=true;
-  $('jenisUndian').disabled=true;
-  showStatus('Roda terus berputar. Tekan STOP untuk memilih pemenang.');
+  $('putar').disabled=true;$('stop').disabled=false;$('muat').disabled=true;$('jenisUndian').disabled=true;
+  spinStarted=performance.now();lastFrame=0;
+  showStatus('Roda berputar cepat lalu stabil. Tekan STOP untuk memperlambat roda selama 5 detik.');
+  spinFrame=requestAnimationFrame(animateSpin);
 }
 function stopSpin(){
-  if(!isSpinning)return;
-  isSpinning=false;
-  $('wheel').classList.remove('spinning');
+  if(!isSpinning||isSlowing)return;
+  isSpinning=false;isSlowing=true;
+  if(spinFrame)cancelAnimationFrame(spinFrame);
   const type=$('jenisUndian').value;
   const pool=eligible.filter(p=>!winners[type].has(kode(p)));
   if(!pool.length){
+    isSlowing=false;
     showStatus('Tidak ada peserta tersisa untuk jenis undian ini.','err');
-    finishSpin();
-    return;
+    finishSpin();return;
   }
-  const winner=pool[Math.floor(Math.random()*pool.length)];
-  winners[type].add(kode(winner));
-  $('namaMenang').textContent=nama(winner);
-  $('kodeMenang').textContent=kode(winner);
-  $('hadiahMenang').textContent=type==='listrik'?'Hadiah: Sepeda Listrik':'Hadiah: Sepeda Motor';
-  $('hasil').classList.add('show');
-  const li=document.createElement('li');
-  li.textContent=nama(winner)+' — '+kode(winner)+' — '+(type==='listrik'?'Sepeda Listrik':'Sepeda Motor');
-  const list=$('riwayat');
-  if(list.querySelector('li.small'))list.innerHTML='';
-  list.prepend(li);
-  showStatus('Undian dihentikan. Pemenang terpilih: '+nama(winner));
-  finishSpin();
+  // Pemenang ditentukan saat STOP ditekan, roda melambat menuju bidang namanya.
+  selectedWinner=pool[Math.floor(Math.random()*pool.length)];
+  const index=eligible.findIndex(p=>kode(p)===kode(selectedWinner));
+  const step=360/eligible.length;
+  const center=index*step+step/2;
+  const targetMod=((360-center)%360+360)%360;
+  const currentMod=((currentAngle%360)+360)%360;
+  let delta=(targetMod-currentMod+360)%360;
+  delta+=360*5; // beberapa putaran tambahan selama efek melambat
+  const startAngle=currentAngle;
+  const endAngle=startAngle+delta;
+  const startTime=performance.now();
+  $('stop').disabled=true;
+  showStatus('STOP ditekan. Roda sedang melambat selama 5 detik...');
+  function slowFrame(now){
+    const t=Math.min(1,(now-startTime)/5000);
+    const eased=1-Math.pow(1-t,4); // ease-out perlahan di akhir
+    currentAngle=startAngle+(endAngle-startAngle)*eased;
+    $('wheel').style.transform=`rotate(${currentAngle}deg)`;
+    if(t<1){requestAnimationFrame(slowFrame);return;}
+    currentAngle=((endAngle%360)+360)%360;
+    $('wheel').style.transform=`rotate(${currentAngle}deg)`;
+    winners[type].add(kode(selectedWinner));
+    $('namaMenang').textContent=nama(selectedWinner);
+    $('kodeMenang').textContent=kode(selectedWinner);
+    $('hasil').classList.add('show');
+    const li=document.createElement('li');
+    li.textContent=nama(selectedWinner)+' — '+kode(selectedWinner);
+    const list=$('riwayat');
+    if(list.querySelector('li.small'))list.replaceChildren();
+    list.prepend(li);
+    isSlowing=false;
+    showStatus('Roda berhenti. Pemenang: '+nama(selectedWinner));
+    finishSpin();
+  }
+  requestAnimationFrame(slowFrame);
 }
 function finishSpin(){
-  isSpinning=false;
-  $('wheel').classList.remove('spinning');
+  isSpinning=false;isSlowing=false;
   $('stop').disabled=true;
-  $('putar').disabled=eligible.length===0;
   $('muat').disabled=false;
   $('jenisUndian').disabled=false;
   updateEligible();
@@ -224,6 +268,7 @@ $('muat').addEventListener('click',loadData);
 $('putar').addEventListener('click',startSpin);
 $('stop').addEventListener('click',stopSpin);
 $('jenisUndian').addEventListener('change',()=>{updateEligible();$('hasil').classList.remove('show')});
+window.addEventListener('resize',()=>{if(!isSpinning&&!isSlowing)drawWheel()});
 loadData();
 </script>
 </body>
