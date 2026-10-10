@@ -334,7 +334,7 @@ $('formRegistrasi').addEventListener('submit', async e => {
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // COD tidak dibatasi tanggal; tombol hanya terkunci jika harga belum diatur.
+    // COD boleh didaftarkan kapan saja selama harga sudah diatur.
     if(codPrice <= 0) b.disabled = true;
   }
 });
