@@ -168,6 +168,14 @@ body{
   font-weight:800;
 }
 
+/* Tambahan: nominal estimasi peserta belum lunas */
+.nominal-estimasi{
+  margin-top:5px;
+  color:#dc3545;
+  font-size:14px;
+  font-weight:800;
+}
+
 /* =========================
    SECTION
 ========================= */
@@ -508,6 +516,10 @@ body{
         0
       </div>
 
+      <div class="nominal-estimasi" id="nominalBelum">
+        Estimasi Rp 0
+      </div>
+
     </div>
 
 
@@ -636,10 +648,10 @@ body{
         </div>
       </div>
 
-<div class="kaos">
-  <div class="kaos-name">XXXXL / 4XL</div>
-  <div class="kaos-number" id="kaosXXXXL">0</div>
-</div>
+      <div class="kaos">
+        <div class="kaos-name">XXXXL / 4XL</div>
+        <div class="kaos-number" id="kaosXXXXL">0</div>
+      </div>
 
     </div>
 
@@ -699,8 +711,11 @@ body{
   <div class="menu">
 
     <a href="registrasi-cod.html">
-      <div class="menu-icon">💵</div>
-      <div><b>Registrasi COD</b><small>Daftarkan peserta COD pada hari acara</small></div>
+      <div class="icon">💵</div>
+      <div>
+        <h3>Registrasi COD</h3>
+        <p>Daftarkan peserta COD pada hari acara.</p>
+      </div>
     </a>
 
     <a href="peserta.html">
@@ -749,22 +764,22 @@ body{
 
     <a href="bukti.html">
 
-  <div class="icon">
-    🔎
-  </div>
+      <div class="icon">
+        🔎
+      </div>
 
-  <div>
-    <h3>
-      Cek Registrasi
-    </h3>
+      <div>
+        <h3>
+          Cek Registrasi
+        </h3>
 
-    <p>
-      Memeriksa bukti registrasi dan
-      kode registrasi peserta.
-    </p>
-  </div>
+        <p>
+          Memeriksa bukti registrasi dan
+          kode registrasi peserta.
+        </p>
+      </div>
 
-</a>
+    </a>
 
 
     <a id="menuPengaturan" href="pengaturan.html">
@@ -783,6 +798,28 @@ body{
           Atur tanggal, lokasi, harga tiket,
           benefit, petugas dan status
           pendaftaran.
+        </p>
+
+      </div>
+
+    </a>
+
+    <!-- Tambahan menu pemutaran doorprize -->
+    <a href="pengundian.html">
+
+      <div class="icon">
+        🎁
+      </div>
+
+      <div>
+
+        <h3>
+          Pemutaran Doorprize
+        </h3>
+
+        <p>
+          Buka halaman pengundian untuk
+          menentukan pemenang doorprize.
         </p>
 
       </div>
@@ -841,7 +878,9 @@ const firebaseConfig = {
   appId: "1:983090504866:web:7879b0784b9fecad4863fb"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentRole = '';
@@ -893,75 +932,44 @@ async function requireAdmin(){
 ========================= */
 
 function clean(value){
-
-  return String(
-    value ?? ''
-  ).trim();
-
+  return String(value ?? '').trim();
 }
-
 
 function upper(value){
-
-  return clean(value)
-    .toUpperCase();
-
+  return clean(value).toUpperCase();
 }
 
-
 function rupiah(value){
-
   /*
    * Mengatasi angka:
    * 150000
    * "150000"
    * "Rp 150.000"
    */
-
   const number =
     Number(
       String(value ?? '')
         .replace(/[^\d]/g,'')
     ) || 0;
 
-  return (
-    'Rp ' +
-    number.toLocaleString('id-ID')
-  );
-
+  return 'Rp ' + number.toLocaleString('id-ID');
 }
-
 
 /* =========================
    STATUS
 ========================= */
 
-function showStatus(
-  message,
-  type
-){
-
-  const el =
-    document.getElementById(
-      'status'
-    );
-
-  el.textContent =
-    message;
-
-  el.className =
-    'status show ' +
-    (type || '');
-
+function showStatus(message, type){
+  const el = document.getElementById('status');
+  el.textContent = message;
+  el.className = 'status show ' + (type || '');
 }
-
 
 /* =========================
    LOAD DASHBOARD
 ========================= */
 
 async function loadDashboard(){
-
   document.getElementById('loading').textContent =
     'Mengambil data peserta dari Firestore...';
   showStatus('Mengambil data peserta dari Firestore...', '');
@@ -987,324 +995,186 @@ async function loadDashboard(){
   }
 }
 
-
-
 /* =========================
    HITUNG DASHBOARD
 ========================= */
 
-function hitungDashboard(
-  peserta
-){
+function hitungDashboard(peserta){
 
   /* =========================
      TOTAL
   ========================== */
 
-  const total =
-    peserta.length;
-
+  const total = peserta.length;
 
   /* =========================
      STATUS PEMBAYARAN
   ========================== */
 
-  const lunas =
-    peserta.filter(
-      function(p){
+  const lunas = peserta.filter(function(p){
+    return upper(p.statusPembayaran) === 'LUNAS';
+  });
 
-        return upper(
-          p.statusPembayaran
-        ) === 'LUNAS';
-
-      }
-    );
-
-
-  const belumLunas =
-    peserta.filter(
-      function(p){
-
-        return upper(
-          p.statusPembayaran
-        ) !== 'LUNAS';
-
-      }
-    );
-
+  const belumLunas = peserta.filter(function(p){
+    return upper(p.statusPembayaran) !== 'LUNAS';
+  });
 
   /* =========================
      COD
-     
-     COD hanya dihitung dari
-     metode pembayaran COD.
-
-     Nominal hanya dijumlahkan
-     bila pembayaran sudah LUNAS.
+     COD hanya dihitung dari metode pembayaran COD.
+     Nominal hanya dijumlahkan bila pembayaran sudah LUNAS.
   ========================== */
 
-  const pesertaCOD =
-    peserta.filter(
-      function(p){
+  const pesertaCOD = peserta.filter(function(p){
+    return upper(p.metodePembayaran) === 'COD';
+  });
 
-        return upper(
-          p.metodePembayaran
-        ) === 'COD';
-
-      }
-    );
-
-
-  const codLunas =
-    pesertaCOD.filter(
-      function(p){
-
-        return upper(
-          p.statusPembayaran
-        ) === 'LUNAS';
-
-      }
-    );
-
+  const codLunas = pesertaCOD.filter(function(p){
+    return upper(p.statusPembayaran) === 'LUNAS';
+  });
 
   /* =========================
      NOMINAL LUNAS
   ========================== */
 
-  const nominalLunas =
-    lunas.reduce(
-      function(total,p){
+  const nominalLunas = lunas.reduce(function(total, p){
+    return total +
+      Number(
+        String(p.nominalPembayaran ?? '').replace(/[^\d]/g,'')
+      );
+  }, 0);
 
-        return total +
-          Number(
-            String(
-              p.nominalPembayaran ?? ''
-            ).replace(/[^\d]/g,'')
-          );
+  /* =========================
+     NOMINAL ESTIMASI BELUM LUNAS
+     Mengutamakan estimasiHarga; jika kosong,
+     gunakan nominalPembayaran sebagai cadangan.
+  ========================== */
 
-      },
-      0
-    );
+  const nominalBelum = belumLunas.reduce(function(total, p){
+    const nilaiEstimasi =
+      p.estimasiHarga !== undefined &&
+      p.estimasiHarga !== null &&
+      String(p.estimasiHarga).trim() !== ''
+        ? p.estimasiHarga
+        : p.nominalPembayaran;
 
+    return total +
+      (Number(
+        String(nilaiEstimasi ?? '').replace(/[^\d]/g,'')
+      ) || 0);
+  }, 0);
 
   /* =========================
      NOMINAL COD
   ========================== */
 
-  const nominalCOD =
-    codLunas.reduce(
-      function(total,p){
-
-        return total +
-          Number(
-            String(
-              p.nominalPembayaran ?? ''
-            ).replace(/[^\d]/g,'')
-          );
-
-      },
-      0
-    );
-
+  const nominalCOD = codLunas.reduce(function(total, p){
+    return total +
+      Number(
+        String(p.nominalPembayaran ?? '').replace(/[^\d]/g,'')
+      );
+  }, 0);
 
   /* =========================
      KEHADIRAN
   ========================== */
 
-  const hadir =
-    peserta.filter(
-      function(p){
+  const hadir = peserta.filter(function(p){
+    return upper(p.statusKehadiran) === 'HADIR';
+  });
 
-        return upper(
-          p.statusKehadiran
-        ) === 'HADIR';
-
-      }
-    );
-
-
-  const belumHadir =
-    peserta.filter(
-      function(p){
-
-        return upper(
-          p.statusKehadiran
-        ) !== 'HADIR';
-
-      }
-    );
-
+  const belumHadir = peserta.filter(function(p){
+    return upper(p.statusKehadiran) !== 'HADIR';
+  });
 
   /* =========================
      UKURAN KAOS
+     4XL, XXXXL, dan variasi "XXXXL / 4XL"
+     dihitung ke satu kategori yang sama.
   ========================== */
 
-  
-const kaos = {
-  S: 0,
-  M: 0,
-  L: 0,
-  XL: 0,
-  XXL: 0,
-  XXXL: 0,
-  XXXXL: 0,
-  "4XL": 0
-};
+  const kaos = {
+    S: 0,
+    M: 0,
+    L: 0,
+    XL: 0,
+    XXL: 0,
+    XXXL: 0,
+    XXXXL: 0
+  };
 
+  peserta.forEach(function(p){
+    const ukuranAsli = upper(p.ukuran);
 
+    const ukuran =
+      ukuranAsli === '4XL' ||
+      ukuranAsli === 'XXXXL / 4XL' ||
+      ukuranAsli === 'XXXXL/4XL'
+        ? 'XXXXL'
+        : ukuranAsli;
 
-  peserta.forEach(
-    function(p){
-
-      const ukuran =
-        upper(
-          p.ukuran
-        );
-
-
-      if(
-        Object.prototype
-          .hasOwnProperty
-          .call(
-            kaos,
-            ukuran
-          )
-      ){
-
-        kaos[ukuran]++;
-
-      }
-
+    if(Object.prototype.hasOwnProperty.call(kaos, ukuran)){
+      kaos[ukuran]++;
     }
-  );
-
+  });
 
   /* =========================
      TAMPILKAN
   ========================== */
 
-  document.getElementById(
-    'total'
-  ).textContent =
-    total;
+  document.getElementById('total').textContent = total;
 
+  document.getElementById('lunas').textContent = lunas.length;
 
-  document.getElementById(
-    'lunas'
-  ).textContent =
-    lunas.length;
+  document.getElementById('nominalLunas').textContent =
+    rupiah(nominalLunas);
 
+  document.getElementById('belum').textContent = belumLunas.length;
 
-  document.getElementById(
-    'nominalLunas'
-  ).textContent =
-    rupiah(
-      nominalLunas
-    );
+  document.getElementById('nominalBelum').textContent =
+    'Estimasi ' + rupiah(nominalBelum);
 
+  document.getElementById('cod').textContent = pesertaCOD.length;
 
-  document.getElementById(
-    'belum'
-  ).textContent =
-    belumLunas.length;
+  document.getElementById('nominalCOD').textContent =
+    rupiah(nominalCOD);
 
+  document.getElementById('hadir').textContent = hadir.length;
 
-  document.getElementById(
-    'cod'
-  ).textContent =
-    pesertaCOD.length;
-
-
-  document.getElementById(
-    'nominalCOD'
-  ).textContent =
-    rupiah(
-      nominalCOD
-    );
-
-
-  document.getElementById(
-    'hadir'
-  ).textContent =
-    hadir.length;
-
-
-  document.getElementById(
-    'belumHadir'
-  ).textContent =
+  document.getElementById('belumHadir').textContent =
     belumHadir.length;
 
+  document.getElementById('hadir2').textContent = hadir.length;
 
-  document.getElementById(
-    'hadir2'
-  ).textContent =
-    hadir.length;
-
-
-  document.getElementById(
-    'belumHadir2'
-  ).textContent =
+  document.getElementById('belumHadir2').textContent =
     belumHadir.length;
 
+  document.getElementById('kaosS').textContent = kaos.S;
 
-  document.getElementById(
-    'kaosS'
-  ).textContent =
-    kaos.S;
+  document.getElementById('kaosM').textContent = kaos.M;
 
+  document.getElementById('kaosL').textContent = kaos.L;
 
-  document.getElementById(
-    'kaosM'
-  ).textContent =
-    kaos.M;
+  document.getElementById('kaosXL').textContent = kaos.XL;
 
+  document.getElementById('kaosXXL').textContent = kaos.XXL;
 
-  document.getElementById(
-    'kaosL'
-  ).textContent =
-    kaos.L;
+  document.getElementById('kaosXXXL').textContent = kaos.XXXL;
 
-
-  document.getElementById(
-    'kaosXL'
-  ).textContent =
-    kaos.XL;
-
-
-  document.getElementById(
-    'kaosXXL'
-  ).textContent =
-    kaos.XXL;
-
-
-  document.getElementById(
-    'kaosXXXL'
-  ).textContent =
-    kaos.XXXL;
-
+  document.getElementById('kaosXXXXL').textContent = kaos.XXXXL;
 }
-
 
 /* =========================
    LOGOUT
 ========================= */
 
 function logout(){
-
-  if(
-    confirm(
-      'Keluar dari halaman admin?'
-    )
-  ){
-
+  if(confirm('Keluar dari halaman admin?')){
     auth.signOut().finally(() => {
       window.location.href = 'login-panitia.html';
     });
-
   }
-
 }
-
 
 /* =========================
    START
