@@ -54,7 +54,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 @media(max-width:520px){.hero h1{font-size:25px}.hero .title{font-size:19px}.card{padding:18px}.price{font-size:27px}.detail-row{align-items:flex-start}.wrap{padding:14px 10px}}
 </style>
 </head>
-<body data-version="COD-AUTH-PERSISTENCE-FIX-2026-10-10">
+<body data-version="COD-MATCH-REGISTRASI-PESERTA">
 <header class="hero">
   <div class="hero-content">
     <img src="logo.png" class="logo" onerror="this.style.display='none'" alt="Logo TESPOIN">
@@ -133,17 +133,13 @@ button:disabled{opacity:.6;cursor:not-allowed}
         <div class="detail-row"><span>Kode Registrasi</span><b id="rKode">-</b></div>
         <div class="detail-row"><span>Metode Pembayaran</span><b id="rMetode">COD</b></div>
         <div class="detail-row"><span>Status Pembayaran</span><b id="rStatus">LUNAS</b></div>
-        <div class="detail-row"><span>Status Kehadiran</span><b id="rKehadiran">BELUM HADIR</b></div>
-        <div class="detail-row"><span>Status Benefit</span><b id="rBenefit">BELUM DIAMBIL</b></div>
         <div class="detail-row"><span>Nominal</span><b id="rNominal">-</b></div>
       </div>
 
       <div class="save-note">
         <b>PENTING:</b> Simpan bukti registrasi dalam bentuk JPG. QR Code jangan dihapus
         karena akan digunakan saat registrasi ulang. Tanda <b>COD</b> membedakan bukti ini
-        dari registrasi peserta biasa. Status kehadiran baru berubah menjadi <b>HADIR</b>
-        saat QR Code dipindai pada halaman registrasi ulang. Status benefit tetap
-        <b>BELUM DIAMBIL</b> sampai benefit benar-benar diberikan.
+        dari registrasi peserta biasa.
       </div>
 
       <div class="proof-actions">
@@ -157,9 +153,9 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -209,46 +205,33 @@ function makeCode(){
 }
 
 async function init(){
-  // Samakan persistence dan SDK dengan halaman login-panitia.html.
-  // Ini membantu sesi Firebase yang sudah dibuat di halaman login dipulihkan
-  // ketika halaman registrasi COD dibuka.
+  // Gunakan persistensi lokal yang sama dengan login-panitia.html.
   try {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-  } catch (persistenceError) {
-    console.warn('Tidak dapat mengatur persistence Firebase:', persistenceError);
+  } catch (err) {
+    console.warn('Pengaturan persistensi login:', err);
   }
 
+  // Tunggu Firebase menyelesaikan pemulihan sesi sebelum memutuskan pengguna belum login.
   user = auth.currentUser;
   if (!user) {
-    user = await new Promise(resolve => {
+    user = await new Promise((resolve, reject) => {
       let unsubscribe = null;
-      let selesai = false;
       unsubscribe = auth.onAuthStateChanged(
         currentUser => {
-          if (selesai) return;
-          selesai = true;
           if (unsubscribe) unsubscribe();
           resolve(currentUser || null);
         },
         error => {
-          console.error('Gagal memulihkan sesi Firebase:', error);
-          if (selesai) return;
-          selesai = true;
           if (unsubscribe) unsubscribe();
-          resolve(null);
+          reject(error);
         }
       );
     });
   }
 
   if(!user){
-    setMsg('Sesi login Admin/Owner belum terbaca. Buka login-panitia.html, masuk, lalu buka kembali halaman ini pada alamat website yang sama.', true);
-    const loginLink = document.createElement('a');
-    loginLink.href = 'login-panitia.html';
-    loginLink.textContent = 'Buka Login Admin / Owner';
-    loginLink.style.cssText = 'display:block;text-align:center;margin-top:12px;padding:12px;background:#111;color:#ffc107;border-radius:10px;text-decoration:none;font-weight:800';
-    $('pesan').appendChild(loginLink);
-    $('btnDaftar').disabled = true;
+    setMsg('Sesi Firebase belum terbaca. Pastikan sudah login melalui login-panitia.html pada alamat website yang sama, lalu buka kembali Registrasi COD.', true);
     return;
   }
 
@@ -395,8 +378,6 @@ function tampilkanBukti(p){
   $('rKode').textContent = p.kode || '-';
   $('rMetode').textContent = 'COD';
   $('rStatus').textContent = 'LUNAS';
-  $('rKehadiran').textContent = 'BELUM HADIR';
-  $('rBenefit').textContent = 'BELUM DIAMBIL';
   $('rNominal').textContent = rupiah(p.nominal);
 
   const qr = $('qrcode');
