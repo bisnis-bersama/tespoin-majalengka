@@ -205,33 +205,17 @@ function makeCode(){
 }
 
 async function init(){
-  // Gunakan persistensi lokal yang sama dengan login-panitia.html.
-  try {
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-  } catch (err) {
-    console.warn('Pengaturan persistensi login:', err);
-  }
-
-  // Tunggu Firebase menyelesaikan pemulihan sesi sebelum memutuskan pengguna belum login.
-  user = auth.currentUser;
-  if (!user) {
-    user = await new Promise((resolve, reject) => {
-      let unsubscribe = null;
-      unsubscribe = auth.onAuthStateChanged(
-        currentUser => {
-          if (unsubscribe) unsubscribe();
-          resolve(currentUser || null);
-        },
-        error => {
-          if (unsubscribe) unsubscribe();
-          reject(error);
-        }
-      );
+  // Pertahankan alur login seperti halaman COD semula.
+  user = await new Promise(resolve => {
+    let unsub = null;
+    unsub = auth.onAuthStateChanged(x => {
+      if (unsub) unsub();
+      resolve(x);
     });
-  }
+  });
 
   if(!user){
-    setMsg('Sesi Firebase belum terbaca. Pastikan sudah login melalui login-panitia.html pada alamat website yang sama, lalu buka kembali Registrasi COD.', true);
+    location.replace('login-panitia.html');
     return;
   }
 
