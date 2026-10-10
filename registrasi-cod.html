@@ -64,7 +64,7 @@ $('form').addEventListener('submit',async e=>{
     if(waNormalized.length<10)throw new Error('Nomor WhatsApp tidak valid.');
     const kode=await kodeUnik();
     const now=firebase.firestore.FieldValue.serverTimestamp();
-    const peserta={kode,nama,toko,wa,waNormalized,alamat,email,ukuran,buktiTransfer:'',buktiNama:'',buktiTeks:'',statusPembayaran:'LUNAS',nominalPembayaran:codPrice,estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',hargaFinal:codPrice,metodePembayaran:'COD',tanggalVerifikasi:now,petugasPembayaran:user.email||user.uid,waktuPembayaran:now,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now,statusKehadiran:'HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now};
+    const peserta={kode,nama,toko,wa,waNormalized,alamat,email,ukuran,buktiTransfer:'',buktiNama:'',buktiTeks:'',statusPembayaran:'LUNAS',nominalPembayaran:codPrice,estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',hargaFinal:codPrice,metodePembayaran:'COD',tanggalVerifikasi:now,petugasPembayaran:user.email||user.uid,waktuPembayaran:now,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now,statusKehadiran:'BELUM HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now};
     const batch=db.batch();
     batch.set(db.collection('peserta').doc(kode),peserta);
     batch.set(db.collection('uniqueWa').doc(keyWa(waNormalized)),{waNormalized,kode,createdAt:now});
