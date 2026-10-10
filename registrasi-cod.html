@@ -133,13 +133,17 @@ button:disabled{opacity:.6;cursor:not-allowed}
         <div class="detail-row"><span>Kode Registrasi</span><b id="rKode">-</b></div>
         <div class="detail-row"><span>Metode Pembayaran</span><b id="rMetode">COD</b></div>
         <div class="detail-row"><span>Status Pembayaran</span><b id="rStatus">LUNAS</b></div>
+        <div class="detail-row"><span>Status Kehadiran</span><b id="rKehadiran">BELUM HADIR</b></div>
+        <div class="detail-row"><span>Status Benefit</span><b id="rBenefit">BELUM DIAMBIL</b></div>
         <div class="detail-row"><span>Nominal</span><b id="rNominal">-</b></div>
       </div>
 
       <div class="save-note">
         <b>PENTING:</b> Simpan bukti registrasi dalam bentuk JPG. QR Code jangan dihapus
         karena akan digunakan saat registrasi ulang. Tanda <b>COD</b> membedakan bukti ini
-        dari registrasi peserta biasa.
+        dari registrasi peserta biasa. Status kehadiran baru berubah menjadi <b>HADIR</b>
+        saat QR Code dipindai pada halaman registrasi ulang. Status benefit tetap
+        <b>BELUM DIAMBIL</b> sampai benefit benar-benar diberikan.
       </div>
 
       <div class="proof-actions">
@@ -153,15 +157,15 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 const firebaseConfig = {
-  apiKey:"AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfPdNDppQ",
+  apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain:"register-peserta.firebaseapp.com",
   projectId:"register-peserta",
   storageBucket:"register-peserta.firebasestorage.app",
@@ -205,33 +209,12 @@ function makeCode(){
 }
 
 async function init(){
-  // Gunakan persistensi lokal yang sama dengan login-panitia.html.
-  try {
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-  } catch (err) {
-    console.warn('Pengaturan persistensi login:', err);
-  }
-
-  // Tunggu Firebase menyelesaikan pemulihan sesi sebelum memutuskan pengguna belum login.
-  user = auth.currentUser;
-  if (!user) {
-    user = await new Promise((resolve, reject) => {
-      let unsubscribe = null;
-      unsubscribe = auth.onAuthStateChanged(
-        currentUser => {
-          if (unsubscribe) unsubscribe();
-          resolve(currentUser || null);
-        },
-        error => {
-          if (unsubscribe) unsubscribe();
-          reject(error);
-        }
-      );
-    });
-  }
+  user = await new Promise(resolve => {
+    const unsub = auth.onAuthStateChanged(x => {unsub();resolve(x)});
+  });
 
   if(!user){
-    setMsg('Sesi Firebase belum terbaca. Pastikan sudah login melalui login-panitia.html pada alamat website yang sama, lalu buka kembali Registrasi COD.', true);
+    location.replace('login-panitia.html');
     return;
   }
 
@@ -378,6 +361,8 @@ function tampilkanBukti(p){
   $('rKode').textContent = p.kode || '-';
   $('rMetode').textContent = 'COD';
   $('rStatus').textContent = 'LUNAS';
+  $('rKehadiran').textContent = 'BELUM HADIR';
+  $('rBenefit').textContent = 'BELUM DIAMBIL';
   $('rNominal').textContent = rupiah(p.nominal);
 
   const qr = $('qrcode');
