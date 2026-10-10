@@ -120,8 +120,27 @@ form.addEventListener('submit',async e=>{
   batch.set(pesertaRef,peserta);
   await batch.commit();
   tampilkanBukti(peserta);hasil.style.display='block';form.reset();tampilPesan('Data peserta berhasil tersimpan. Estimasi pembayaran Rp '+ESTIMASI_NOMINAL.toLocaleString('id-ID')+'.',false);window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
- }catch(err){console.error(err);tampilPesan(err.message||'Terjadi kesalahan saat menyimpan.',true);}finally{btn.disabled=false;btn.textContent='SIMPAN KE FIRESTORE';}
-});
+ } catch (err) {
+  console.error('Gagal registrasi:', err);
+
+  if (
+    err.code === 'permission-denied' ||
+    (err.message || '').includes('Missing or insufficient permissions')
+  ) {
+    tampilPesan(
+      'Nomor WhatsApp atau email sudah terdaftar. Periksa kembali data Anda dan gunakan nomor atau email yang belum digunakan.',
+      true
+    );
+  } else {
+    tampilPesan(
+      err.message || 'Terjadi kesalahan saat menyimpan data.',
+      true
+    );
+  }
+} finally {
+  btn.disabled = false;
+  btn.textContent = 'SIMPAN KE FIRESTORE';
+}
 function buatKodeRegistrasi() {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
