@@ -72,6 +72,7 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
 <div class="tabs">
   <button class="active" data-tab="dashboard">Ringkasan</button>
   <button data-tab="rab">Rencana Anggaran</button>
+  <button data-tab="alokasi">Alokasi Dana</button>
   <button data-tab="masuk">Pemasukan</button>
   <button data-tab="keluar">Pengeluaran</button>
   <button data-tab="laporan">Laporan & Ekspor</button>
@@ -123,6 +124,24 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
   <div class="panel">
     <h2>Daftar Rencana Anggaran</h2>
     <div class="table-wrap"><table><thead><tr><th>Item</th><th>Kategori</th><th>Volume</th><th>Harga Satuan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="rabRows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div>
+  </div>
+</section>
+
+<section id="tab-alokasi" class="tab-panel">
+  <div class="panel">
+    <h2>Alokasi Dana per Kebutuhan</h2>
+    <p class="note">Alokasi adalah batas anggaran per kategori/item, bukan uang yang sudah dibayarkan. Buat item RAB dan setujui terlebih dahulu, lalu tentukan alokasi dana di sini.</p>
+    <div class="form-grid">
+      <div class="field"><label>Item RAB</label><select id="allocRabItem" required><option value="">Pilih item RAB</option></select></div>
+      <div class="field"><label>Nominal alokasi (Rp)</label><input id="allocAmount" type="number" min="1" step="1" required placeholder="Contoh: 5000000"></div>
+      <div class="field full"><label>Catatan alokasi</label><textarea id="allocNote" placeholder="Misalnya batas dana konsumsi peserta"></textarea></div>
+    </div>
+    <div class="form-actions"><button id="saveAllocBtn" class="btn-gold">Simpan Alokasi</button><button id="resetAllocBtn" class="btn-light">Kosongkan</button></div>
+  </div>
+  <div class="panel">
+    <h2>Rekap Alokasi, Pengeluaran, dan Sisa</h2>
+    <div class="table-wrap"><table><thead><tr><th>Item RAB</th><th>Anggaran RAB</th><th>Alokasi Dana</th><th>Pengeluaran Terkonfirmasi</th><th>Sisa Alokasi</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody id="allocRows"><tr><td colspan="7">Belum ada alokasi.</td></tr></tbody></table></div>
+    <p class="note">Pengeluaran dihitung berdasarkan transaksi terkonfirmasi yang ditautkan ke item RAB terkait. Transaksi yang tidak ditautkan tidak mengurangi sisa alokasi item.</p>
   </div>
 </section>
 
@@ -200,7 +219,7 @@ const eventRef=()=>db.collection('events').doc(EVENT_ID);
 const rabRef=()=>eventRef().collection('rab_items');
 const txRef=()=>eventRef().collection('transactions');
 const auditRef=()=>eventRef().collection('audit_logs');
-let userRole='',currentUser=null,rabItems=[],transactions=[],eventData={};
+let userRole='',currentUser=null,rabItems=[],transactions=[],allocations=[],eventData={};
 
 function clean(v){return String(v==null?'':v).trim()}
 function up(v){return clean(v).toUpperCase()}
@@ -267,10 +286,76 @@ function renderTx(kind){
     body.appendChild(tr);
   });
 }
-function renderAll(){renderSummary();renderRab();renderTx('PEMASUKAN');renderTx('PENGELUARAN')}
+
+function allocationRef(){return eventRef().collection('allocations')}
+function itemAllocated(itemId){return allocations.filter(a=>a.rabItemId===itemId).reduce((s,a)=>s+money(a.nominal),0)}
+function itemSpent(itemId){return confirmedTransactions('PENGELUARAN').filter(t=>t.rabItemId===itemId).reduce((s,t)=>s+money(t.nominal),0)}
+function fillAllocationOptions(){
+  const select=$('allocRabItem'),old=select.value;select.replaceChildren();
+  const first=document.createElement('option');first.value='';first.textContent='Pilih item RAB';select.appendChild(first);
+  rabItems.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.namaItem+' — RAB '+rupiah(money(item.volume)*money(item.hargaSatuan));select.appendChild(o)});
+  select.value=old;
+}
+function renderAllocations(){
+  fillAllocationOptions();
+  const body=$('allocRows');body.replaceChildren();
+  if(!allocations.length){
+    const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.textContent='Belum ada alokasi dana.';tr.appendChild(td);body.appendChild(tr);return;
+  }
+  allocations.forEach(a=>{
+    const item=rabItems.find(x=>x.id===a.rabItemId);
+    const tr=document.createElement('tr');
+    makeCell(tr,item?item.namaItem:'Item RAB tidak ditemukan');
+    makeCell(tr,item?rupiah(money(item.volume)*money(item.hargaSatuan)):'-');
+    makeCell(tr,rupiah(a.nominal));
+    makeCell(tr,rupiah(itemSpent(a.rabItemId)));
+    makeCell(tr,rupiah(money(a.nominal)-itemSpent(a.rabItemId)));
+    makeCell(tr,a.catatan||'-');
+    const td=tr.insertCell();
+    if(canWrite())makeAction(td,'Ubah nominal','btn-light',()=>editAllocation(a));
+    body.appendChild(tr);
+  });
+}
+function editAllocation(a){
+  $('allocRabItem').value=a.rabItemId;
+  $('allocAmount').value=a.nominal;
+  $('allocNote').value=a.catatan||'';
+  $('saveAllocBtn').dataset.editId=a.id;
+  tab('alokasi');window.scrollTo({top:0,behavior:'smooth'});
+}
+async function saveAllocation(){
+  if(!canWrite())return;
+  const rabItemId=$('allocRabItem').value,nominal=Number($('allocAmount').value);
+  if(!rabItemId){showStatus('Pilih item RAB terlebih dahulu.',true);return}
+  if(!Number.isSafeInteger(nominal)||nominal<=0){showStatus('Nominal alokasi harus berupa bilangan rupiah positif.',true);return}
+  const item=rabItems.find(x=>x.id===rabItemId);
+  if(!item){showStatus('Item RAB tidak ditemukan.',true);return}
+  const existing=allocations.find(a=>a.rabItemId===rabItemId);
+  const editId=$('saveAllocBtn').dataset.editId|| (existing?existing.id:'');
+  const otherAllocated=allocations.filter(a=>a.rabItemId===rabItemId&&a.id!==editId).reduce((s,a)=>s+money(a.nominal),0);
+  const budget=money(item.volume)*money(item.hargaSatuan);
+  if(otherAllocated+nominal>budget){showStatus('Alokasi melebihi anggaran item RAB ('+rupiah(budget)+').',true);return}
+  const data={rabItemId,nominal,catatan:$('allocNote').value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
+  try{
+    if(editId){
+      await allocationRef().doc(editId).update(data);
+      await addAudit('ALOKASI_DANA_DIUBAH',editId,item.namaItem+' '+nominal);
+    }else{
+      data.createdAt=firebase.firestore.FieldValue.serverTimestamp();data.createdBy=currentUser.uid;
+      const ref=await allocationRef().add(data);
+      await addAudit('ALOKASI_DANA_DITAMBAHKAN',ref.id,item.namaItem+' '+nominal);
+    }
+    resetAllocation();await reloadData();tab('alokasi');showStatus('Alokasi dana berhasil disimpan.');
+  }catch(e){showStatus('Gagal menyimpan alokasi: '+e.message,true)}
+}
+function resetAllocation(){
+  $('allocRabItem').value='';$('allocAmount').value='';$('allocNote').value='';delete $('saveAllocBtn').dataset.editId;
+}
+
+function renderAll(){renderSummary();renderRab();renderAllocations();renderTx('PEMASUKAN');renderTx('PENGELUARAN')}
 function canWrite(){return userRole==='ADMIN'||userRole==='BENDAHARA'}
 function setWriteAccess(){
-  document.querySelectorAll('#rabForm input,#rabForm select,#rabForm textarea,#rabForm button,#inForm input,#inForm select,#inForm textarea,#inForm button,#outForm input,#outForm select,#outForm textarea,#outForm button,#saveEventBtn').forEach(el=>el.disabled=!canWrite());
+  document.querySelectorAll('#rabForm input,#rabForm select,#rabForm textarea,#rabForm button,#inForm input,#inForm select,#inForm textarea,#inForm button,#outForm input,#outForm select,#outForm textarea,#outForm button,#saveEventBtn,#allocRabItem,#allocAmount,#allocNote,#saveAllocBtn,#resetAllocBtn').forEach(el=>el.disabled=!canWrite());
   $('exportRab').disabled=false;$('exportTx').disabled=false;
   if(userRole==='OWNER')showStatus('Mode Owner: hanya melihat laporan, tidak dapat mengubah data.');
 }
@@ -351,10 +436,11 @@ async function saveEvent(){
   try{await eventRef().set({...data,createdAt:eventData.createdAt||firebase.firestore.FieldValue.serverTimestamp(),createdBy:eventData.createdBy||currentUser.uid},{merge:true});await addAudit('INFO_ACARA_DIUBAH',EVENT_ID,data.namaAcara);await reloadData();showStatus('Identitas acara berhasil disimpan.')}catch(e){showStatus('Gagal menyimpan identitas acara: '+e.message,true)}
 }
 async function reloadData(){
-  const [eventSnap,rabSnap,txSnap]=await Promise.all([eventRef().get(),rabRef().get(),txRef().get()]);
+  const [eventSnap,rabSnap,txSnap,allocSnap]=await Promise.all([eventRef().get(),rabRef().get(),txRef().get(),allocationRef().get()]);
   eventData=eventSnap.exists?eventSnap.data():{};
   rabItems=rabSnap.docs.map(d=>({id:d.id,...d.data()}));
   transactions=txSnap.docs.map(d=>({id:d.id,...d.data()}));
+  allocations=allocSnap.docs.map(d=>({id:d.id,...d.data()}));
   if(eventData.namaAcara)$('eventName').value=eventData.namaAcara;
   if(eventData.lokasi)$('eventLocation').value=eventData.lokasi;
   $('eventStart').value=eventData.tanggalMulai||'';$('eventEnd').value=eventData.tanggalSelesai||'';$('eventStatus').value=eventData.status||'PERSIAPAN';
@@ -390,6 +476,8 @@ $('outForm').addEventListener('submit',e=>saveTx(e,'PENGELUARAN'));
 $('cancelInEdit').addEventListener('click',()=>resetTx('PEMASUKAN'));
 $('cancelOutEdit').addEventListener('click',()=>resetTx('PENGELUARAN'));
 $('saveEventBtn').addEventListener('click',saveEvent);
+$('saveAllocBtn').addEventListener('click',saveAllocation);
+$('resetAllocBtn').addEventListener('click',resetAllocation);
 $('exportRab').addEventListener('click',exportRAB);
 $('exportTx').addEventListener('click',exportTransactions);
 resetTx('PEMASUKAN');resetTx('PENGELUARAN');loadPage();
