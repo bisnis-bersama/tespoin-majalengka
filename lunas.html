@@ -1,164 +1,253 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Peserta Lunas - DPD TESPOIN Majalengka</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#f3f3f3;color:#222;font-family:Arial,sans-serif}
-.wrap{max-width:1050px;margin:auto;padding:18px}
-.header{background:#111;color:#fff;border-radius:18px;padding:20px;text-align:center}
-.header h1{margin:0;color:#f5c400;font-size:23px}
-.header p{margin:6px 0 0;color:#ddd;font-size:13px}
-.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}
-.box{background:#fff;border-radius:14px;padding:15px;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.06)}
-.box strong{display:block;font-size:25px}
-.box span{font-size:12px;color:#777}
-.search{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;margin-bottom:14px;font-size:15px}
-.card{background:#fff;border-radius:16px;padding:15px;box-shadow:0 3px 15px rgba(0,0,0,.06);overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:850px}
-th,td{padding:11px 8px;border-bottom:1px solid #eee;text-align:left;font-size:13px}
-th{background:#111;color:#f5c400}
-.badge{display:inline-block;background:#dff5e4;color:#087b25;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:900}
-.empty{text-align:center;color:#888;padding:30px}
-.msg{display:none;padding:11px;border-radius:10px;margin-bottom:12px;font-size:13px;font-weight:700}
-.error{background:#ffe1e1;color:#a00000}
-.back{display:block;text-align:center;margin-top:15px;color:#666;text-decoration:none;font-size:13px}
-.btn{border:0;border-radius:9px;padding:8px 10px;font-weight:800;background:#f5c400;cursor:pointer}
-@media(max-width:650px){.summary{grid-template-columns:1fr 1fr}.summary .box:last-child{grid-column:1/-1}}
-</style>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
-  authDomain: "register-peserta.firebaseapp.com",
-  projectId: "register-peserta",
-  storageBucket: "register-peserta.firebasestorage.app",
-  messagingSenderId: "983090504866",
-  appId: "1:983090504866:web:7879b0784b9fecad4863fb"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-function getAuthUser(){
-  return new Promise(resolve=>{
-    const unsub=auth.onAuthStateChanged(user=>{unsub();resolve(user);});
-  });
-}
-async function requireStaff(){
-  const user=await getAuthUser();
-  if(!user){ location.href='login-panitia.html'; return false; }
-  const snap=await db.collection('users').doc(user.uid).get();
-  const role=snap.exists ? String(snap.data().role||'').toLowerCase() : '';
-  if(role!=='admin' && role!=='owner'){
-    alert('Akses ditolak. Halaman ini hanya untuk Admin atau Owner.');
-    await auth.signOut();
-    location.href='login-panitia.html';
-    return false;
-  }
-  return true;
-}
-</script>
-</head>
-<body>
-<div class="wrap">
-  <div class="header">
-    <h1>PESERTA LUNAS</h1>
-    <p>DPD TESPOIN MAJALENGKA</p>
-  </div>
+<!doctype html>
 
-  <div class="summary">
-    <div class="box"><strong id="total">0</strong><span>TOTAL PESERTA LUNAS</span></div>
-    <div class="box"><strong id="hadir">0</strong><span>SUDAH HADIR</span></div>
-    <div class="box"><strong id="belumHadir">0</strong><span>BELUM HADIR</span></div>
-  </div>
+<html lang="id">  
+<head>  
+<meta charset="utf-8">  
+<meta name="viewport" content="width=device-width,initial-scale=1">  
+<title>Cek Bukti Registrasi - DPD TESPOIN Majalengka</title>  
+<link rel="stylesheet" href="style.css">  
+<style>  
+  :root{--navy:#061b30;--gold:#ffc400;--ink:#10233a;--muted:#52647a;--line:#e4eaf1}  
+  body{background:#f1f5fa;color:var(--ink);font-family:Arial,Helvetica,sans-serif}  
+  header .nav{display:flex;justify-content:space-between;align-items:center;gap:12px}  
+  .lookup-form{display:grid;gap:12px;margin:18px 0;text-align:left}  
+  .lookup-form input{width:100%;padding:13px;border:1px solid #ccd5df;border-radius:10px;font-size:16px}  
+  .lookup-form button{padding:13px;border:0;border-radius:10px;background:var(--gold);color:#111;font-weight:800;cursor:pointer}  
+  .lookup-form button:disabled{opacity:.6;cursor:wait}  
+  #status{margin-top:12px;font-weight:700}  
+  #status.error{color:#b00020} #status.ok{color:#087b25}  
+  #result{display:none;text-align:left;margin:22px auto 0;max-width:900px;background:#fff;border:1px solid #e5eaf0;border-radius:22px;padding:clamp(14px,3vw,28px);box-shadow:0 12px 35px #10233a12;overflow:hidden}  
+  .proof-top{height:14px;margin:-1px -1px 20px;background:linear-gradient(115deg,var(--navy) 0 42%,var(--gold) 42% 45%,var(--navy) 45% 88%,var(--gold) 88%);border-radius:12px}  
+  .proof-title{text-align:center;margin:0;font-size:clamp(22px,4vw,34px);font-weight:900;color:var(--navy);line-height:1.2}  
+  .proof-subtitle{text-align:center;color:var(--muted);margin:8px 0 22px;font-size:clamp(13px,2vw,17px)}  
+  .qr-card{max-width:500px;margin:0 auto 18px;padding:18px;border:1px solid var(--line);border-radius:18px;text-align:center}  
+  #qr{display:flex;justify-content:center;align-items:center;margin:8px auto 12px;min-height:0}  
+  #qr img,#qr canvas{display:block;width:clamp(190px,48vw,300px)!important;height:auto!important;max-width:100%}  
+  .qr-caption{font-size:13px;color:var(--muted);font-weight:700;margin:10px 0}  
+  .kode-box{background:#fff6d8;border:1px solid #ffe6a0;border-radius:12px;padding:12px;margin-top:12px;text-align:center}  
+  .kode-label{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:5px}  
+  .kode-value{font-size:clamp(17px,3.5vw,27px);font-weight:900;overflow-wrap:anywhere;color:#071b30}  
+  .copy-code{border:0;background:transparent;color:var(--navy);font-weight:800;cursor:pointer;padding:6px 10px}  
+  .detail-title{background:var(--navy);color:#fff;font-size:17px;font-weight:900;padding:14px 16px;border-radius:12px 12px 0 0;border-bottom:4px solid var(--gold)}  
+  #dataRows{border:1px solid var(--line);border-radius:12px;overflow:hidden}  
+  .data-row{display:grid;grid-template-columns:minmax(115px, .85fr) 14px minmax(0,1.3fr);gap:10px;align-items:start;padding:12px 14px;border-bottom:1px solid var(--line);font-size:clamp(13px,2vw,16px)}  
+  .data-row:last-child{border-bottom:0}  
+  .data-row span{color:#42546a}.data-row .colon{color:#708198}.data-row b{text-align:left;overflow-wrap:anywhere;color:#101e30}  
+  .reminder{margin:18px 0;background:#fff6d8;border:1px solid #ffe6a0;border-radius:12px;padding:14px;line-height:1.55;color:#273447;font-size:14px}  
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}  
+  .print-btn{width:100%;padding:14px 12px;border:0;border-radius:12px;font-weight:900;cursor:pointer;background:var(--navy);color:white}  
+  #saveJpgButton{background:var(--gold);color:#111}  
+  .print-btn:disabled{opacity:.65;cursor:wait}  
+  @media(max-width:520px){#result{padding:12px;border-radius:16px}.qr-card{padding:12px}.data-row{grid-template-columns:minmax(100px,.8fr) 8px minmax(0,1.2fr);gap:7px;padding:11px 9px}.actions{grid-template-columns:1fr}.proof-subtitle{line-height:1.4}}  
+  @media print{body{background:#fff!important}header,.lookup-form,#status,.print-btn,.copy-code{display:none!important}.container{max-width:none!important;padding:0!important}.card{box-shadow:none!important;border:0!important;padding:0!important}#result{display:block!important;max-width:none;border:0;box-shadow:none;margin:0;padding:10px}.proof-top{print-color-adjust:exact;-webkit-print-color-adjust:exact}.detail-title,.kode-box,.reminder{print-color-adjust:exact;-webkit-print-color-adjust:exact}}  
+</style>  
+</head>  
+<body>  
+<header><div class="nav"><div class="logo">BUKTI REGISTRASI</div><a href="index.html">Beranda</a></div></header>  
+<div class="container">  
+  <div class="card" style="max-width:600px;margin:auto;text-align:center">  
+    <h1>Cek Bukti Registrasi</h1>  
+    <p class="muted">Halaman khusus Admin. Masukkan email atau nomor WhatsApp peserta untuk mencari data registrasi.</p>  
+    <form id="lookupForm" class="lookup-form">  
+      <input id="keyword" type="text" autocomplete="off" required placeholder="Email atau 08xxxxxxxxxx">  
+      <button id="lookupButton" type="submit">CEK REGISTRASI</button>  
+    </form>  
+    <div id="status" role="status" aria-live="polite"></div>  
+    <section id="result">  
+      <div class="proof-top"></div>  
+      <h2 class="proof-title">BUKTI REGISTRASI PESERTA</h2>  
+      <p class="proof-subtitle">Roadshow Sertifikasi Profesi BNSP TESPOIN DPD Majalengka</p>  <div class="qr-card">  
+    <div id="qr"></div>  
+    <div class="qr-caption">SCAN QR CODE SAAT REGISTRASI ULANG</div>  
+    <div class="kode-box">  
+      <div class="kode-label">KODE REGISTRASI</div>  
+      <div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">  
+        <strong id="kodeValue" class="kode-value">-</strong>  
+        <button type="button" class="copy-code" id="copyCodeButton" aria-label="Salin kode registrasi">▢</button>  
+      </div>  
+    </div>  
+  </div>  
 
-  <div id="msg" class="msg"></div>
+  <div class="detail-title">DATA PESERTA</div>  
+  <div id="dataRows"></div>  
+  <div class="reminder"><b>PENTING:</b> Simpan bukti registrasi ini dalam bentuk JPG atau PDF. QR Code akan digunakan untuk registrasi ulang saat hari acara.</div>  
+  <div class="actions">  
+    <button id="saveJpgButton" class="print-btn" type="button">SIMPAN BUKTI JPG</button>  
+    <button class="print-btn" type="button" onclick="window.print()">CETAK / SIMPAN PDF</button>  
+  </div>  
+</section>
 
-  <input id="cari" class="search" placeholder="Cari REG, nama, toko, atau WhatsApp..." oninput="render()">
-
-  <div class="card">
-    <div id="loading" class="empty">Memuat data...</div>
-    <div id="tableWrap"></div>
-  </div>
-
-  <a href="index-admin.html" class="back">← Kembali ke Dashboard Admin</a>
-</div>
-
-<script>
-let dataLunas=[];
-
-async function load(){
-  try{
-    const snap=await db.collection('peserta').get();
-    dataLunas=snap.docs.map(doc=>{
-      const p=doc.data()||{};
-      return {...p,_docId:doc.id,kode:p.kode||doc.id,
-        jamCheckin:p.jamCheckIn||p.jamCheckin||'',
-        waktuCheckin:p.waktuScan||p.waktuCheckin||'',
-        petugasCheckin:p.petugasScan||p.petugasCheckin||''};
-    }).filter(p=>String(p.statusPembayaran||'').toUpperCase()==='LUNAS');
-    updateSummary();
-    render();
-  }catch(e){
-    showMsg(e.message);
-    document.getElementById('loading').textContent='Gagal memuat data.';
-  }
-}
-
-function updateSummary(){
-  const hadir=dataLunas.filter(p=>String(p.statusKehadiran||'').toUpperCase()==='HADIR').length;
-  document.getElementById('total').textContent=dataLunas.length;
-  document.getElementById('hadir').textContent=hadir;
-  document.getElementById('belumHadir').textContent=dataLunas.length-hadir;
-}
-
-function render(){
-  const q=document.getElementById('cari').value.toLowerCase().trim();
-  const rows=dataLunas.filter(p=>{
-    if(!q)return true;
-    return [p.kode,p.nama,p.toko,p.wa,p.alamat].some(v=>String(v||'').toLowerCase().includes(q));
-  });
-
-  document.getElementById('loading').style.display='none';
-
-  if(!rows.length){
-    document.getElementById('tableWrap').innerHTML='<div class="empty">Belum ada peserta LUNAS.</div>';
-    return;
-  }
-
-  let out='<table><thead><tr><th>REG</th><th>Nama Peserta</th><th>Toko</th><th>WhatsApp</th><th>Kaos</th><th>Pembayaran</th><th>Kehadiran</th><th>Jam Check-in</th></tr></thead><tbody>';
-
-  rows.forEach(p=>{
-    const hadir=String(p.statusKehadiran||'').toUpperCase()==='HADIR';
-    out+='<tr>';
-    out+='<td><b>'+esc(p.kode)+'</b></td>';
-    out+='<td>'+esc(p.nama)+'</td>';
-    out+='<td>'+esc(p.toko)+'</td>';
-    out+='<td>'+esc(p.wa)+'</td>';
-    out+='<td>'+esc(p.ukuran)+'</td>';
-    out+='<td><span class="badge">LUNAS</span></td>';
-    out+='<td>'+(hadir?'<span class="badge">HADIR</span>':'BELUM HADIR')+'</td>';
-    out+='<td>'+esc(p.jamCheckin||'-')+'</td>';
-    out+='</tr>';
-  });
-
-  out+='</tbody></table>';
-  document.getElementById('tableWrap').innerHTML=out;
-}
-
-function showMsg(t){
-  const e=document.getElementById('msg');
-  e.textContent=t;e.className='msg error';e.style.display='block';
-}
-function esc(v){
-  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-(async function(){ if(await requireStaff()) load(); })();
-</script>
-</body>
-</html>
+  </div>  
+</div>  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>  <script>  
+const firebaseConfig = {  
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",  
+  authDomain: "register-peserta.firebaseapp.com",  
+  projectId: "register-peserta",  
+  storageBucket: "register-peserta.firebasestorage.app",  
+  messagingSenderId: "983090504866",  
+  appId: "1:983090504866:web:7879b0784b9fecad4863fb"  
+};  
+firebase.initializeApp(firebaseConfig);  
+const auth = firebase.auth();  
+const db = firebase.firestore();  
+  
+const form = document.getElementById("lookupForm");  
+const button = document.getElementById("lookupButton");  
+const statusEl = document.getElementById("status");  
+const resultEl = document.getElementById("result");  
+  
+function normalizeWa(value) {  
+  let n = String(value || "").replace(/\D/g, "");  
+  if (n.startsWith("0")) n = "62" + n.slice(1);  
+  return n;  
+}  
+function showStatus(message, error=false) {  
+  statusEl.textContent = message || "";  
+  statusEl.className = error ? "error" : "ok";  
+}  
+function addRow(label, value) {  
+  const row = document.createElement("div");  
+  row.className = "data-row";  
+  const left = document.createElement("span");  
+  left.textContent = label;  
+  const colon = document.createElement("span");  
+  colon.className = "colon";  
+  colon.textContent = ":";  
+  const right = document.createElement("b");  
+  right.textContent = value == null || value === "" ? "-" : String(value);  
+  row.append(left, colon, right);  
+  document.getElementById("dataRows").appendChild(row);  
+}  
+function renderParticipant(p) {  
+  const kode = p.kode || p.kodeRegistrasi || p._docId || "";  
+  if (!kode) throw new Error("Data peserta tidak memiliki kode registrasi.");  
+  document.getElementById("dataRows").replaceChildren();  
+  document.getElementById("qr").replaceChildren();  
+  document.getElementById("kodeValue").textContent = kode;  
+  addRow("Nama Peserta", p.nama);  
+  addRow("Nama Toko", p.toko);  
+  addRow("No. WhatsApp", p.wa || p.noWa || p.nomorWhatsApp);  
+  addRow("Alamat", p.alamat);  
+  addRow("Email", p.email);  
+  addRow("Ukuran Kaos", p.ukuran);  
+  new QRCode(document.getElementById("qr"), {text:kode, width:280, height:280, correctLevel:QRCode.CorrectLevel.H});  
+  document.getElementById("copyCodeButton").onclick = async () => {  
+    try {  
+      await navigator.clipboard.writeText(kode);  
+      showStatus("Kode registrasi berhasil disalin.");  
+    } catch (_) {  
+      const temporary = document.createElement("textarea");  
+      temporary.value = kode;  
+      document.body.appendChild(temporary);  
+      temporary.select();  
+      document.execCommand("copy");  
+      temporary.remove();  
+      showStatus("Kode registrasi berhasil disalin.");  
+    }  
+  };  
+  resultEl.style.display = "block";  
+  
+  const saveButton = document.getElementById("saveJpgButton");  
+  saveButton.onclick = async () => {  
+    const oldText = saveButton.textContent;  
+    saveButton.disabled = true;  
+    saveButton.textContent = "MEMBUAT JPG...";  
+    try {  
+      await new Promise(resolve => setTimeout(resolve, 200));  
+      const canvas = await html2canvas(resultEl, {  
+        scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,  
+        scrollX: 0, scrollY: 0,  
+        ignoreElements: element => element.classList && (element.classList.contains("print-btn") || element.classList.contains("copy-code"))  
+      });  
+      const link = document.createElement("a");  
+      link.href = canvas.toDataURL("image/jpeg", 0.95);  
+      link.download = kode + "-BUKTI-REGISTRASI.jpg";  
+      document.body.appendChild(link); link.click(); link.remove();  
+    } catch (error) {  
+      console.error(error);  
+      showStatus("Gagal menyimpan JPG. Silakan gunakan tombol Cetak / Simpan PDF.", true);  
+    } finally {  
+      saveButton.disabled = false;  
+      saveButton.textContent = oldText;  
+    }  
+  };  
+}  
+  
+async function waitForAuth() {  
+  return new Promise(resolve => {  
+    const unsubscribe = auth.onAuthStateChanged(user => {  
+      unsubscribe();  
+      resolve(user);  
+    });  
+  });  
+}  
+  
+async function requireAdmin() {  
+  const user = await waitForAuth();  
+  if (!user) {  
+    showStatus("Silakan login sebagai Admin terlebih dahulu.", true);  
+    setTimeout(() => { window.location.href = "login-panitia.html"; }, 1200);  
+    return false;  
+  }  
+  try {  
+    const userDoc = await db.collection("users").doc(user.uid).get();  
+    const role = userDoc.exists ? String(userDoc.data().role || "").toLowerCase() : "";  
+    if (role !== "admin") {  
+      showStatus("Akses ditolak. Halaman ini khusus Admin.", true);  
+      await auth.signOut();  
+      setTimeout(() => { window.location.href = "login-panitia.html"; }, 1200);  
+      return false;  
+    }  
+    return true;  
+  } catch (error) {  
+    console.error("Pemeriksaan admin gagal:", error);  
+    showStatus("Gagal memeriksa akses Admin. Periksa koneksi dan aturan Firestore.", true);  
+    return false;  
+  }  
+}  
+  
+form.addEventListener("submit", async (event) => {  
+  event.preventDefault();  
+  const keyword = document.getElementById("keyword").value.trim();  
+  if (!keyword) return;  
+  button.disabled = true;  
+  button.textContent = "MENCARI...";  
+  resultEl.style.display = "none";  
+  showStatus("Mencari data peserta...");  
+  try {  
+    if (!auth.currentUser) throw new Error("Sesi Admin tidak ditemukan. Silakan login ulang.");  
+    const needleEmail = keyword.toLowerCase();  
+    const needleWa = normalizeWa(keyword);  
+    const snapshot = await db.collection("peserta").get();  
+    let found = null;  
+    snapshot.forEach(doc => {  
+      if (found) return;  
+      const p = doc.data() || {};  
+      const email = String(p.email || "").trim().toLowerCase();  
+      const wa = normalizeWa(p.wa || p.noWa || p.nomorWhatsApp || "");  
+      if ((keyword.includes("@") && email === needleEmail) || (!keyword.includes("@") && wa && wa === needleWa)) {  
+        found = {...p, _docId: doc.id};  
+      }  
+    });  
+    if (!found) {  
+      showStatus("Data registrasi tidak ditemukan. Periksa kembali email atau nomor WhatsApp.", true);  
+      return;  
+    }  
+    renderParticipant(found);  
+    showStatus("Data registrasi ditemukan.");  
+  } catch (error) {  
+    console.error("Pencarian registrasi gagal:", error);  
+    if (error.code === "permission-denied") {  
+      showStatus("Akses Firestore ditolak. Pastikan akun Admin berhak membaca koleksi peserta.", true);  
+    } else {  
+      showStatus(error.message || "Gagal mencari data registrasi.", true);  
+    }  
+  } finally {  
+    button.disabled = false;  
+    button.textContent = "CEK REGISTRASI";  
+  }  
+});  
+  
+requireAdmin();  
+</script>  </body>  
+</html>  
