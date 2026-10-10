@@ -157,15 +157,15 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 const firebaseConfig = {
-  apiKey:"AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfPdNDppQ",
+  apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain:"register-peserta.firebaseapp.com",
   projectId:"register-peserta",
   storageBucket:"register-peserta.firebasestorage.app",
@@ -334,7 +334,7 @@ $('formRegistrasi').addEventListener('submit', async e => {
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // COD bisa didaftarkan kapan saja; tombol hanya nonaktif jika harga belum diatur.
+    // COD boleh dilakukan kapan saja selama harga sudah diatur.
     b.disabled = codPrice <= 0;
   }
 });
@@ -393,12 +393,10 @@ function tampilkanBukti(p){
   };
 }
 
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-  .then(() => init())
-  .catch(err => {
-    console.error(err);
-    setMsg(err.message || 'Gagal memuat sesi Firebase.', true);
-  });
+init().catch(err => {
+  console.error(err);
+  setMsg(err.message || 'Gagal memuat pengaturan.',true);
+});
 </script>
 </body>
 </html>
