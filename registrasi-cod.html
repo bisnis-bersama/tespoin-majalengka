@@ -165,7 +165,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 
 <script>
 const firebaseConfig = {
-  apiKey:"AIzaSyBL_AE-ckPgJOhJX4XUYC04nBvfPdNDppQ",
+  apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain:"register-peserta.firebaseapp.com",
   projectId:"register-peserta",
   storageBucket:"register-peserta.firebasestorage.app",
@@ -334,7 +334,7 @@ $('formRegistrasi').addEventListener('submit', async e => {
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // Tombol hanya dinonaktifkan jika harga COD belum tersedia.
+    // COD dapat didaftarkan kapan saja selama harga sudah diatur.
     if(codPrice <= 0) b.disabled = true;
   }
 });
