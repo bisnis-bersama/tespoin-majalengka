@@ -171,7 +171,7 @@ function renderParticipant(p) {
     saveButton.textContent = "MEMBUAT JPG...";
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 5000));
       const canvas = await html2canvas(resultEl, {
         scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,
         scrollX: 0, scrollY: 0,
