@@ -4,12 +4,18 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Data Peserta & Approval Pembayaran — DPD TESPOIN Majalengka</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#222;font-family:Arial,Helvetica,sans-serif}.wrap{max-width:1100px;margin:auto;padding:18px}.card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 5px 24px #00000010;margin-bottom:18px}h1{font-size:25px;margin:0 0 7px}.sub{color:#777;margin-bottom:20px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.stat{padding:17px 10px;border-radius:14px;text-align:center;background:#eee}.stat span{font-size:13px}.stat b{display:block;font-size:30px;margin-top:5px}.wait{background:#fff1c4!important;color:#866600!important}.ok{background:#d8f6e2!important;color:#087b25!important}.hadir{background:#dceeff!important;color:#07558a!important}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}.tabs button,.btn{border:0;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;background:#f5c400;color:#111}.tabs button{background:#ddd}.tabs button.active{background:#111;color:#f5c400}.search{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;margin-bottom:14px;font-size:15px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th{background:#111;color:#f5c400;text-align:left;padding:12px}td{padding:12px 9px;border-bottom:1px solid #eee;vertical-align:middle}.badge{display:inline-block;border-radius:20px;padding:6px 9px;font-size:11px;font-weight:800;background:#eee;color:#555}.badge.ok{background:#d8f6e2}.badge.wait{background:#fff1c4}.badge.hadir{background:#dceeff}.action-cell{min-width:170px}.action-group{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.edit{background:#1677d2;color:white}.delete{background:#c62828;color:white}.btn-small{border:0;border-radius:8px;padding:9px 10px;font-weight:800;cursor:pointer}.empty{text-align:center;color:#777;padding:25px}.modal{display:none;position:fixed;inset:0;z-index:10000;background:#0009;padding:14px;overflow:auto}.modal.show{display:block}.modal-box{max-width:680px;margin:20px auto;background:white;border-radius:18px;padding:20px}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.close{border:0;background:#eee;border-radius:9px;padding:8px 13px;font-size:22px;cursor:pointer}.detail{border:1px solid #ddd;border-radius:12px;overflow:hidden;margin-top:15px}.row{display:flex;justify-content:space-between;gap:16px;padding:11px 12px;border-bottom:1px solid #eee;font-size:14px}.row:last-child{border:0}.row span{color:#666}.row b{text-align:right;max-width:60%;overflow-wrap:anywhere}.proof{margin-top:16px;border:1px solid #ddd;border-radius:12px;background:#fafafa;padding:14px}.proof h3{margin:0 0 12px}.proof-name{margin:0 0 10px;overflow-wrap:anywhere}.ocr{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222;font-size:14px;line-height:1.5;min-height:35px}.confirm{width:100%;margin-top:16px;padding:14px;border:0;border-radius:11px;background:#f5c400;font-weight:900;font-size:15px;cursor:pointer}.confirm:disabled{opacity:.55}.nominal-box{margin-top:14px;padding:12px;border:1px solid #e0c04b;border-radius:10px;background:#fff9df}.nominal-box label{display:block;font-weight:800;margin-bottom:7px}.nominal-box input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:16px}.nominal-help{font-size:12px;color:#666;margin-top:6px}.msg{text-align:center;font-weight:700;margin-top:10px}.msg.err{color:#b00020}.msg.good{color:#087b25}.hidden{display:none!important}@media(max-width:650px){.wrap{padding:10px}.card{padding:15px}.stats{grid-template-columns:1fr 1fr}.tabs{grid-template-columns:1fr 1fr}.modal{padding:8px}.modal-box{padding:15px;margin:6px auto}.row{align-items:flex-start}.row b{max-width:58%}}
+*{box-sizing:border-box}body{margin:0;background:#f4f4f4;color:#222;font-family:Arial,Helvetica,sans-serif}.wrap{max-width:1100px;margin:auto;padding:18px}.card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 5px 24px #00000010;margin-bottom:18px}h1{font-size:25px;margin:0 0 7px}.sub{color:#777;margin-bottom:20px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.stat{padding:17px 10px;border-radius:14px;text-align:center;background:#eee}.stat span{font-size:13px}.stat b{display:block;font-size:30px;margin-top:5px}.wait{background:#fff1c4!important;color:#866600!important}.ok{background:#d8f6e2!important;color:#087b25!important}.hadir{background:#dceeff!important;color:#07558a!important}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}.tabs button,.btn{border:0;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;background:#f5c400;color:#111}.tabs button{background:#ddd}.tabs button.active{background:#111;color:#f5c400}.search{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;margin-bottom:14px;font-size:15px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th{background:#111;color:#f5c400;text-align:left;padding:12px}td{padding:12px 9px;border-bottom:1px solid #eee;vertical-align:middle}.badge{display:inline-block;border-radius:20px;padding:6px 9px;font-size:11px;font-weight:800;background:#eee;color:#555}.badge.ok{background:#d8f6e2}.badge.wait{background:#fff1c4}.badge.hadir{background:#dceeff}.action-cell{min-width:170px}.action-group{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.edit{background:#1677d2;color:white}.delete{background:#c62828;color:white}.btn-small{border:0;border-radius:8px;padding:9px 10px;font-weight:800;cursor:pointer}.empty{text-align:center;color:#777;padding:25px}.modal{display:none;position:fixed;inset:0;z-index:10000;background:#0009;padding:14px;overflow:auto}.modal.show{display:block}.modal-box{max-width:680px;margin:20px auto;background:white;border-radius:18px;padding:20px}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.close{border:0;background:#eee;border-radius:9px;padding:8px 13px;font-size:22px;cursor:pointer}.detail{border:1px solid #ddd;border-radius:12px;overflow:hidden;margin-top:15px}.row{display:flex;justify-content:space-between;gap:16px;padding:11px 12px;border-bottom:1px solid #eee;font-size:14px}.row:last-child{border:0}.row span{color:#666}.row b{text-align:right;max-width:60%;overflow-wrap:anywhere}.proof{margin-top:16px;border:1px solid #ddd;border-radius:12px;background:#fafafa;padding:14px}.proof h3{margin:0 0 12px}.proof-name{margin:0 0 10px;overflow-wrap:anywhere}.ocr{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border:1px solid #ddd;border-radius:10px;padding:12px;color:#222;font-size:14px;line-height:1.5;min-height:35px}.confirm{width:100%;margin-top:16px;padding:14px;border:0;border-radius:11px;background:#f5c400;font-weight:900;font-size:15px;cursor:pointer}.confirm:disabled{opacity:.55}.nominal-box{margin-top:14px;padding:12px;border:1px solid #e0c04b;border-radius:10px;background:#fff9df}.nominal-box label{display:block;font-weight:800;margin-bottom:7px}.nominal-box input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:16px}.nominal-help{font-size:12px;color:#666;margin-top:6px}.msg{text-align:center;font-weight:700;margin-top:10px}.msg.err{color:#b00020}.msg.good{color:#087b25}.hidden{display:none!important}@media(max-width:650px){.wrap{padding:10px}.card{padding:15px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:12px 6px}.stat span{font-size:11px}.stat b{font-size:24px}.tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.tabs button{padding:10px 4px;font-size:11px}.modal{padding:8px}.modal-box{padding:15px;margin:6px auto}.row{align-items:flex-start}.row b{max-width:58%}}
 </style>
 </head>
 <body>
 <div class="wrap"><section class="card">
 <h1>DATA PESERTA</h1><div class="sub">DPD TESPOIN MAJALENGKA — Data peserta, approval pembayaran, dan kehadiran</div>
+<div class="stats" aria-label="Ringkasan jumlah peserta">
+  <div class="stat"><span>TOTAL PESERTA</span><b id="sumTotal">—</b></div>
+  <div class="stat wait"><span>BELUM LUNAS</span><b id="sumBelum">—</b></div>
+  <div class="stat ok"><span>SUDAH LUNAS</span><b id="sumLunas">—</b></div>
+  <div class="stat hadir"><span>SUDAH HADIR</span><b id="sumHadir">—</b></div>
+</div>
 <div class="tabs"><button id="tabBelum" class="active" onclick="setTab('belum')">BELUM LUNAS</button><button id="tabLunas" onclick="setTab('lunas')">SUDAH LUNAS</button><button id="tabHadir" onclick="setTab('hadir')">SUDAH HADIR</button></div>
 <div id="categoryInfo" class="msg">Data dimuat sesuai kategori yang dipilih untuk mengurangi pembacaan Firestore.</div>
 <input id="search" class="search" placeholder="Cari nama, toko, WA, atau kode registrasi..." oninput="render()">
@@ -40,24 +46,33 @@ async function requireAccess(){
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
+async function updateSummaryCounts(){
+  const targets=[
+    ['sumTotal',db.collection('peserta')],
+    ['sumBelum',db.collection('peserta').where('statusPembayaran','==','BELUM LUNAS')],
+    ['sumLunas',db.collection('peserta').where('statusPembayaran','==','LUNAS')],
+    ['sumHadir',db.collection('peserta').where('statusKehadiran','==','HADIR')]
+  ];
+  try{
+    // Firestore aggregation count: returns counts without downloading every participant document.
+    await Promise.all(targets.map(async ([id,query])=>{
+      const result=await query.count().get();
+      $(id).textContent=Number(result.data().count||0).toLocaleString('id-ID');
+    }));
+  }catch(error){
+    console.warn('Count aggregation is unavailable; summary counts were not loaded to avoid reading the whole collection.',error);
+    ['sumTotal','sumBelum','sumLunas','sumHadir'].forEach(id=>$(id).textContent='—');
+  }
+}
 async function load(){
   const sequence=++loadSequence;
   $('tbody').innerHTML='<tr><td colspan="10" class="empty">Memuat kategori dari Firestore...</td></tr>';
   $('categoryInfo').textContent='Memuat data kategori '+categoryLabel()+ '...';
   try{
     let query=db.collection('peserta');
-    if(tab==='belum') {
-      query=query.where('statusPembayaran','==','BELUM LUNAS');
-    } else if(tab==='lunas') {
-      // Peserta lunas yang belum check-in saja.
-      // Setelah QR discan dan statusKehadiran menjadi HADIR,
-      // dokumen otomatis keluar dari kategori ini.
-      query=query
-        .where('statusPembayaran','==','LUNAS')
-        .where('statusKehadiran','==','BELUM HADIR');
-    } else if(tab==='hadir') {
-      query=query.where('statusKehadiran','==','HADIR');
-    }
+    if(tab==='belum') query=query.where('statusPembayaran','==','BELUM LUNAS');
+    else if(tab==='lunas') query=query.where('statusPembayaran','==','LUNAS');
+    else if(tab==='hadir') query=query.where('statusKehadiran','==','HADIR');
     const snap=await query.get();
     if(sequence!==loadSequence)return;
     peserta=snap.docs.map(normalizeParticipant);
@@ -137,6 +152,6 @@ async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Adm
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='review'){const p=peserta.find(x=>x._docId===id);if(!p){alert('Data peserta tidak ditemukan. Muat ulang halaman.');return;}openReview(p.kode);return;}if(b.dataset.action==='edit')editPeserta(id);else if(b.dataset.action==='delete')hapusPeserta(id);});
 // Pastikan fungsi yang dipanggil dari atribut HTML tersedia pada window.
 window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;
-(async()=>{try{if(await requireAccess())await load();}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
+(async()=>{try{if(await requireAccess()){updateSummaryCounts();await load();}}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
 </body></html>
