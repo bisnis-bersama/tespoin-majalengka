@@ -154,6 +154,9 @@ function updateEligible(){
 }
 function drawWheel(){
   const wheel=$('wheel'),labels=$('wheelLabels');
+  // Render ulang daftar nama tidak boleh memulai animasi roda.
+  wheel.classList.remove('spinning');
+  wheel.style.animation='none';
   labels.replaceChildren();
   const list=eligible.length?eligible:[];
   if(!list.length){
@@ -266,7 +269,13 @@ function stopSpin(){
     // Jangan membulatkan sudut ke nilai lain saat frame terakhir,
     // supaya roda tidak terlihat melompat ketika berhenti.
     currentAngle=endAngle;
-    $('wheel').style.transform=`rotate(${endAngle}deg)`;
+    const wheelEl=$('wheel');
+    wheelEl.classList.remove('spinning');
+    wheelEl.style.animation='none';
+    wheelEl.style.transition='none';
+    wheelEl.style.transform=`rotate(${endAngle}deg)`;
+    // Paksa browser menerapkan posisi akhir sebelum menunggu pengumuman.
+    void wheelEl.offsetWidth;
 
     // Roda benar-benar sudah berhenti. Tahan 2 detik sebelum
     // nama pemenang ditampilkan, lalu jalankan efek perayaan.
@@ -283,6 +292,11 @@ function stopSpin(){
       if(list.querySelector('li.small'))list.replaceChildren();
       list.prepend(li);
 
+      // Kunci roda tetap diam ketika nama pemenang muncul.
+      wheelEl.classList.remove('spinning');
+      wheelEl.style.animation='none';
+      wheelEl.style.transition='none';
+      wheelEl.style.transform=`rotate(${endAngle}deg)`;
       playCelebration();
       isSlowing=false;
       showStatus('Pemenang: '+nama(selectedWinner));
