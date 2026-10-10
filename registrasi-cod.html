@@ -271,10 +271,11 @@ $('formRegistrasi').addEventListener('submit', async e => {
     if(waNormalized.length < 10) throw new Error('Nomor WhatsApp tidak valid.');
 
     
+
 const waKey = waNormalized;
 const emailKey = keyEmail(email);
 
-// Cek nomor WhatsApp
+// Periksa nomor WhatsApp
 const cekWa = await db
   .collection('uniqueWa')
   .doc(waKey)
@@ -282,11 +283,11 @@ const cekWa = await db
 
 if (cekWa.exists) {
   throw new Error(
-    'Nomor WhatsApp ini sudah terdaftar. Gunakan nomor lain.'
+    'PENDAFTARAN DITOLAK! Nomor WhatsApp ini sudah terdaftar. Silakan gunakan nomor lain.'
   );
 }
 
-// Cek email jika diisi
+// Periksa email jika diisi
 if (email) {
   const cekEmail = await db
     .collection('uniqueEmail')
@@ -295,7 +296,7 @@ if (email) {
 
   if (cekEmail.exists) {
     throw new Error(
-      'Email ini sudah terdaftar. Gunakan email lain.'
+      'PENDAFTARAN DITOLAK! Email ini sudah terdaftar. Silakan gunakan email lain.'
     );
   }
 }
