@@ -141,7 +141,8 @@ button:disabled{opacity:.6;cursor:not-allowed}
       <div class="save-note">
         <b>PENTING:</b> Simpan bukti registrasi dalam bentuk JPG. QR Code jangan dihapus
         karena akan digunakan saat registrasi ulang. Tanda <b>COD</b> membedakan bukti ini
-        dari registrasi peserta biasa. Status kehadiran tercatat <b>BELUM HADIR</b> sesuai Rules Firestore saat ini. Status benefit tetap
+        dari registrasi peserta biasa. Status kehadiran baru berubah menjadi <b>HADIR</b>
+        saat QR Code dipindai pada halaman registrasi ulang. Status benefit tetap
         <b>BELUM DIAMBIL</b> sampai benefit benar-benar diberikan.
       </div>
 
@@ -164,7 +165,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 
 <script>
 const firebaseConfig = {
-  apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPDNDppQ",
+  apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
   authDomain:"register-peserta.firebaseapp.com",
   projectId:"register-peserta",
   storageBucket:"register-peserta.firebasestorage.app",
@@ -202,8 +203,14 @@ function rupiah(value){
   return 'Rp ' + (Number(value) || 0).toLocaleString('id-ID');
 }
 function keyEmail(v){return encodeURIComponent(normEmail(v))}
-function makeCode(){
-  return String(Math.floor(1000 + Math.random() * 9000));
+async function makeCode(){
+  // Kode hanya 4 digit dan dicek agar tidak menimpa ID peserta yang sudah ada.
+  for(let i=0;i<30;i++){
+    const code = String(Math.floor(1000 + Math.random()*9000));
+    const exists = await db.collection('peserta').doc(code).get();
+    if(!exists.exists) return code;
+  }
+  throw new Error('Gagal membuat kode 4 digit yang tersedia. Coba lagi.');
 }
 
 async function init(){
@@ -212,7 +219,7 @@ async function init(){
   });
 
   if(!user){
-    location.replace('login.html');
+    location.replace('login-panitia.html');
     return;
   }
 
@@ -221,7 +228,7 @@ async function init(){
 
   if(!['admin','owner'].includes(role)){
     alert('Akses hanya untuk Admin atau Owner.');
-    location.replace('login.html');
+    location.replace('login-panitia.html');
     return;
   }
 
@@ -229,13 +236,20 @@ async function init(){
   if(!snap.exists) throw new Error('Pengaturan acara belum tersedia.');
 
   settings = snap.data() || {};
+  const today = dayKey(new Date());
+  const event = String(settings.tanggalAcara || settings.tanggal || '').slice(0,10);
   codPrice = Number(String(settings.codHarga || '').replace(/[^0-9]/g,'')) || 0;
 
   $('harga').textContent = rupiah(codPrice);
 
-  if(codPrice <= 0){
+  if(today !== event || codPrice <= 0){
     $('btnDaftar').disabled = true;
-    setMsg('Harga COD belum diatur pada Pengaturan Acara.', true);
+    setMsg(
+      today !== event
+        ? 'Registrasi COD hanya tersedia pada tanggal acara (' + (event || 'belum diatur') + ').'
+        : 'Harga COD belum diatur pada Pengaturan Acara.',
+      true
+    );
   }else{
     $('btnDaftar').disabled = false;
     setMsg('Silakan isi data peserta COD.', false);
@@ -252,6 +266,10 @@ $('formRegistrasi').addEventListener('submit', async e => {
   b.textContent = 'MENYIMPAN...';
 
   try{
+    const today = dayKey(new Date());
+    const event = String(settings.tanggalAcara || settings.tanggal || '').slice(0,10);
+
+    if(today !== event) throw new Error('COD hanya dapat dilakukan pada tanggal acara.');
     if(codPrice <= 0) throw new Error('Harga COD belum diatur.');
 
     const nama = $('nama').value.trim();
@@ -267,21 +285,26 @@ $('formRegistrasi').addEventListener('submit', async e => {
     }
     if(waNormalized.length < 10) throw new Error('Nomor WhatsApp tidak valid.');
 
-    // Jangan membaca uniqueWa/uniqueEmail: Rules Firestore memang melarang read.
-    // Dokumen reservasi dibuat dalam batch yang sama dengan peserta. Jika nomor
-    // WA/email sudah ada, create-only Rules menolak seluruh batch sehingga data
-    // peserta tidak tersimpan sebagian.
+    // Halaman ini khusus Admin/Owner. Rules mengizinkan staff membaca peserta,
+    // tetapi melarang membaca uniqueWa/uniqueEmail. Karena itu cek duplikat
+    // dilakukan pada koleksi peserta yang memang diizinkan Rules.
+    const daftarSnap = await db.collection('peserta').get();
+    let duplikatWa = false;
+    let duplikatEmail = false;
+    daftarSnap.forEach(doc => {
+      const d = doc.data() || {};
+      const waLama = normWa(d.waNormalized || d.wa || '');
+      const emailLama = normEmail(d.email || '');
+      if (waLama && waLama === waNormalized) duplikatWa = true;
+      if (email && emailLama && emailLama === email) duplikatEmail = true;
+    });
+
+    if(duplikatWa) throw new Error('Nomor WhatsApp ini sudah terdaftar. Gunakan nomor WhatsApp lain.');
+    if(duplikatEmail) throw new Error('Email ini sudah terdaftar. Gunakan email lain.');
+
     const waKey = waNormalized;
     const emailKey = keyEmail(email);
-
-    // Pastikan kode 4 digit belum dipakai.
-    let kode = makeCode();
-    for(let i=0;i<10;i++){
-      const cekKode = await db.collection('peserta').doc(kode).get();
-      if(!cekKode.exists) break;
-      kode = makeCode();
-      if(i===9) throw new Error('Gagal membuat kode registrasi unik. Silakan coba lagi.');
-    }
+    const kode = await makeCode();
     const now = firebase.firestore.FieldValue.serverTimestamp();
 
     const p = {
@@ -336,16 +359,17 @@ $('formRegistrasi').addEventListener('submit', async e => {
 
   }catch(err){
     console.error(err);
-    if(err && (err.code === 'permission-denied' || /missing or insufficient permissions/i.test(err.message || ''))){
-      setMsg('PENDAFTARAN DITOLAK. Nomor WhatsApp atau email mungkin sudah terdaftar. Periksa kembali nomor WA dan email. Tidak ada data peserta yang disimpan.', true);
+    if(err && err.code === 'permission-denied'){
+      setMsg('Registrasi ditolak Firestore. Nomor WhatsApp/email mungkin sudah memiliki reservasi, atau akun ini tidak memiliki akses Admin/Owner. Tidak ada perubahan Rules yang dilakukan.',true);
     }else{
-      setMsg(err.message || 'Registrasi COD gagal. Periksa koneksi dan aturan Firestore.',true);
+      setMsg(err.message || 'Registrasi COD gagal. Periksa koneksi dan akses Firebase.',true);
     }
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // Tombol hanya dinonaktifkan jika harga COD belum tersedia.
-    if(codPrice <= 0) b.disabled = true;
+    // Tombol tetap dinonaktifkan jika tanggal acara/harga tidak memenuhi syarat.
+    const event = String(settings.tanggalAcara || settings.tanggal || '').slice(0,10);
+    if(dayKey(new Date()) !== event || codPrice <= 0) b.disabled = true;
   }
 });
 
