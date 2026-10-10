@@ -204,34 +204,44 @@ function makeCode(){
     Math.floor(100 + Math.random() * 900);
 }
 
-async function init(){
-  // Gunakan persistensi lokal yang sama dengan login-panitia.html.
-  try {
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-  } catch (err) {
-    console.warn('Pengaturan persistensi login:', err);
-  }
+async function ambilSesiFirebase(){
+  // Jangan mengubah persistence login di halaman COD.
+  // Tunggu Firebase memulihkan sesi yang dibuat oleh login-panitia.html.
+  if (auth.currentUser) return auth.currentUser;
+  return await new Promise((resolve, reject) => {
+    let selesai = false;
+    let unsubscribe = null;
+    const timer = setTimeout(() => {
+      if (selesai) return;
+      selesai = true;
+      if (unsubscribe) unsubscribe();
+      resolve(auth.currentUser || null);
+    }, 8000);
+    unsubscribe = auth.onAuthStateChanged(
+      currentUser => {
+        if (selesai) return;
+        selesai = true;
+        clearTimeout(timer);
+        if (unsubscribe) unsubscribe();
+        resolve(currentUser || null);
+      },
+      error => {
+        if (selesai) return;
+        selesai = true;
+        clearTimeout(timer);
+        if (unsubscribe) unsubscribe();
+        reject(error);
+      }
+    );
+  });
+}
 
-  // Tunggu Firebase menyelesaikan pemulihan sesi sebelum memutuskan pengguna belum login.
-  user = auth.currentUser;
-  if (!user) {
-    user = await new Promise((resolve, reject) => {
-      let unsubscribe = null;
-      unsubscribe = auth.onAuthStateChanged(
-        currentUser => {
-          if (unsubscribe) unsubscribe();
-          resolve(currentUser || null);
-        },
-        error => {
-          if (unsubscribe) unsubscribe();
-          reject(error);
-        }
-      );
-    });
-  }
+async function init(){
+  user = await ambilSesiFirebase();
 
   if(!user){
-    setMsg('Sesi Firebase belum terbaca. Pastikan sudah login melalui login-panitia.html pada alamat website yang sama, lalu buka kembali Registrasi COD.', true);
+    setMsg('Sesi login belum ditemukan pada browser ini. Buka login-panitia.html, login, lalu pilih Registrasi COD dari dashboard Admin pada domain yang sama.', true);
+    $('btnDaftar').disabled = true;
     return;
   }
 
@@ -239,8 +249,8 @@ async function init(){
   role = us.exists ? String(us.data().role || '').toLowerCase() : '';
 
   if(!['admin','owner'].includes(role)){
-    alert('Akses hanya untuk Admin atau Owner.');
-    location.replace('login-panitia.html');
+    setMsg('Akses ditolak. Akun ini bukan Admin atau Owner. Silakan login dengan akun yang berwenang.', true);
+    $('btnDaftar').disabled = true;
     return;
   }
 
@@ -249,15 +259,15 @@ async function init(){
 
   settings = snap.data() || {};
   codPrice = Number(String(settings.codHarga || '').replace(/[^0-9]/g,'')) || 0;
-
   $('harga').textContent = rupiah(codPrice);
 
+  // Pembatasan tanggal acara sengaja dihapus. Harga COD tetap wajib diatur.
   if(codPrice <= 0){
     $('btnDaftar').disabled = true;
     setMsg('Harga COD belum diatur pada Pengaturan Acara.', true);
   }else{
     $('btnDaftar').disabled = false;
-    setMsg('Silakan isi data peserta COD.', false);
+    setMsg('Sesi Admin/Owner aktif. Registrasi COD dapat dilakukan kapan saja.', false);
   }
 }
 
