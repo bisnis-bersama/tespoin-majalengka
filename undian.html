@@ -232,16 +232,29 @@ function stopSpin(){
   const startAngle=currentAngle;
   const endAngle=startAngle+delta;
   const startTime=performance.now();
+  const duration=5000;
   $('stop').disabled=true;
-  showStatus('STOP ditekan. Roda sedang melambat selama 5 detik...');
+  showStatus('STOP ditekan. Roda melambat secara bertahap selama 5 detik...');
+
+  // Ease-out quint: tetap bergerak pada awal pengereman,
+  // lalu melambat sangat halus dan paling lambat di detik terakhir.
   function slowFrame(now){
-    const t=Math.min(1,(now-startTime)/5000);
-    const eased=1-Math.pow(1-t,4); // ease-out perlahan di akhir
+    const t=Math.min(1,(now-startTime)/duration);
+    const remaining=1-t;
+    const eased=1-Math.pow(remaining,5);
     currentAngle=startAngle+(endAngle-startAngle)*eased;
     $('wheel').style.transform=`rotate(${currentAngle}deg)`;
-    if(t<1){requestAnimationFrame(slowFrame);return;}
-    currentAngle=((endAngle%360)+360)%360;
-    $('wheel').style.transform=`rotate(${currentAngle}deg)`;
+
+    if(t<1){
+      requestAnimationFrame(slowFrame);
+      return;
+    }
+
+    // Jangan membulatkan sudut ke nilai lain saat frame terakhir,
+    // supaya roda tidak terlihat melompat ketika berhenti.
+    currentAngle=endAngle;
+    $('wheel').style.transform=`rotate(${endAngle}deg)`;
+
     winners[type].add(kode(selectedWinner));
     $('namaMenang').textContent=nama(selectedWinner);
     $('kodeMenang').textContent=kode(selectedWinner);
