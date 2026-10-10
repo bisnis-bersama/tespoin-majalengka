@@ -161,13 +161,6 @@ body{
   margin-top:6px;
 }
 
-.nominal{
-  margin-top:5px;
-  color:#198754;
-  font-size:14px;
-  font-weight:800;
-}
-
 /* =========================
    SECTION
 ========================= */
@@ -485,12 +478,6 @@ body{
         0
       </div>
 
-      <div
-        class="nominal"
-        id="nominalLunas">
-        Rp 0
-      </div>
-
     </div>
 
 
@@ -523,12 +510,6 @@ body{
         class="number"
         id="cod">
         0
-      </div>
-
-      <div
-        class="nominal"
-        id="nominalCOD">
-        Rp 0
       </div>
 
     </div>
@@ -732,7 +713,7 @@ body{
       <div>
 
         <h3>
-          Approval Peserta
+          Data Peserta
         </h3>
 
         <p>
@@ -941,29 +922,6 @@ function upper(value){
 
   return clean(value)
     .toUpperCase();
-
-}
-
-
-function rupiah(value){
-
-  /*
-   * Mengatasi angka:
-   * 150000
-   * "150000"
-   * "Rp 150.000"
-   */
-
-  const number =
-    Number(
-      String(value ?? '')
-        .replace(/[^\d]/g,'')
-    ) || 0;
-
-  return (
-    'Rp ' +
-    number.toLocaleString('id-ID')
-  );
 
 }
 
@@ -1243,14 +1201,6 @@ function hitungDashboard(
 
 
   document.getElementById(
-    'nominalLunas'
-  ).textContent =
-    rupiah(
-      nominalLunas
-    );
-
-
-  document.getElementById(
     'belum'
   ).textContent =
     belumLunas.length;
@@ -1260,14 +1210,6 @@ function hitungDashboard(
     'cod'
   ).textContent =
     pesertaCOD.length;
-
-
-  document.getElementById(
-    'nominalCOD'
-  ).textContent =
-    rupiah(
-      nominalCOD
-    );
 
 
   document.getElementById(
