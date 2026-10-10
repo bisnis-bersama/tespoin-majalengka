@@ -68,10 +68,32 @@ async function muatPengaturanRegistrasi(){
 }
 function keyEmail(email){return encodeURIComponent(normalisasiEmail(email));}
 function keyWa(waNormalized){return String(waNormalized||'').replace(/[^0-9]/g,'');}
-async function cekDuplikat(waNormalized,email){
-  // Hindari membaca seluruh koleksi peserta dari halaman publik.
-  // Keunikan dijaga oleh dokumen reservasi unik dalam batch Firestore.
-  if(!waNormalized) throw new Error('Nomor WhatsApp wajib diisi.');
+async function cekDuplikat(waNormalized, email) {
+  if (!waNormalized) {
+    throw new Error('Nomor WhatsApp wajib diisi.');
+  }
+
+  // Periksa apakah nomor WhatsApp sudah terdaftar.
+  const waRef = db.collection('uniqueWa').doc(keyWa(waNormalized));
+  const waSnap = await waRef.get();
+
+  if (waSnap.exists) {
+    throw new Error(
+      'Nomor WhatsApp ini sudah terdaftar. Gunakan nomor WhatsApp lain.'
+    );
+  }
+
+  // Email diperiksa jika diisi.
+  if (email) {
+    const emailRef = db.collection('uniqueEmail').doc(keyEmail(email));
+    const emailSnap = await emailRef.get();
+
+    if (emailSnap.exists) {
+      throw new Error(
+        'Email ini sudah terdaftar. Gunakan email lain.'
+      );
+    }
+  }
 }
 
 form.addEventListener('submit',async e=>{
