@@ -6,7 +6,7 @@
 <header class="hero"><img src="logo.png" alt="Logo TESPOIN" onerror="this.style.display='none'"><h1>DPD TESPOIN <span>MAJALENGKA</span></h1><p>REGISTRASI PESERTA COD</p></header>
 <main class="wrap"><section class="card">
 <div class="notice"><b>Registrasi peserta COD oleh panitia.</b><br>Halaman ini tidak membatasi tanggal acara. Setelah berhasil, sistem membuat kode registrasi dan QR Code untuk registrasi ulang.</div>
-<div id="loginBox" class="authbox"><h2>Login Admin / Owner</h2><p>Jika sesi login belum terbaca, login langsung di halaman ini. Tidak perlu berpindah halaman.</p><form id="loginForm"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" required><button id="loginBtn" type="submit">LOGIN DAN LANJUTKAN</button></form></div>
+<div class="notice"><b>Akses registrasi COD.</b><br>Halaman mengikuti pola autentikasi anonim pada registrasi peserta biasa; tidak meminta login Admin/Owner.</div>
 <div class="price"><small>HARGA TIKET COD</small><strong id="harga">Memuat harga…</strong><div style="font-size:12px;color:#ddd;margin-top:5px">Harga mengikuti Pengaturan Acara.</div></div>
 <form id="formRegistrasi"><label for="nama">Nama Peserta *</label><input id="nama" required autocomplete="name"><label for="toko">Nama Toko</label><input id="toko"><label for="wa">No. WhatsApp *</label><input id="wa" type="tel" placeholder="08xxxxxxxxxx" required><label for="alamat">Alamat *</label><textarea id="alamat" required></textarea><label for="email">Email</label><input id="email" type="email"><label for="ukuran">Ukuran Kaos *</label><select id="ukuran" required><option value="">-- Pilih Ukuran --</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option><option>XXXXL / 4XL</option></select><button id="btnDaftar" type="submit" disabled>DAFTARKAN PESERTA COD</button></form>
 <div id="pesan" class="status" aria-live="polite"></div>
@@ -15,7 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 // Konfigurasi disalin persis dari konfigurasi yang dikirim A Yudi.
-const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4UYC04nBvfNDPPq",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
+const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
 if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore(),$=id=>document.getElementById(id);
 let user=null,role='',codPrice=0,buktiData=null;
@@ -26,10 +26,71 @@ function rupiah(v){return 'Rp '+(Number(v)||0).toLocaleString('id-ID')}
 function makeCode(){return 'COD-'+Date.now().toString().slice(-8)+'-'+Math.floor(100+Math.random()*900)}
 function message(t,error=false){$('pesan').textContent=t;$('pesan').className='status '+(error?'error':'ok')}
 async function loadSettings(){const snap=await db.collection('pengaturan').doc('acara').get();if(!snap.exists)throw new Error('Pengaturan acara belum tersedia.');const s=snap.data()||{};codPrice=Number(String(s.codHarga||'').replace(/[^0-9]/g,''))||0;$('harga').textContent=rupiah(codPrice);if(codPrice>0&&user&&['admin','owner'].includes(role)){$('btnDaftar').disabled=false;message('Login terverifikasi. Registrasi COD dapat dilakukan kapan saja.')}else{$('btnDaftar').disabled=true;if(codPrice<=0)message('Harga COD belum diatur pada Pengaturan Acara.',true)}}
-async function verifyUser(u){if(!u){user=null;role='';$('loginBox').classList.remove('hidden');$('btnDaftar').disabled=true;return}const snap=await db.collection('users').doc(u.uid).get();const r=snap.exists?String(snap.data().role||'').toLowerCase():'';if(!['admin','owner'].includes(r)){user=null;role='';$('loginBox').classList.remove('hidden');$('btnDaftar').disabled=true;message('Akun ini bukan Admin/Owner. Gunakan akun panitia yang berwenang.',true);return}user=u;role=r;$('loginBox').classList.add('hidden');await loadSettings()}
-auth.onAuthStateChanged(u=>{verifyUser(u).catch(e=>message('Gagal memeriksa akun/pengaturan: '+(e.message||e),true))});
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const b=$('loginBtn');b.disabled=true;b.textContent='MEMERIKSA…';try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);const cred=await auth.signInWithEmailAndPassword($('loginEmail').value.trim(),$('loginPassword').value);await verifyUser(cred.user)}catch(err){message('Login gagal: '+(err.message||err),true)}finally{b.disabled=false;b.textContent='LOGIN DAN LANJUTKAN'}});
-$('formRegistrasi').addEventListener('submit',async e=>{e.preventDefault();if(!user||!['admin','owner'].includes(role)){message('Login Admin/Owner terlebih dahulu pada kotak login di halaman ini.',true);$('loginBox').classList.remove('hidden');return}const b=$('btnDaftar');b.disabled=true;b.textContent='MENYIMPAN…';try{if(codPrice<=0)throw new Error('Harga COD belum diatur.');const nama=$('nama').value.trim(),toko=$('toko').value.trim(),wa=$('wa').value.trim(),waNormalized=normWa(wa),alamat=$('alamat').value.trim(),email=normEmail($('email').value),ukuran=$('ukuran').value;if(!nama||!wa||!alamat||!ukuran)throw new Error('Lengkapi nama, WhatsApp, alamat, dan ukuran kaos.');if(waNormalized.length<10)throw new Error('Nomor WhatsApp tidak valid.');const kode=makeCode(),now=firebase.firestore.FieldValue.serverTimestamp();const p={kode,nama,toko,wa,waNormalized,alamat,email,ukuran,buktiTransfer:'',buktiNama:'',buktiTeks:'',statusPembayaran:'LUNAS',nominalPembayaran:codPrice,estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',hargaFinal:codPrice,metodePembayaran:'COD',tanggalVerifikasi:now,petugasPembayaran:user.email||user.uid,waktuPembayaran:now,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now,statusKehadiran:'BELUM HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now};const batch=db.batch();batch.set(db.collection('peserta').doc(kode),p);batch.set(db.collection('uniqueWa').doc(waNormalized),{waNormalized,kode,createdAt:now});if(email)batch.set(db.collection('uniqueEmail').doc(keyEmail(email)),{email,kode,createdAt:now});await batch.commit();buktiData={nama,toko,wa,alamat,email,ukuran,kode,nominal:codPrice};showProof(buktiData);$('hasil').style.display='block';$('formRegistrasi').reset();message('Registrasi COD berhasil disimpan. Kode: '+kode+' — LUNAS '+rupiah(codPrice));$('hasil').scrollIntoView({behavior:'smooth'});}catch(err){console.error(err);message('Registrasi gagal: '+(err.message||err),true)}finally{b.disabled=!(user&&['admin','owner'].includes(role)&&codPrice>0);b.textContent='DAFTARKAN PESERTA COD'}});
+
+async function ensureSignedIn(){
+  if(auth.currentUser) return auth.currentUser;
+  const credential=await auth.signInAnonymously();
+  return credential.user;
+}
+async function init(){
+  try{
+    await ensureSignedIn();
+    await loadSettings();
+    $('btnDaftar').disabled=codPrice<=0;
+    message(codPrice>0?'Siap menerima registrasi COD.':'Harga COD belum diatur.',codPrice<=0);
+  }catch(err){
+    console.error(err);
+    $('btnDaftar').disabled=true;
+    message('Gagal menyiapkan Firebase/pengaturan: '+(err.message||err),true);
+  }
+}
+async function loadSettings(){
+  const snap=await db.collection('pengaturan').doc('acara').get();
+  if(!snap.exists) throw new Error('Pengaturan acara belum tersedia.');
+  const settings=snap.data()||{};
+  codPrice=Number(String(settings.codHarga||'').replace(/[^0-9]/g,''))||0;
+  $('harga').textContent=rupiah(codPrice);
+  if(codPrice<=0) throw new Error('Harga COD belum diatur pada Pengaturan Acara.');
+}
+$('formRegistrasi').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const b=$('btnDaftar'); b.disabled=true; b.textContent='MENYIMPAN…';
+  try{
+    await ensureSignedIn();
+    if(codPrice<=0) await loadSettings();
+    const nama=$('nama').value.trim(),toko=$('toko').value.trim();
+    const wa=$('wa').value.trim(),waNormalized=normWa(wa);
+    const alamat=$('alamat').value.trim(),email=normEmail($('email').value),ukuran=$('ukuran').value;
+    if(!nama||!wa||!alamat||!ukuran) throw new Error('Lengkapi nama, WhatsApp, alamat, dan ukuran kaos.');
+    if(waNormalized.length<10) throw new Error('Nomor WhatsApp tidak valid.');
+    const kode=makeCode(),now=firebase.firestore.FieldValue.serverTimestamp();
+    const p={
+      kode,nama,toko,wa,waNormalized,alamat,email,ukuran,
+      buktiTransfer:'',buktiNama:'',buktiTeks:'',
+      statusPembayaran:'LUNAS',nominalPembayaran:codPrice,
+      estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',
+      hargaFinal:codPrice,metodePembayaran:'COD',
+      tanggalVerifikasi:now,petugasPembayaran:'COD',
+      waktuPembayaran:now,petugasVerifikasi:'COD',waktuVerifikasi:now,
+      statusKehadiran:'BELUM HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now
+    };
+    const batch=db.batch();
+    batch.set(db.collection('peserta').doc(kode),p);
+    batch.set(db.collection('uniqueWa').doc(waNormalized),{waNormalized,kode,createdAt:now});
+    if(email) batch.set(db.collection('uniqueEmail').doc(keyEmail(email)),{email,kode,createdAt:now});
+    await batch.commit();
+    showProof({nama,toko,wa,alamat,email,ukuran,kode,nominal:codPrice});
+    $('hasil').style.display='block'; $('formRegistrasi').reset();
+    message('Registrasi COD berhasil disimpan. Kode: '+kode+' — LUNAS '+rupiah(codPrice));
+    $('hasil').scrollIntoView({behavior:'smooth'});
+  }catch(err){
+    console.error(err);
+    message('Registrasi gagal: '+(err.message||err),true);
+  }finally{
+    b.disabled=codPrice<=0; b.textContent='DAFTARKAN PESERTA COD';
+  }
+});
+init();
 function showProof(p){for(const [id,v] of Object.entries({rNama:p.nama,rToko:p.toko,rWa:p.wa,rAlamat:p.alamat,rEmail:p.email||'-',rUkuran:p.ukuran,rKode:p.kode,rNominal:rupiah(p.nominal)}))$(id).textContent=v||'-';$('qrcode').innerHTML='';new QRCode($('qrcode'),{text:p.kode,width:220,height:220,correctLevel:QRCode.CorrectLevel.H})}
 $('btnSimpanQR').addEventListener('click',async()=>{const b=$('btnSimpanQR');b.disabled=true;b.textContent='MEMBUAT JPG…';try{const canvas=await html2canvas($('hasil'),{scale:2,backgroundColor:'#ffffff',useCORS:true});const a=document.createElement('a');a.href=canvas.toDataURL('image/jpeg',.95);a.download=(buktiData?.kode||'bukti-registrasi-COD')+'.jpg';a.click()}catch(e){message('Gagal membuat JPG: '+(e.message||e),true)}finally{b.disabled=false;b.textContent='SIMPAN BUKTI JPG'}});
 </script></body></html>
