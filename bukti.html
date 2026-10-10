@@ -56,7 +56,6 @@
       <div class="proof-top"></div>
       <h2 class="proof-title">BUKTI REGISTRASI PESERTA</h2>
       <p class="proof-subtitle">Roadshow Sertifikasi Profesi BNSP TESPOIN DPD Majalengka</p>
-
       <div class="qr-card">
         <div id="qr"></div>
         <div class="qr-caption">SCAN QR CODE SAAT REGISTRASI ULANG</div>
@@ -68,7 +67,6 @@
           </div>
         </div>
       </div>
-
       <div class="detail-title">DATA PESERTA</div>
       <div id="dataRows"></div>
       <div class="reminder"><b>PENTING:</b> Simpan bukti registrasi ini dalam bentuk JPG atau PDF. QR Code akan digunakan untuk registrasi ulang saat hari acara.</div>
@@ -79,7 +77,6 @@
     </section>
   </div>
 </div>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -94,7 +91,7 @@ const firebaseConfig = {
   messagingSenderId: "983090504866",
   appId: "1:983090504866:web:7879b0784b9fecad4863fb"
 };
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -108,7 +105,7 @@ function normalizeWa(value) {
   if (n.startsWith("0")) n = "62" + n.slice(1);
   return n;
 }
-function showStatus(message, error=false) {
+function showStatus(message, error = false) {
   statusEl.textContent = message || "";
   statusEl.className = error ? "error" : "ok";
 }
@@ -125,19 +122,35 @@ function addRow(label, value) {
   row.append(left, colon, right);
   document.getElementById("dataRows").appendChild(row);
 }
+
 function renderParticipant(p) {
   const kode = p.kode || p.kodeRegistrasi || p._docId || "";
   if (!kode) throw new Error("Data peserta tidak memiliki kode registrasi.");
-  document.getElementById("dataRows").replaceChildren();
-  document.getElementById("qr").replaceChildren();
-  document.getElementById("kodeValue").textContent = kode;
+
+  const qrEl = document.getElementById("qr");
+  const kodeEl = document.getElementById("kodeValue");
+  const dataRows = document.getElementById("dataRows");
+  const saveButton = document.getElementById("saveJpgButton");
+
+  dataRows.replaceChildren();
+  qrEl.replaceChildren();
+  kodeEl.textContent = kode;
+
   addRow("Nama Peserta", p.nama);
   addRow("Nama Toko", p.toko);
   addRow("No. WhatsApp", p.wa || p.noWa || p.nomorWhatsApp);
   addRow("Alamat", p.alamat);
   addRow("Email", p.email);
   addRow("Ukuran Kaos", p.ukuran);
-  new QRCode(document.getElementById("qr"), {text:kode, width:280, height:280, correctLevel:QRCode.CorrectLevel.H});
+
+  // QR Code tetap dibuat setiap kali data peserta berhasil ditemukan.
+  new QRCode(qrEl, {
+    text: String(kode),
+    width: 280,
+    height: 280,
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
   document.getElementById("copyCodeButton").onclick = async () => {
     try {
       await navigator.clipboard.writeText(kode);
@@ -152,108 +165,77 @@ function renderParticipant(p) {
       showStatus("Kode registrasi berhasil disalin.");
     }
   };
+
   resultEl.style.display = "block";
 
-const saveButton = document.getElementById("saveJpgButton");
+  saveButton.onclick = async () => {
+    const oldText = saveButton.textContent;
+    const nomorWA = normalizeWa(p.wa || p.noWa || p.nomorWhatsApp || "");
 
-saveButton.onclick = async () => {
-  const oldText = saveButton.textContent;
-  const nomorWA = normalizeWa(
-    p.wa || p.noWa || p.nomorWhatsApp || ""
-  );
+    if (!nomorWA) {
+      showStatus("Nomor WhatsApp peserta tidak tersedia.", true);
+      return;
+    }
 
-  if (!nomorWA) {
-    showStatus("Nomor WhatsApp peserta tidak tersedia.", true);
-    return;
-  }
+    // Tab dibuka langsung dari klik agar browser tidak memblokirnya.
+    const waTab = window.open("about:blank", "_blank");
+    if (!waTab) {
+      showStatus("Pop-up diblokir. Izinkan pop-up browser lalu coba lagi.", true);
+      return;
+    }
+    waTab.document.title = "Menyiapkan WhatsApp";
+    waTab.document.body.innerHTML = "<p style='font-family:Arial;text-align:center;margin-top:40px'>Bukti JPG sedang dibuat. WhatsApp akan dibuka setelah 10 detik.</p>";
 
-  // Siapkan tab WhatsApp agar tidak diblokir browser.
-  const waTab = window.open("about:blank", "_blank");
+    saveButton.disabled = true;
+    try {
+      saveButton.textContent = "MEMBUAT JPG...";
+      // Beri waktu agar QR dan tampilan bukti selesai dirender.
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-  if (waTab) {
-    waTab.document.title = "Menyiapkan WhatsApp...";
-    waTab.document.body.innerHTML =
-      "<p style='font-family:Arial;text-align:center;margin-top:40px'>" +
-      "JPG sedang dibuat. WhatsApp akan dibuka setelah 10 detik.</p>";
-  }
-
-  saveButton.disabled = true;
-
-  try {
-    saveButton.textContent = "MEMBUAT JPG...";
-
-    // Buat gambar bukti registrasi.
-    const canvas = await html2canvas(resultEl, {
-      scale: 2,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-      ignoreElements: element =>
-        element.classList &&
-        (
+      const canvas = await html2canvas(resultEl, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        ignoreElements: element => element.classList && (
           element.classList.contains("print-btn") ||
           element.classList.contains("copy-code")
         )
-    });
+      });
 
-    // Unduh JPG.
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/jpeg", 0.95);
-    link.download =
-      document.getElementById("kodeValue").textContent +
-      "-BUKTI-REGISTRASI.jpg";
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/jpeg", 0.95);
+      link.download = kode + "-BUKTI-REGISTRASI.jpg";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+      saveButton.textContent = "MENUNGGU 10 DETIK...";
+      showStatus("JPG berhasil dibuat. WhatsApp dibuka dalam 10 detik.");
+      await new Promise(resolve => setTimeout(resolve, 10000));
 
-    // Mulai hitung 10 detik SETELAH JPG selesai dibuat.
-    saveButton.textContent = "MENUNGGU 10 DETIK...";
-    showStatus(
-      "JPG sudah dibuat. WhatsApp dibuka dalam 10 detik."
-    );
+      const pesanWA = "Halo " + (p.nama || "Peserta") +
+        ", berikut informasi bukti registrasi Anda. Kode registrasi: " + kode +
+        ". Mohon simpan bukti JPG untuk registrasi ulang.";
+      const linkWA = "https://wa.me/" + nomorWA + "?text=" + encodeURIComponent(pesanWA);
 
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
-    // Buka WhatsApp setelah waktu tunggu selesai.
-    const pesanWA =
-      "Halo " + (p.nama || "Peserta") +
-      ", berikut bukti registrasi Anda dengan kode " +
-      document.getElementById("kodeValue").textContent +
-      ". Silakan simpan JPG bukti registrasi ini untuk digunakan saat registrasi ulang.";
-
-    const linkWA =
-      "https://wa.me/" + nomorWA +
-      "?text=" + encodeURIComponent(pesanWA);
-
-    if (waTab && !waTab.closed) {
-      waTab.location.href = linkWA;
-    } else {
-      showStatus(
-        "Tab WhatsApp tidak tersedia. Izinkan pop-up browser lalu coba lagi.",
-        true
-      );
+      if (waTab && !waTab.closed) {
+        waTab.location.href = linkWA;
+      } else {
+        showStatus("Tab WhatsApp ditutup sebelum proses selesai. Silakan tekan tombol JPG lagi.", true);
+      }
+    } catch (error) {
+      console.error("Gagal membuat JPG:", error);
+      if (waTab && !waTab.closed) waTab.close();
+      showStatus("Gagal membuat JPG. Silakan coba kembali atau gunakan Cetak / Simpan PDF.", true);
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = oldText;
     }
-
-  } catch (error) {
-    console.error("Gagal membuat JPG:", error);
-
-    if (waTab && !waTab.closed) {
-      waTab.close();
-    }
-
-    showStatus(
-      "Gagal membuat JPG. Periksa koneksi atau gunakan Cetak / Simpan PDF.",
-      true
-    );
-
-  } finally {
-    saveButton.disabled = false;
-    saveButton.textContent = oldText;
-  }
-};
+  };
+}
 
 async function waitForAuth() {
   return new Promise(resolve => {
@@ -292,29 +274,35 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const keyword = document.getElementById("keyword").value.trim();
   if (!keyword) return;
+
   button.disabled = true;
   button.textContent = "MENCARI...";
   resultEl.style.display = "none";
   showStatus("Mencari data peserta...");
+
   try {
     if (!auth.currentUser) throw new Error("Sesi Admin tidak ditemukan. Silakan login ulang.");
     const needleEmail = keyword.toLowerCase();
     const needleWa = normalizeWa(keyword);
     const snapshot = await db.collection("peserta").get();
     let found = null;
+
     snapshot.forEach(doc => {
       if (found) return;
       const p = doc.data() || {};
       const email = String(p.email || "").trim().toLowerCase();
       const wa = normalizeWa(p.wa || p.noWa || p.nomorWhatsApp || "");
-      if ((keyword.includes("@") && email === needleEmail) || (!keyword.includes("@") && wa && wa === needleWa)) {
-        found = {...p, _docId: doc.id};
+      if ((keyword.includes("@") && email === needleEmail) ||
+          (!keyword.includes("@") && wa && wa === needleWa)) {
+        found = { ...p, _docId: doc.id };
       }
     });
+
     if (!found) {
       showStatus("Data registrasi tidak ditemukan. Periksa kembali email atau nomor WhatsApp.", true);
       return;
     }
+
     renderParticipant(found);
     showStatus("Data registrasi ditemukan.");
   } catch (error) {
