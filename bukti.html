@@ -156,29 +156,70 @@ function renderParticipant(p) {
 
   const saveButton = document.getElementById("saveJpgButton");
   saveButton.onclick = async () => {
-    const oldText = saveButton.textContent;
-    saveButton.disabled = true;
-    saveButton.textContent = "MEMBUAT JPG...";
-    try {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      const canvas = await html2canvas(resultEl, {
-        scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false,
-        scrollX: 0, scrollY: 0,
-        ignoreElements: element => element.classList && (element.classList.contains("print-btn") || element.classList.contains("copy-code"))
-      });
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/jpeg", 0.95);
-      link.download = kode + "-BUKTI-REGISTRASI.jpg";
-      document.body.appendChild(link); link.click(); link.remove();
-    } catch (error) {
-      console.error(error);
-      showStatus("Gagal menyimpan JPG. Silakan gunakan tombol Cetak / Simpan PDF.", true);
-    } finally {
-      saveButton.disabled = false;
-      saveButton.textContent = oldText;
+  const oldText = saveButton.textContent;
+  const nomorWA = normalizeWa(
+    p.wa || p.noWa || p.nomorWhatsApp || ""
+  );
+
+  if (!nomorWA) {
+    showStatus("Nomor WhatsApp peserta tidak tersedia.", true);
+    return;
+  }
+
+  // Buka tab WhatsApp saat tombol ditekan agar tidak diblokir browser.
+  const waWindow = window.open("about:blank", "_blank");
+
+  saveButton.disabled = true;
+  saveButton.textContent = "MEMBUAT JPG...";
+
+  try {
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    const canvas = await html2canvas(resultEl, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      ignoreElements: element =>
+        element.classList &&
+        (
+          element.classList.contains("print-btn") ||
+          element.classList.contains("copy-code")
+        )
+    });
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/jpeg", 0.95);
+    link.download = kode + "-BUKTI-REGISTRASI.jpg";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // Setelah unduhan JPG dipicu, buka chat WhatsApp peserta.
+    if (waWindow) {
+      waWindow.location.href = "https://wa.me/" + nomorWA;
+    } else {
+      showStatus(
+        "JPG sudah dibuat. Izinkan pop-up browser untuk membuka WhatsApp.",
+        true
+      );
     }
-  };
-}
+
+  } catch (error) {
+    console.error(error);
+    if (waWindow) waWindow.close();
+
+    showStatus(
+      "Gagal menyimpan JPG. Silakan coba kembali.",
+      true
+    );
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = oldText;
+  }
+};
 
 async function waitForAuth() {
   return new Promise(resolve => {
