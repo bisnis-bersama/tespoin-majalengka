@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Undian Doorprize | DPD TESPOIN Majalengka</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#171717;font-family:Arial,Helvetica,sans-serif}.wrap{max-width:900px;margin:auto;padding:16px}.header{background:#111;color:#fff;border-radius:18px;padding:22px;text-align:center}.header h1{margin:0;color:#f5c400;font-size:24px}.header p{margin:8px 0 0;color:#ddd;font-size:13px}.panel{background:#fff;margin-top:15px;padding:18px;border-radius:16px;box-shadow:0 4px 16px #0000000d}.status{display:none;padding:11px 13px;border-radius:10px;margin-top:12px;font-size:13px;font-weight:bold}.status.show{display:block}.ok{background:#dcfce7;color:#166534}.err{background:#fee2e2;color:#991b1b}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.controls select,.controls button,.action{font-size:14px;font-weight:700;border:0;border-radius:10px;padding:12px 14px}.controls select{background:#f3f4f6;flex:1;min-width:210px}.btn{cursor:pointer}.yellow{background:#f5c400;color:#111}.dark{background:#111;color:#fff}.green{background:#198754;color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}.wheel-wrap{display:flex;flex-direction:column;align-items:center;padding:16px 0}.pointer{font-size:28px;color:#dc2626;line-height:1;position:relative;z-index:2;margin-bottom:-3px}.wheel{width:min(82vw,420px);height:min(82vw,420px);border-radius:50%;border:9px solid #111;box-shadow:0 7px 20px #0002;position:relative;overflow:hidden;background:conic-gradient(#f5c400 0deg 30deg,#fff 30deg 60deg,#111 60deg 90deg,#f5c400 90deg 120deg,#fff 120deg 150deg,#111 150deg 180deg,#f5c400 180deg 210deg,#fff 210deg 240deg,#111 240deg 270deg,#f5c400 270deg 300deg,#fff 300deg 330deg,#111 330deg 360deg);transition:transform 5s cubic-bezier(.12,.7,.12,1)}.wheel:after{content:'TESPOIN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:92px;height:92px;border-radius:50%;background:#111;color:#f5c400;border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;box-shadow:0 2px 8px #0003}.wheel-label{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:22px;font-size:12px;font-weight:900;color:#111;text-align:center}.result{display:none;text-align:center;border:2px solid #f5c400;background:#fffbea;border-radius:14px;padding:20px}.result.show{display:block}.result .caption{font-size:12px;font-weight:900;color:#666;letter-spacing:1px}.winner-name{font-size:clamp(22px,5vw,34px);font-weight:900;margin:10px 0;color:#111;overflow-wrap:anywhere}.winner-code{font-size:22px;font-weight:900;color:#8a6500}.small{font-size:12px;color:#666;line-height:1.5}.statline{font-size:14px;font-weight:800;margin-top:10px}.history{padding-left:22px;margin-bottom:0}.history li{margin:8px 0;overflow-wrap:anywhere}.footer{font-size:11px;color:#777;text-align:center;padding:16px}@media(max-width:500px){.wrap{padding:10px}.header h1{font-size:20px}.panel{padding:14px}.controls select,.controls button{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header"><h1>DPD TESPOIN MAJALENGKA</h1><p>PUTARAN SPIN UNDIAN DOORPRIZE</p></header>
+  <section class="panel">
+    <div class="controls">
+      <select id="jenisUndian" aria-label="Pilih jenis undian">
+        <option value="motor">Undian Sepeda Motor — Semua peserta berbayar</option>
+        <option value="listrik">Undian Sepeda Listrik — Khusus peserta Majalengka</option>
+      </select>
+      <button id="muat" class="btn yellow">↻ Muat Data Peserta</button>
+    </div>
+    <div id="status" class="status"></div>
+    <div class="statline" id="jumlah">Data peserta belum dimuat.</div>
+    <p class="small">Peserta yang masuk undian adalah peserta dengan status pembayaran <b>LUNAS</b>. Peserta gratis tidak diikutsertakan. Pemenang yang sudah keluar tidak akan diundi kembali pada jenis undian yang sama.</p>
+  </section>
+  <section class="panel">
+    <div class="wheel-wrap">
+      <div class="pointer">▼</div>
+      <div id="wheel" class="wheel" aria-label="Roda undian"><div class="wheel-label">MULAI<br>UNDIAN</div></div>
+    </div>
+    <div class="controls" style="justify-content:center">
+      <button id="putar" class="btn green" disabled>▶ PUTAR SPIN</button>
+      <button id="stop" class="btn dark" disabled>■ STOP</button>
+    </div>
+  </section>
+  <section id="hasil" class="panel result" aria-live="polite">
+    <div class="caption">PEMENANG UNDIAN</div>
+    <div id="namaMenang" class="winner-name">—</div>
+    <div class="small">Nomor Registrasi</div>
+    <div id="kodeMenang" class="winner-code">—</div>
+    <div id="hadiahMenang" class="statline"></div>
+  </section>
+  <section class="panel">
+    <b>Riwayat pemenang</b>
+    <ol id="riwayat" class="history"><li class="small">Belum ada pemenang.</li></ol>
+    <p class="small">Riwayat ini tersimpan di halaman selama halaman tetap terbuka. Silakan catat hasil undian sebelum menutup halaman.</p>
+  </section>
+  <div class="footer">Sumber data: Firebase Firestore • Koleksi peserta</div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(),db=firebase.firestore();
+const $=id=>document.getElementById(id);
+let peserta=[],eligible=[],winners={motor:new Set(),listrik:new Set()},isSpinning=false,rotation=0,spinTimer=null,pendingWinner=null;
+function showStatus(msg,type='ok'){$('status').textContent=msg;$('status').className='status show '+(type==='err'?'err':'ok')}
+function clean(v){return String(v==null?'':v).trim()}
+function upper(v){return clean(v).toUpperCase()}
+function kode(p){return clean(p.kode||p.nomorRegistrasi||p._docId||'-')}
+function nama(p){return clean(p.nama||p.namaPeserta||p.name||'Nama tidak tersedia')}
+function isFree(p){const fields=[p.tierRegistrasi,p.tierPembayaran,p.jenisRegistrasi,p.jenisPembayaran,p.tipeTiket,p.kategoriTiket];if(fields.some(v=>['FREE','GRATIS','TIKET GRATIS'].includes(upper(v))))return true;const raw=p.hargaFinal??p.nominalPembayaran??p.estimasiNominal;if(raw===undefined||raw===null||clean(raw)==='')return false;const amount=Number(String(raw).replace(/[^0-9]/g,''));return Number.isFinite(amount)&&amount===0}
+function isMajalengka(p){const text=[p.alamat,p.toko,p.kota,p.kabupaten,p.domisili,p.asal].map(clean).join(' ').toLowerCase();return text.includes('majalengka')}
+function updateEligible(){const type=$('jenisUndian').value;eligible=peserta.filter(p=>upper(p.statusPembayaran)==='LUNAS'&&!isFree(p));if(type==='listrik')eligible=eligible.filter(isMajalengka);eligible=eligible.filter(p=>!winners[type].has(kode(p)));$('jumlah').textContent='Peserta yang memenuhi syarat: '+eligible.length;$('putar').disabled=eligible.length===0||isSpinning;$('stop').disabled=!isSpinning;if(!isSpinning)$('wheel').style.background='conic-gradient(#f5c400 0deg 30deg,#fff 30deg 60deg,#111 60deg 90deg,#f5c400 90deg 120deg,#fff 120deg 150deg,#111 150deg 180deg,#f5c400 180deg 210deg,#fff 210deg 240deg,#111 240deg 270deg,#f5c400 270deg 300deg,#fff 300deg 330deg,#111 330deg 360deg)'}
+async function loadData(){ $('muat').disabled=true;showStatus('Memeriksa akses dan mengambil data peserta...');try{const user=await new Promise((resolve,reject)=>{let unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u)},reject)});if(!user){location.href='login.html';return}const roleSnap=await db.collection('users').doc(user.uid).get();const role=roleSnap.exists?upper(roleSnap.data().role):'';if(role!=='ADMIN'){showStatus('Akses ditolak. Halaman undian khusus Admin.', 'err');await auth.signOut();setTimeout(()=>location.href='login.html',1200);return}const snap=await db.collection('peserta').get();peserta=snap.docs.map(d=>({...d.data(),_docId:d.id}));updateEligible();showStatus('Data berhasil dimuat dari Firestore ('+peserta.length+' peserta).');}catch(e){console.error(e);showStatus('Gagal memuat data: '+(e.message||e), 'err')}finally{$('muat').disabled=false}}
+function startSpin(){if(!eligible.length||isSpinning)return;isSpinning=true;pendingWinner=null;$('hasil').classList.remove('show');$('putar').disabled=true;$('stop').disabled=false;$('muat').disabled=true;$('jenisUndian').disabled=true;const extra=1800+Math.floor(Math.random()*1800);rotation+=extra;$('wheel').style.transition='transform 5s cubic-bezier(.12,.7,.12,1)';$('wheel').style.transform='rotate('+rotation+'deg)';spinTimer=setTimeout(()=>{if(isSpinning)stopSpin()},5200);showStatus('Roda sedang berputar. Tekan STOP untuk memilih pemenang.')}
+function stopSpin(){if(!isSpinning)return;clearTimeout(spinTimer);isSpinning=false;const type=$('jenisUndian').value;const pool=eligible.filter(p=>!winners[type].has(kode(p)));if(!pool.length){showStatus('Tidak ada peserta tersisa untuk jenis undian ini.','err');finishSpin();return}const winner=pool[Math.floor(Math.random()*pool.length)];winners[type].add(kode(winner));$('namaMenang').textContent=nama(winner);$('kodeMenang').textContent=kode(winner);$('hadiahMenang').textContent=type==='listrik'?'Hadiah: Sepeda Listrik':'Hadiah: Sepeda Motor';$('hasil').classList.add('show');const li=document.createElement('li');li.textContent=nama(winner)+' — '+kode(winner)+' — '+(type==='listrik'?'Sepeda Listrik':'Sepeda Motor');const list=$('riwayat');if(list.querySelector('li.small'))list.innerHTML='';list.prepend(li);showStatus('Undian dihentikan. Pemenang terpilih: '+nama(winner));finishSpin()}
+function finishSpin(){isSpinning=false;$('stop').disabled=true;$('putar').disabled=eligible.length===0;$('muat').disabled=false;$('jenisUndian').disabled=false;updateEligible()}
+$('muat').addEventListener('click',loadData);$('putar').addEventListener('click',startSpin);$('stop').addEventListener('click',stopSpin);$('jenisUndian').addEventListener('change',()=>{updateEligible();$('hasil').classList.remove('show')});
+loadData();
+</script>
+</body>
+</html>
