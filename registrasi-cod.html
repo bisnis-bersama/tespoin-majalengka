@@ -157,9 +157,9 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -334,8 +334,8 @@ $('formRegistrasi').addEventListener('submit', async e => {
   }finally{
     b.disabled = false;
     b.textContent = 'DAFTARKAN PESERTA COD';
-    // COD boleh didaftarkan kapan saja selama harga sudah diatur.
-    if(codPrice <= 0) b.disabled = true;
+    // COD bisa didaftarkan kapan saja; tombol hanya nonaktif jika harga belum diatur.
+    b.disabled = codPrice <= 0;
   }
 });
 
@@ -393,10 +393,12 @@ function tampilkanBukti(p){
   };
 }
 
-init().catch(err => {
-  console.error(err);
-  setMsg(err.message || 'Gagal memuat pengaturan.',true);
-});
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(() => init())
+  .catch(err => {
+    console.error(err);
+    setMsg(err.message || 'Gagal memuat sesi Firebase.', true);
+  });
 </script>
 </body>
 </html>
