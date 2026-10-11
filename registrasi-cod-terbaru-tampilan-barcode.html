@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Registrasi COD - TESPOIN Majalengka</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#f3f4f6;font-family:Arial,sans-serif;color:#222}.wrap{max-width:680px;margin:auto;padding:18px}.card{background:#fff;padding:22px;border-radius:16px;box-shadow:0 4px 18px #0001}.head{text-align:center;background:#111;color:#fff;padding:18px;border-radius:14px;margin-bottom:16px}.head h1{margin:0;color:#f5c400;font-size:22px}.field{margin:13px 0}label{display:block;font-weight:700;margin-bottom:6px}input,textarea,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:9px;font-size:15px}button{padding:13px;border:0;border-radius:9px;background:#f5c400;font-weight:800;width:100%;margin-top:10px;cursor:pointer}button:disabled{opacity:.5}.price{background:#111;color:#f5c400;padding:14px;text-align:center;border-radius:12px;font-size:23px;font-weight:800}.note{font-size:13px;line-height:1.5;background:#fff7d5;padding:12px;border-radius:8px;margin:12px 0}.msg{margin-top:12px;font-weight:700}.err{color:#b00020}.ok{color:#087b25}.hidden{display:none}.links{display:flex;gap:10px;margin-top:14px}.links a{flex:1;text-align:center;padding:10px;background:#eee;border-radius:8px;text-decoration:none;color:#222;font-size:13px}
+/* Perubahan khusus tampilan bukti COD */
+#hasil{padding:14px!important;border:1px solid #e4eaf1!important;border-radius:20px!important;overflow:visible!important}
+#hasil .proof-details{margin:10px 0 12px;text-align:left}
+#hasil .proof-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:5px 2px;font-size:13px;line-height:1.35}
+#hasil .proof-row .label{color:#747b84;flex:0 0 38%}
+#hasil .proof-row .value{color:#111;font-weight:700;text-align:right;overflow-wrap:anywhere;min-width:0}
+#hasil .proof-row.size-row{margin:9px 0;padding:11px 12px;border:1px solid #f2d96b;border-radius:13px;background:#fff3bf;align-items:center}
+#hasil .proof-row.size-row .label{color:#795b08;font-size:15px;font-weight:900;flex-basis:50%}
+#hasil .proof-row.size-row .value{font-size:26px;font-weight:900;color:#111}
+#hasil .qr-proof{max-width:560px;margin:12px auto 0;padding:12px;border:1px solid #e4eaf1;border-radius:20px;text-align:center;background:#fff}
+#hasil #qrcode{display:flex;justify-content:center;align-items:center;margin:4px auto 10px;overflow:visible}
+#hasil #qrcode img,#hasil #qrcode canvas{display:block;max-width:100%;height:auto!important}
+#hasil .qr-caption{background:#111;color:#ffc400;padding:10px 8px;border-radius:10px;font-size:12px;font-weight:900;line-height:1.3}
+#hasil .doorprize-box{margin-top:10px;padding:10px;border-radius:13px;background:#fff3bf;border:1px solid #f2d96b}
+#hasil .doorprize-label{font-size:13px;font-weight:900;color:#795b08}
+#hasil #rKode{font-size:clamp(34px,8vw,44px)!important;line-height:1.15;letter-spacing:5px;font-weight:900;margin-top:3px;overflow-wrap:anywhere}
+#hasil .payment-pill{display:inline-block;margin-top:10px;padding:7px 12px;background:#e9f8ed;color:#087b25;border-radius:999px;font-weight:900;font-size:13px}
+@media(max-width:480px){#hasil{padding:11px!important}#hasil .proof-row{font-size:12px;gap:8px}#hasil .proof-row.size-row .label{font-size:14px}#hasil .proof-row.size-row .value{font-size:24px}#hasil .qr-proof{padding:9px}}
+
+</style></head>
+<body><div class="wrap"><header class="head"><h1>REGISTRASI PESERTA COD</h1><div>DPD TESPOIN MAJALENGKA</div></header><main class="card"><div class="note">Registrasi COD dapat dilakukan kapan saja oleh Admin atau Owner yang sudah login, selama pendaftaran tidak ditutup. Peserta langsung tercatat LUNAS sesuai harga COD yang ditetapkan.</div><div class="price" id="harga">Memuat harga COD...</div><form id="form"><div class="field"><label>Nama Peserta *</label><input id="nama" required></div><div class="field"><label>Nama Toko</label><input id="toko"></div><div class="field"><label>WhatsApp *</label><input id="wa" type="tel" required></div><div class="field"><label>Alamat *</label><textarea id="alamat" required></textarea></div><div class="field"><label>Email</label><input id="email" type="email"></div><div class="field"><label>Ukuran Kaos *</label><select id="ukuran" required><option value="">Pilih ukuran</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option><option>XXXXL</option></select></div><button id="submit" type="submit">DAFTARKAN COD</button></form><div id="msg" class="msg"></div>
+<section id="hasil" class="hidden" style="margin-top:18px;border:1px solid #e4eaf1;border-radius:20px;padding:14px;text-align:center;background:#fff">
+  <div style="font-weight:900;font-size:18px">BUKTI REGISTRASI <span style="color:#b00020">COD</span></div>
+  <div style="font-size:12px;color:#666;margin:5px 0 10px">DPD TESPOIN MAJALENGKA</div>
+  <div class="proof-details">
+    <div class="proof-row"><span class="label">Nama Peserta</span><b class="value" id="rNama"></b></div>
+    <div class="proof-row"><span class="label">Nama Toko</span><b class="value" id="rToko"></b></div>
+    <div class="proof-row"><span class="label">WhatsApp</span><b class="value" id="rWa"></b></div>
+    <div class="proof-row"><span class="label">Email</span><b class="value" id="rEmail"></b></div>
+    <div class="proof-row size-row"><span class="label">UKURAN KAOS</span><b class="value" id="rUkuran"></b></div>
+    <div class="proof-row price-row"><span class="label">Harga Tiket COD</span><b class="value" id="rHarga"></b></div>
+  </div>
+  <div class="qr-proof">
+    <div id="qrcode"></div>
+    <div class="qr-caption">SCAN QR CODE INI SAAT REGISTRASI ULANG</div>
+    <div class="doorprize-box"><div class="doorprize-label">NOMOR UNDIAN DOORPRIZE</div><div id="rKode"></div></div>
+    <div class="payment-pill">STATUS PEMBAYARAN: LUNAS • COD</div>
+  </div>
+  <button type="button" id="btnSimpanQR">SIMPAN BUKTI REGISTRASI</button>
+</section>
+<div class="links"><a href="peserta.html">Data Peserta</a><a href="index-admin.html">Dashboard</a></div></main></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script>
+const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore(),auth=firebase.auth();
+let user=null,role='',settings={},codPrice=0,ready=false,lastParticipant=null;
+const $=id=>document.getElementById(id);
+function normWa(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);return n;}
+function normEmail(v){return String(v||'').trim().toLowerCase();}
+function keyEmail(v){return encodeURIComponent(normEmail(v));}
+function keyWa(v){return String(v||'').replace(/\D/g,'');}
+function setMsg(t,err=false){$('msg').textContent=t;$('msg').className='msg '+(err?'err':'ok');}
+function rupiah(n){return 'Rp '+Number(n||0).toLocaleString('id-ID');}
+async function getRole(){return new Promise(resolve=>{const unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u);},e=>{unsub();resolve(null);});});}
+async function init(){
+  user=await getRole();
+  if(!user||user.isAnonymous){setMsg('Silakan login sebagai Admin atau Owner terlebih dahulu.',true);$('submit').disabled=true;return;}
+  const userSnap=await db.collection('users').doc(user.uid).get();
+  role=userSnap.exists?String(userSnap.data().role||'').toLowerCase():'';
+  if(!['admin','owner'].includes(role)){setMsg('Akses ditolak. Halaman COD hanya untuk Admin dan Owner.',true);$('submit').disabled=true;return;}
+  const snap=await db.collection('pengaturan').doc('acara').get();
+  if(!snap.exists)throw new Error('Pengaturan acara belum tersedia di Firestore (pengaturan/acara).');
+  settings=snap.data()||{};
+  codPrice=Number(String(settings.codHarga??'').replace(/[^0-9]/g,''))||0;
+  $('harga').textContent='Harga Tiket COD: '+rupiah(codPrice);
+  if(!codPrice){$('submit').disabled=true;throw new Error('Harga COD belum diatur di halaman Pengaturan Acara.');}
+  if(String(settings.statusPendaftaran||settings.status||'DIBUKA').toUpperCase()==='DITUTUP'){$('submit').disabled=true;throw new Error('Pendaftaran sedang ditutup oleh panitia.');}
+  ready=true;setMsg('Login terverifikasi sebagai '+role.toUpperCase()+'. Harga COD mengikuti Pengaturan Acara.',false);
+}
+function buatKodeRegistrasi(){return String(Math.floor(1000+Math.random()*9000));}
+async function kodeUnik(){for(let i=0;i<15;i++){const code=buatKodeRegistrasi();const snap=await db.collection('peserta').doc(code).get();if(!snap.exists)return code;}throw new Error('Tidak berhasil membuat kode registrasi unik. Silakan coba lagi.');}
+function tampilkanBukti(p){
+  lastParticipant=p;
+  $('rNama').textContent=p.nama||'-';$('rToko').textContent=p.toko||'-';$('rWa').textContent=p.wa||'-';$('rEmail').textContent=p.email||'-';$('rUkuran').textContent=p.ukuran||'-';$('rHarga').textContent=rupiah(p.hargaFinal);$('rKode').textContent=p.kode;
+  $('qrcode').innerHTML='';new QRCode($('qrcode'),{text:p.kode,width:220,height:220,correctLevel:QRCode.CorrectLevel.H});$('hasil').classList.remove('hidden');
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+$('btnSimpanQR').addEventListener('click',async function(){
+  if(!lastParticipant)return;
+  const p=lastParticipant;
+  const btn=this;
+  btn.disabled=true;
+  const old=btn.textContent;
+  let waWindow=null;
+  try{waWindow=window.open('about:blank','_blank');}catch(e){waWindow=null;}
+  try{
+    btn.textContent='MENYIAPKAN BUKTI...';
+    await new Promise(r=>setTimeout(r,150));
+    const canvas=await html2canvas($('hasil'),{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/jpeg',.95);
+    a.download=p.kode+'-BUKTI-COD.jpg';
+    a.click();
+    btn.textContent='BUKTI DIUNDUH, MEMBUKA WHATSAPP...';
+    await new Promise(r=>setTimeout(r,1800));
+    const nomor=normWa(p.waNormalized||p.wa);
+    if(!nomor)throw new Error('Nomor WhatsApp peserta tidak valid.');
+    const pesan=[
+      'Halo '+(p.nama||'Peserta')+',',
+      '',
+      'Registrasi COD Anda untuk acara DPD TESPOIN MAJALENGKA berhasil.',
+      'Status pembayaran: LUNAS • COD',
+      'Kode registrasi: '+p.kode,
+      'Nama: '+(p.nama||'-'),
+      'Toko: '+(p.toko||'-'),
+      'Ukuran kaos: '+(p.ukuran||'-'),
+      'Harga tiket: '+rupiah(p.hargaFinal),
+      '',
+      'Simpan bukti/barcode registrasi Anda dan tunjukkan saat registrasi ulang. Terima kasih.'
+    ].join('\n');
+    const url='https://wa.me/'+nomor+'?text='+encodeURIComponent(pesan);
+    if(waWindow&&!waWindow.closed){waWindow.location.href=url;}else{window.location.href=url;}
+    setMsg('Bukti registrasi diunduh. WhatsApp peserta dibuka dengan pesan registrasi yang sudah disiapkan.',false);
+  }catch(e){
+    if(waWindow&&!waWindow.closed)waWindow.close();
+    setMsg('Gagal menyiapkan bukti/WhatsApp: '+(e.message||e),true);
+  }finally{btn.disabled=false;btn.textContent=old;}
+});
+$('form').addEventListener('submit',async e=>{
+  e.preventDefault();if(!ready||!user||!['admin','owner'].includes(role)){setMsg('Akses belum siap. Login kembali sebagai Admin atau Owner.',true);return;}
+  const b=$('submit');b.disabled=true;b.textContent='MEMERIKSA & MENYIMPAN...';
+  try{
+    if(!codPrice)throw new Error('Harga COD belum diatur.');
+    const nama=$('nama').value.trim(),toko=$('toko').value.trim(),wa=$('wa').value.trim(),waNormalized=normWa(wa),alamat=$('alamat').value.trim(),email=normEmail($('email').value),ukuran=$('ukuran').value;
+    if(!nama||!wa||!alamat||!ukuran)throw new Error('Lengkapi nama, WhatsApp, alamat, dan ukuran kaos.');
+    if(waNormalized.length<10)throw new Error('Nomor WhatsApp tidak valid.');
+    const kode=await kodeUnik();
+    const now=firebase.firestore.FieldValue.serverTimestamp();
+    const peserta={kode,nama,toko,wa,waNormalized,alamat,email,ukuran,buktiTransfer:'',buktiNama:'',buktiTeks:'',statusPembayaran:'LUNAS',nominalPembayaran:codPrice,estimasiNominal:codPrice,tierRegistrasi:'COD',tierPembayaran:'COD',hargaFinal:codPrice,metodePembayaran:'COD',tanggalVerifikasi:now,petugasPembayaran:user.email||user.uid,waktuPembayaran:now,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now,statusKehadiran:'HADIR',statusBenefit:'BELUM DIAMBIL',createdAt:now};
+    const batch=db.batch();
+    batch.set(db.collection('peserta').doc(kode),peserta);
+    batch.set(db.collection('uniqueWa').doc(keyWa(waNormalized)),{waNormalized,kode,createdAt:now});
+    if(email)batch.set(db.collection('uniqueEmail').doc(keyEmail(email)),{email,kode,createdAt:now});
+    await batch.commit();
+    tampilkanBukti({...peserta,createdAt:new Date()});
+    $('form').reset();setMsg('Registrasi COD berhasil disimpan ke Firestore. Tiket berstatus LUNAS. Kode: '+kode+'.',false);
+  }catch(err){
+    console.error('Registrasi COD gagal:',err);
+    if(err.code==='permission-denied'||err.code==='firestore/permission-denied')setMsg('Penyimpanan ditolak Firestore. Kemungkinan WhatsApp/email sudah terdaftar atau Rules belum mengizinkan batch COD untuk Admin/Owner. Tidak ada data peserta yang disimpan sebagian.',true);
+    else setMsg(err.message||'Registrasi COD gagal.',true);
+  }finally{b.disabled=false;b.textContent='DAFTARKAN COD';}
+});
+init().catch(e=>{console.error(e);$('submit').disabled=true;setMsg(e.message||'Gagal memuat pengaturan acara.',true);});
+</script></body></html>
