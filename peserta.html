@@ -150,7 +150,17 @@ async function confirmLunas(){
     [['tabBelum','belum'],['tabLunas','lunas'],['tabHadir','hadir']].forEach(([id,val])=>$(id).classList.toggle('active',tab===val));
     $('search').value='';
     cacheLoaded=false;
-    await load(true);
+    // Approval sudah tersimpan. Jika pembacaan ulang gagal, jangan tampilkan seolah-olah penyimpanan gagal.
+    try {
+      await load(true);
+      $('modalMsg').className='msg good';
+      $('modalMsg').textContent=(paidNow?'Nominal pembayaran diperbaiki. ':'Pembayaran disetujui. ')+'Nominal Rp '+nominal.toLocaleString('id-ID')+' tersimpan di Firestore.';
+      $('confirmBtn').textContent='NOMINAL TERSIMPAN';
+    } catch (refreshError) {
+      console.error('Approval berhasil, tetapi penyegaran data gagal:',refreshError);
+      $('modalMsg').className='msg good';
+      $('modalMsg').textContent='Approval tersimpan di Firestore, tetapi data tabel gagal dimuat ulang.';
+    }
     setTimeout(closeModal,1400);
   }catch(e){console.error(e);$('modalMsg').className='msg err';$('modalMsg').textContent=e.code==='permission-denied'?'Izin Firestore ditolak. Periksa Rules koleksi peserta.':(e.message||'Penyimpanan nominal gagal.');}
   finally{
