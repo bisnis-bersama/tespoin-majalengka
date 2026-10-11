@@ -46,24 +46,6 @@ async function requireAccess(){
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
-async function updateSummaryCounts(){
-  const targets=[
-    ['sumTotal',db.collection('peserta')],
-    ['sumBelum',db.collection('peserta').where('statusPembayaran','==','BELUM LUNAS')],
-    ['sumLunas',db.collection('peserta').where('statusPembayaran','==','LUNAS')],
-    ['sumHadir',db.collection('peserta').where('statusKehadiran','==','HADIR')]
-  ];
-  try{
-    // Firestore aggregation count: returns counts without downloading every participant document.
-    await Promise.all(targets.map(async ([id,query])=>{
-      const result=await query.count().get();
-      $(id).textContent=Number(result.data().count||0).toLocaleString('id-ID');
-    }));
-  }catch(error){
-    console.warn('Count aggregation is unavailable; summary counts were not loaded to avoid reading the whole collection.',error);
-    ['sumTotal','sumBelum','sumLunas','sumHadir'].forEach(id=>$(id).textContent='—');
-  }
-}
 async function load(){
   const sequence=++loadSequence;
   $('tbody').innerHTML='<tr><td colspan="10" class="empty">Memuat kategori dari Firestore...</td></tr>';
@@ -71,7 +53,13 @@ async function load(){
   try{
     let query=db.collection('peserta');
     if(tab==='belum') query=query.where('statusPembayaran','==','BELUM LUNAS');
-    else if(tab==='lunas') query=query.where('statusPembayaran','==','LUNAS');
+    else if(tab==='lunas') {
+      // Hanya peserta yang sudah lunas tetapi belum check-in.
+      // Peserta berstatus HADIR otomatis tidak masuk kategori ini.
+      query=query
+        .where('statusPembayaran','==','LUNAS')
+        .where('statusKehadiran','==','BELUM HADIR');
+    }
     else if(tab==='hadir') query=query.where('statusKehadiran','==','HADIR');
     const snap=await query.get();
     if(sequence!==loadSequence)return;
@@ -152,6 +140,39 @@ async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Adm
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='review'){const p=peserta.find(x=>x._docId===id);if(!p){alert('Data peserta tidak ditemukan. Muat ulang halaman.');return;}openReview(p.kode);return;}if(b.dataset.action==='edit')editPeserta(id);else if(b.dataset.action==='delete')hapusPeserta(id);});
 // Pastikan fungsi yang dipanggil dari atribut HTML tersedia pada window.
 window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;
-(async()=>{try{if(await requireAccess()){updateSummaryCounts();await load();}}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
+(async()=>{try{if(await requireAccess())await load();}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
+
+<script type="module">
+  import { getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getFirestore, collection, query, where, getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const modularDb = getFirestore(getApp());
+
+  window.updateSummaryCounts = async function(){
+    const ids = ['sumTotal','sumBelum','sumLunas','sumHadir'];
+    try {
+      const pesertaRef = collection(modularDb, 'peserta');
+      const [totalSnap, lunasSnap, hadirSnap] = await Promise.all([
+        getCountFromServer(pesertaRef),
+        getCountFromServer(query(pesertaRef, where('statusPembayaran', '==', 'LUNAS'))),
+        getCountFromServer(query(pesertaRef, where('statusKehadiran', '==', 'HADIR')))
+      ]);
+      const total = totalSnap.data().count || 0;
+      const lunas = lunasSnap.data().count || 0;
+      const hadir = hadirSnap.data().count || 0;
+      document.getElementById('sumTotal').textContent = total.toLocaleString('id-ID');
+      document.getElementById('sumBelum').textContent = Math.max(0, total-lunas).toLocaleString('id-ID');
+      document.getElementById('sumLunas').textContent = lunas.toLocaleString('id-ID');
+      document.getElementById('sumHadir').textContent = hadir.toLocaleString('id-ID');
+    } catch (error) {
+      console.error('Gagal menghitung ringkasan peserta:', error);
+      ids.forEach(id => document.getElementById(id).textContent = '!');
+      const info = document.getElementById('categoryInfo');
+      if (info) info.textContent += ' • Ringkasan gagal dihitung; periksa izin Firestore dan dukungan aggregation query.';
+    }
+  };
+  window.dispatchEvent(new Event('participant-count-ready'));
+</script>
+
 </body></html>
