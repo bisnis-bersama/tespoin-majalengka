@@ -119,53 +119,52 @@ async function openReview(kode){
 }
 function formatMoney(v){if(v===null||v===undefined||v==='')return '';if(typeof v==='number')return 'Rp '+v.toLocaleString('id-ID');const s=String(v).trim();if(!s)return '';if(/^rp\s*/i.test(s))return s;const n=Number(s.replace(/[^\d,-]/g,'').replace(',','.'));return Number.isFinite(n)&&n>0?'Rp '+n.toLocaleString('id-ID'):s;}
 async function confirmLunas(){
-  if(currentRole!=='admin'){alert('Hanya Admin yang dapat mengubah nominal pembayaran.');return;}
+  if(currentRole!=='admin'){alert('Hanya Admin yang dapat menyetujui pembayaran.');return;}
   if(!selected)return;
-  const nominal=Number($('nominalTransfer').value);
-  if(!Number.isSafeInteger(nominal)||nominal<=0){$('modalMsg').className='msg err';$('modalMsg').textContent='Masukkan nominal transfer berupa angka bulat yang valid sesuai mutasi rekening.';return;}
-  const isAlreadyPaid=roleName(selected.statusPembayaran)==='lunas';
-  const actionText=isAlreadyPaid?'Perbaiki nominal pembayaran':'Konfirmasi pembayaran';
-  if(!confirm('Pastikan nominal Rp '+nominal.toLocaleString('id-ID')+' sudah cocok dengan mutasi bank. '+actionText+' untuk '+(selected.nama||selected.kode)+'?'))return;
-  const btn=$('confirmBtn');btn.disabled=true;btn.textContent='MENYIMPAN...';$('modalMsg').className='msg';$('modalMsg').textContent='';
+  if(roleName(selected.statusPembayaran)==='lunas'){
+    $('modalMsg').className='msg good';
+    $('modalMsg').textContent='Status peserta ini sudah LUNAS.';
+    return;
+  }
+  if(!confirm('Ubah status pembayaran '+(selected.nama||selected.kode)+' dari BELUM LUNAS menjadi LUNAS?'))return;
+  const btn=$('confirmBtn');
+  btn.disabled=true;btn.textContent='MENYIMPAN...';
+  $('modalMsg').className='msg';$('modalMsg').textContent='';
   try{
-    const user=auth.currentUser;if(!user)throw new Error('Sesi login berakhir. Silakan login kembali.');
-    const docId=selected._docId||selected.kode;const ref=db.collection('peserta').doc(docId);const snap=await ref.get();if(!snap.exists)throw new Error('Dokumen peserta tidak ditemukan.');
-    const existing=snap.data()||{};const paidNow=roleName(existing.statusPembayaran)==='lunas';
-    const estimasi=Number(existing.estimasiNominal??existing.estimasiHarga??selected.estimasiNominal??150000)||150000;
-    const now=firebase.firestore.FieldValue.serverTimestamp();
-    const update={nominalPembayaran:nominal,hargaFinal:nominal,estimasiNominal:estimasi,petugasVerifikasi:user.email||user.uid,waktuVerifikasi:now};
-    if(!paidNow){update.statusPembayaran='LUNAS';update.tanggalVerifikasi=now;update.petugasPembayaran=user.email||user.uid;update.metodePembayaran=existing.metodePembayaran||'TRANSFER';}
-    await ref.update(update);
-    const merged={...selected,...update,statusPembayaran:'LUNAS',nominalPembayaran:nominal,estimasiNominal:estimasi,hargaFinal:nominal};
+    const docId=selected._docId||selected.kode;
+    const ref=db.collection('peserta').doc(docId);
+    await ref.update({statusPembayaran:'LUNAS'});
+
+    const merged={...selected,statusPembayaran:'LUNAS'};
     selected=merged;
-    // Perbarui cache lokal lebih dulu supaya ringkasan dan tabel langsung konsisten.
-    semuaPeserta=semuaPeserta.map(item=>item._docId===docId?{...item,...merged}:item);
-    peserta=peserta.map(item=>item._docId===docId?{...item,...merged}:item);
+    semuaPeserta=semuaPeserta.map(item=>item._docId===docId?{...item,statusPembayaran:'LUNAS'}:item);
+    peserta=peserta.map(item=>item._docId===docId?{...item,statusPembayaran:'LUNAS'}:item);
     updateSummaryCounts(semuaPeserta);
-    $('mNominal').textContent=formatMoney(nominal);$('mBayar').innerHTML='<span class="badge ok">LUNAS</span>';
-    $('modalMsg').className='msg good';$('modalMsg').textContent=(paidNow?'Nominal pembayaran diperbaiki. ':'Pembayaran disetujui. ')+'Nominal Rp '+nominal.toLocaleString('id-ID')+' tersimpan di Firestore.';
-    $('confirmBtn').textContent='NOMINAL TERSIMPAN';
-    // Setelah approval, pindah ke kategori SUDAH LUNAS (kecuali peserta sudah hadir).
-    tab='lunas';
+
+    tab=roleName(merged.statusKehadiran)==='hadir'?'hadir':'lunas';
     [['tabBelum','belum'],['tabLunas','lunas'],['tabHadir','hadir']].forEach(([id,val])=>$(id).classList.toggle('active',tab===val));
     $('search').value='';
-    cacheLoaded=false;
-    // Approval sudah tersimpan. Jika pembacaan ulang gagal, jangan tampilkan seolah-olah penyimpanan gagal.
-    try {
-      await load(true);
-      $('modalMsg').className='msg good';
-      $('modalMsg').textContent=(paidNow?'Nominal pembayaran diperbaiki. ':'Pembayaran disetujui. ')+'Nominal Rp '+nominal.toLocaleString('id-ID')+' tersimpan di Firestore.';
-      $('confirmBtn').textContent='NOMINAL TERSIMPAN';
-    } catch (refreshError) {
-      console.error('Approval berhasil, tetapi penyegaran data gagal:',refreshError);
-      $('modalMsg').className='msg good';
-      $('modalMsg').textContent='Approval tersimpan di Firestore, tetapi data tabel gagal dimuat ulang.';
-    }
+    peserta=semuaPeserta.filter(item=>{
+      const paid=roleName(item.statusPembayaran)==='lunas';
+      const present=roleName(item.statusKehadiran)==='hadir';
+      if(tab==='belum')return !paid;
+      if(tab==='lunas')return paid&&!present;
+      return present;
+    });
+    $('categoryInfo').textContent='Kategori: '+categoryLabel()+' • '+peserta.length+' data.';
+    render();
+    $('mBayar').innerHTML='<span class="badge ok">LUNAS</span>';
+    $('modalMsg').className='msg good';
+    $('modalMsg').textContent='Status pembayaran berhasil diubah menjadi LUNAS.';
+    btn.textContent='STATUS LUNAS TERSIMPAN';
     setTimeout(closeModal,1400);
-  }catch(e){console.error(e);$('modalMsg').className='msg err';$('modalMsg').textContent=e.code==='permission-denied'?'Izin Firestore ditolak. Periksa Rules koleksi peserta.':(e.message||'Penyimpanan nominal gagal.');}
-  finally{
+  }catch(e){
+    console.error(e);
+    $('modalMsg').className='msg err';
+    $('modalMsg').textContent=e.code==='permission-denied'?'Firestore menolak perubahan status pembayaran.':(e.message||'Gagal mengubah status pembayaran.');
+  }finally{
     btn.disabled=false;
-    if(btn.textContent!=='NOMINAL TERSIMPAN')btn.textContent=roleName(selected&&selected.statusPembayaran)==='lunas'?'SIMPAN / PERBAIKI NOMINAL':'KONFIRMASI LUNAS';
+    if(btn.textContent!=='STATUS LUNAS TERSIMPAN')btn.textContent='KONFIRMASI LUNAS';
   }
 }
 function closeModal(){$('modal').classList.remove('show');document.body.style.overflow='';selected=null;}
