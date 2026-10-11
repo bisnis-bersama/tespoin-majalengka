@@ -24,15 +24,20 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Ari
 .hero-title{font-size:clamp(22px,4vw,35px);font-weight:950;text-transform:uppercase;letter-spacing:.2px;line-height:1.08;margin:0 0 11px}
 .hero-title span{color:var(--yellow)}
 .hero-subtitle{font-size:12px;color:#d4d4d4;letter-spacing:1.8px;font-weight:650}
-.banner-wrap{max-width:1000px;margin:-2px auto 0;padding:0 14px;position:relative;z-index:5}
-.banner{position:relative;aspect-ratio:16/7;background:#111;border-radius:22px;overflow:hidden;border:1px solid #ffffff28;box-shadow:0 20px 50px #0003}
-.slider{touch-action:pan-y;user-select:none}.slides{width:100%;height:100%;position:relative;overflow:hidden}
-.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .45s ease}.slide.active{opacity:1;visibility:visible}
-.slide img{width:100%;height:100%;object-fit:cover;display:block}
-.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:38px;height:38px;border:1px solid #ffffff55;border-radius:50%;background:#0009;color:#fff;font-size:29px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.slide-arrow.prev{left:12px}.slide-arrow.next{right:12px}
-.slide-dots{position:absolute;left:0;right:0;bottom:11px;z-index:5;display:flex;justify-content:center;gap:7px}
-.slide-dot{width:8px;height:8px;border:0;border-radius:50%;padding:0;background:#ffffff8c;cursor:pointer}.slide-dot.active{background:var(--yellow);transform:scale(1.25)}
+
+/* SLIDE DIPERKECIL, POSISI TENGAH, GAMBAR TIDAK DIPOTONG */
+.banner-wrap{max-width:1000px;margin:10px auto 0;padding:0 14px;position:relative;z-index:5}
+.banner{position:relative;width:100%;max-width:680px;margin:0 auto;aspect-ratio:16/5;background:#111;border-radius:16px;overflow:hidden;border:1px solid #ffffff28;box-shadow:0 12px 30px #0002}
+.slider{touch-action:pan-y;user-select:none}
+.slides{width:100%;height:100%;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .45s ease}
+.slide.active{opacity:1;visibility:visible}
+.slide img{width:100%;height:100%;object-fit:contain;object-position:center center;display:block}
+.slide-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:36px;height:36px;border:1px solid #ffffff55;border-radius:50%;background:#0009;color:#fff;font-size:27px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.slide-arrow.prev{left:10px}.slide-arrow.next{right:10px}
+.slide-dots{position:absolute;left:0;right:0;bottom:8px;z-index:5;display:flex;justify-content:center;gap:7px}
+.slide-dot{width:8px;height:8px;border:0;border-radius:50%;padding:0;background:#ffffff8c;cursor:pointer}
+.slide-dot.active{background:var(--yellow);transform:scale(1.25)}
 .container{max-width:1000px;margin:auto;padding:22px 14px 42px}
 .card{background:var(--white);border-radius:20px;padding:clamp(17px,3vw,25px);box-shadow:var(--shadow);border:1px solid #00000008;margin-bottom:17px;overflow:hidden}
 .status{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:#e7f8ed;color:#137333;font-size:11px;font-weight:900;letter-spacing:.45px;margin-bottom:18px}
@@ -60,7 +65,22 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Ari
 .footer{text-align:center;color:#777;font-size:11px;line-height:1.7;margin-top:8px}
 .admin-login{display:inline-block;margin-top:12px;padding:9px 15px;border:1px solid #dedede;border-radius:999px;color:#626262;background:#fff;text-decoration:none;font-size:11px;font-weight:750}
 .admin-login:hover{color:#111;border-color:var(--yellow);background:#fffbea}
-@media(max-width:600px){.hero{padding:19px 10px 28px}.hero-label{font-size:9px;letter-spacing:.8px}.hero-title{font-size:22px}.hero-subtitle{font-size:10px;letter-spacing:1px}.banner-wrap{padding:0 9px}.banner{aspect-ratio:16/8;border-radius:16px}.slide-arrow{width:32px;height:32px;font-size:24px}.container{padding:15px 9px 32px}.card{border-radius:17px;padding:17px 14px}.title h2{font-size:19px}.icon-title{width:44px;height:44px;min-width:44px;font-size:20px;border-radius:13px}.item{gap:10px}.icon{width:40px;height:40px;min-width:40px;font-size:17px}.value{font-size:14px}.btn{font-size:14px;padding:14px}.benefits{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+  .hero{padding:19px 10px 28px}
+  .hero-label{font-size:9px;letter-spacing:.8px}
+  .hero-title{font-size:22px}
+  .hero-subtitle{font-size:10px;letter-spacing:1px}
+  .banner-wrap{padding:0 12px;margin-top:10px}
+  .banner{width:100%;max-width:560px;aspect-ratio:16/5;border-radius:12px}
+  .slide-arrow{width:30px;height:30px;font-size:23px}
+  .container{padding:15px 9px 32px}
+  .card{border-radius:17px;padding:17px 14px}
+  .title h2{font-size:19px}
+  .icon-title{width:44px;height:44px;min-width:44px;font-size:20px;border-radius:13px}
+  .item{gap:10px}.icon{width:40px;height:40px;min-width:40px;font-size:17px}
+  .value{font-size:14px}.btn{font-size:14px;padding:14px}
+  .benefits{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(max-width:360px){.benefits{grid-template-columns:1fr}.hero-title{font-size:20px}}
 @media(min-width:700px){.benefits{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
@@ -77,7 +97,7 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Ari
 <div class="banner-wrap">
   <div class="banner slider" id="heroSlider">
     <div class="slides" id="slideTrack">
-      <div class="slide active"><img src="judul2.png" alt="Judul Roadshow DPW Jabar Goes to Majalengka"></div>
+      <div class="slide active"><img src="judul.png" alt="Judul Roadshow DPW Jabar Goes to Majalengka"></div>
     </div>
     <button class="slide-arrow prev" id="slidePrev" type="button" aria-label="Slide sebelumnya">‹</button>
     <button class="slide-arrow next" id="slideNext" type="button" aria-label="Slide berikutnya">›</button>
@@ -90,14 +110,11 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Ari
   <div id="status" class="status"><span class="dot"></span><span id="statusText">MEMUAT STATUS PENDAFTARAN</span></div>
   <div class="title"><div class="icon-title">📅</div><h2 id="judulAcara">ROADSHOW SERTIFIKASI BNSP TESPOIN</h2></div>
   <div id="deskripsi" class="desc">Roadshow Sertifikasi Profesi BNSP TESPOIN DPD Majalengka.</div>
-
   <div class="item"><div class="icon">📅</div><div><div class="label">Tanggal</div><div id="tanggal" class="value">Memuat tanggal...</div></div></div>
   <div class="item"><div class="icon">🕐</div><div><div class="label">Waktu</div><div id="waktu" class="value">Memuat waktu...</div></div></div>
   <div class="item"><div class="icon">📍</div><div><div class="label">Lokasi</div><div id="lokasi" class="value">Memuat lokasi...</div></div></div>
   <div class="item"><div class="icon">🎟️</div><div><div class="label">Tiket</div><div id="harga" class="value">Memuat harga...</div></div></div>
-
   <a href="registrasi.html" id="btnDaftar" class="btn">DAFTAR SEKARANG</a>
-
   <div class="desc" style="margin-top:17px;margin-bottom:12px">
     <b>QR CODE ATAU BUKTI REGISTRASI HILANG?</b><br>
     Masukkan nama dan nomor WhatsApp yang digunakan saat mendaftar. Admin akan membantu mengirim ulang bukti registrasi.
@@ -120,7 +137,6 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Ari
     <div class="benefit"><span class="check">✓</span><span>Aktivasi Tools</span></div>
   </div>
 </section>
-
 <footer class="footer">
   DPD TESPOIN MAJALENGKA • TEKNISI PONSEL MAJALENGKA<br>
   <a href="login-panitia.html" class="admin-login">🔐 Login Panitia</a>
@@ -186,6 +202,7 @@ function ambilHargaTiket(data){
 }
 
 let slideTimer=null,slideIndex=0,slideTouchStartX=0,nomorPanitiaWA='6282319264646';
+const SLIDE_DEFAULT = ['gambar1.png','gambar2.png','gambar3.png'];
 function normalisasiSlide(value){
   if(Array.isArray(value))return value.filter(Boolean);
   if(!value)return [];
@@ -193,33 +210,82 @@ function normalisasiSlide(value){
   return String(value).split(/\n|,/).map(x=>x.trim()).filter(Boolean);
 }
 function renderSlider(urls){
-  const track=document.getElementById('slideTrack'),dots=document.getElementById('slideDots'),slider=document.getElementById('heroSlider');
+  const track=document.getElementById('slideTrack');
+  const dots=document.getElementById('slideDots');
+  const slider=document.getElementById('heroSlider');
+  const prev=document.getElementById('slidePrev');
+  const next=document.getElementById('slideNext');
   if(!track||!dots||!slider)return;
-  const slides=normalisasiSlide(urls);
-  const finalSlides=slides.length?slides:['judul.png'];
-  track.innerHTML=finalSlides.map((url,i)=>`<div class="slide ${i===0?'active':''}"><img src="${escapeHtml(url)}" alt="Slide ${i+1}" loading="${i===0?'eager':'lazy'}"></div>`).join('');
-  dots.innerHTML=finalSlides.length>1?finalSlides.map((_,i)=>`<button class="slide-dot ${i===0?'active':''}" type="button" aria-label="Slide ${i+1}" data-slide="${i}"></button>`).join(''):'';
+
+  // Firestore digunakan bila memiliki minimal dua gambar.
+  // Jika tidak, gunakan tiga PNG di folder yang sama dengan index.html.
+  const fromFirestore=normalisasiSlide(urls);
+  const sources=fromFirestore.length>=2?fromFirestore:SLIDE_DEFAULT.slice();
+
+  if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
   slideIndex=0;
-  if(slideTimer)clearInterval(slideTimer);
-  if(finalSlides.length>1)slideTimer=setInterval(()=>goToSlide(slideIndex+1),4500);
-  document.getElementById('slidePrev').style.display=finalSlides.length>1?'flex':'none';
-  document.getElementById('slideNext').style.display=finalSlides.length>1?'flex':'none';
-  dots.querySelectorAll('.slide-dot').forEach(dot=>dot.addEventListener('click',()=>goToSlide(Number(dot.dataset.slide))));
-  document.getElementById('slidePrev').onclick=()=>goToSlide(slideIndex-1);
-  document.getElementById('slideNext').onclick=()=>goToSlide(slideIndex+1);
-  slider.ontouchstart=e=>{slideTouchStartX=e.changedTouches[0].clientX};
-  slider.ontouchend=e=>{const dx=e.changedTouches[0].clientX-slideTouchStartX;if(Math.abs(dx)>45)goToSlide(slideIndex+(dx<0?1:-1))};
+  track.innerHTML=sources.map((url,i)=>
+    `<div class="slide ${i===0?'active':''}">
+      <img src="${escapeHtml(url)}" alt="Slide ${i+1}" loading="${i===0?'eager':'lazy'}">
+    </div>`
+  ).join('');
+
+  function refreshSlider(){
+    const items=Array.from(track.querySelectorAll('.slide'));
+    if(!items.length){
+      track.innerHTML='<div class="slide active"><div style="height:100%;display:grid;place-items:center;color:#fff;padding:18px;text-align:center">Gambar slide tidak ditemukan. Pastikan gambar1.png, gambar2.png, dan gambar3.png berada di folder yang sama dengan index.html.</div></div>';
+    }
+    const activeItems=Array.from(track.querySelectorAll('.slide'));
+    slideIndex=Math.max(0,activeItems.findIndex(el=>el.classList.contains('active')));
+    if(slideIndex<0)slideIndex=0;
+    dots.innerHTML=activeItems.length>1
+      ?activeItems.map((_,i)=>`<button class="slide-dot ${i===slideIndex?'active':''}" type="button" aria-label="Slide ${i+1}" data-slide="${i}"></button>`).join('')
+      :'';
+    dots.querySelectorAll('.slide-dot').forEach((dot,i)=>dot.onclick=()=>goToSlide(i));
+    if(prev)prev.style.display=activeItems.length>1?'flex':'none';
+    if(next)next.style.display=activeItems.length>1?'flex':'none';
+    if(slideTimer){clearInterval(slideTimer);slideTimer=null;}
+    if(activeItems.length>1)slideTimer=setInterval(()=>goToSlide(slideIndex+1),4500);
+  }
+
+  // Hapus gambar yang tidak ditemukan, lalu hitung ulang tombol dan timer.
+  track.querySelectorAll('img').forEach(img=>{
+    img.addEventListener('error',()=>{
+      const slide=img.closest('.slide');
+      const wasActive=slide.classList.contains('active');
+      slide.remove();
+      const remaining=Array.from(track.querySelectorAll('.slide'));
+      if(wasActive && remaining.length){
+        remaining.forEach((el,i)=>el.classList.toggle('active',i===0));
+      }
+      refreshSlider();
+    },{once:true});
+  });
+
+  refreshSlider();
+  if(prev)prev.onclick=()=>goToSlide(slideIndex-1);
+  if(next)next.onclick=()=>goToSlide(slideIndex+1);
+  slider.ontouchstart=e=>{slideTouchStartX=e.changedTouches[0].clientX;};
+  slider.ontouchend=e=>{
+    const dx=e.changedTouches[0].clientX-slideTouchStartX;
+    if(Math.abs(dx)>45)goToSlide(slideIndex+(dx<0?1:-1));
+  };
 }
 function goToSlide(index){
-  const slides=document.querySelectorAll('#slideTrack .slide');
-  if(!slides.length)return;
+  const track=document.getElementById('slideTrack');
+  if(!track)return;
+  const slides=Array.from(track.querySelectorAll('.slide'));
+  if(slides.length<2)return;
   slideIndex=(index+slides.length)%slides.length;
   slides.forEach((el,i)=>el.classList.toggle('active',i===slideIndex));
   document.querySelectorAll('#slideDots .slide-dot').forEach((el,i)=>el.classList.toggle('active',i===slideIndex));
 }
 function tampilkanPengaturan(data){
   if(!data)return;
-  renderSlider(data.slideUrls||data.slideGambar||[]);
+  const gambarFirestore = normalisasiSlide(data.slideUrls).length
+    ? data.slideUrls
+    : (data.slideGambar || []);
+  renderSlider(gambarFirestore);
   document.getElementById('judulAcara').textContent=data.judul||data.judulAcara||'INFORMASI ACARA';
   document.getElementById('deskripsi').textContent=data.deskripsi||'Informasi acara akan diumumkan panitia.';
   document.getElementById('tanggal').textContent=formatTanggal(data.tanggalAcara||data.tanggal);
