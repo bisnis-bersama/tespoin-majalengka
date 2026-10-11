@@ -33,7 +33,7 @@
 const firebaseConfig={apiKey:'AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ',authDomain:'register-peserta.firebaseapp.com',projectId:'register-peserta',storageBucket:'register-peserta.firebasestorage.app',messagingSenderId:'983090504866',appId:'1:983090504866:web:7879b0784b9fecad4863fb'};
 firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore();
-let currentRole='',peserta=[],tab='belum',selected=null,loadSequence=0;
+let currentRole='',peserta=[],semuaPeserta=[],tab='belum',selected=null,loadSequence=0,cacheLoaded=false;
 const $=id=>document.getElementById(id);
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function roleName(v){return String(v||'').trim().toLowerCase();}
@@ -46,53 +46,52 @@ async function requireAccess(){
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
-async function updateSummaryCounts(){
-  const ids=['sumTotal','sumBelum','sumLunas','sumHadir'];
-  ids.forEach(id=>$(id).textContent='…');
-  try{
-    // Firestore aggregation count: hanya mengembalikan angka, bukan dokumen peserta.
-    const pesertaRef=db.collection('peserta');
-    const [totalSnap,belumSnap,lunasSnap,hadirSnap]=await Promise.all([
-      pesertaRef.count().get(),
-      pesertaRef.where('statusPembayaran','==','BELUM LUNAS').count().get(),
-      pesertaRef.where('statusPembayaran','==','LUNAS').where('statusKehadiran','==','BELUM HADIR').count().get(),
-      pesertaRef.where('statusKehadiran','==','HADIR').count().get()
-    ]);
-    $('sumTotal').textContent=totalSnap.data().count.toLocaleString('id-ID');
-    $('sumBelum').textContent=belumSnap.data().count.toLocaleString('id-ID');
-    $('sumLunas').textContent=lunasSnap.data().count.toLocaleString('id-ID');
-    $('sumHadir').textContent=hadirSnap.data().count.toLocaleString('id-ID');
-    if($('categoryInfo').textContent.startsWith('Hitungan Firestore gagal:')) $('categoryInfo').textContent='Jumlah ringkasan dihitung langsung oleh Firestore; tabel hanya membaca kategori yang dipilih.';
-  }catch(e){
-    console.error('Gagal menghitung ringkasan Firestore:',e);
-    ids.forEach(id=>$(id).textContent='ERR');
-    $('categoryInfo').textContent='Hitungan Firestore gagal ('+(e.code||'tanpa kode')+'): '+(e.message||'Periksa dukungan SDK dan Firestore Rules.');
-  }
+function updateSummaryCounts(data){
+  const all=Array.isArray(data)?data:[];
+  const isPaid=p=>roleName(p.statusPembayaran)==='lunas';
+  const isPresent=p=>roleName(p.statusKehadiran)==='hadir';
+  $('sumTotal').textContent=all.length.toLocaleString('id-ID');
+  $('sumBelum').textContent=all.filter(p=>!isPaid(p)).length.toLocaleString('id-ID');
+  // Peserta yang sudah hadir dipindahkan dari kategori SUDAH LUNAS.
+  $('sumLunas').textContent=all.filter(p=>isPaid(p)&&!isPresent(p)).length.toLocaleString('id-ID');
+  $('sumHadir').textContent=all.filter(isPresent).length.toLocaleString('id-ID');
 }
-async function load(){
+async function load(forceRefresh=false){
   const sequence=++loadSequence;
-  updateSummaryCounts();
-  $('tbody').innerHTML='<tr><td colspan="10" class="empty">Memuat kategori dari Firestore...</td></tr>';
-  $('categoryInfo').textContent='Memuat data kategori '+categoryLabel()+ '...';
+  $('tbody').innerHTML='<tr><td colspan="10" class="empty">Memuat data peserta dari Firestore...</td></tr>';
+  $('categoryInfo').textContent='Memuat data kategori '+categoryLabel()+'...';
   try{
-    let query=db.collection('peserta');
-    if(tab==='belum') query=query.where('statusPembayaran','==','BELUM LUNAS');
-    else if(tab==='lunas') query=query.where('statusPembayaran','==','LUNAS').where('statusKehadiran','==','BELUM HADIR');
-    else if(tab==='hadir') query=query.where('statusKehadiran','==','HADIR');
-    const snap=await query.get();
+    // Sama seperti dashboard admin: baca koleksi peserta dari Firestore,
+    // hitung panel dari data tersebut, lalu saring kategori di halaman.
+    // Cache dipakai saat berpindah tab agar tidak membaca Firestore berulang kali.
+    if(forceRefresh || !cacheLoaded){
+      const snap=await db.collection('peserta').get({source:'server'});
+      if(sequence!==loadSequence)return;
+      semuaPeserta=snap.docs.map(normalizeParticipant);
+      semuaPeserta.sort((a,b)=>{
+        const x=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
+        const y=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
+        return y-x;
+      });
+      cacheLoaded=true;
+    }
     if(sequence!==loadSequence)return;
-    peserta=snap.docs.map(normalizeParticipant);
-    peserta.sort((a,b)=>{
-      const x=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
-      const y=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
-      return y-x;
+    updateSummaryCounts(semuaPeserta);
+    peserta=semuaPeserta.filter(p=>{
+      const paid=roleName(p.statusPembayaran)==='lunas';
+      const present=roleName(p.statusKehadiran)==='hadir';
+      if(tab==='belum')return !paid;
+      if(tab==='lunas')return paid&&!present;
+      if(tab==='hadir')return present;
+      return true;
     });
-    $('categoryInfo').textContent='Kategori: '+categoryLabel()+' • '+peserta.length+' data. Hanya kategori ini yang dibaca dari Firestore.';
+    $('categoryInfo').textContent='Kategori: '+categoryLabel()+' • '+peserta.length+' data. Jumlah panel dihitung dari Firestore.';
     render();
   }catch(e){
-    console.error(e);
-    $('categoryInfo').textContent='Gagal memuat kategori. Periksa nilai status pada dokumen dan Firestore Rules.';
+    console.error('Gagal membaca data peserta dari Firestore:',e);
+    $('categoryInfo').textContent='Gagal memuat data Firestore ('+(e.code||'tanpa kode')+'): '+(e.message||'Periksa koneksi dan Firestore Rules.');
     $('tbody').innerHTML='<tr><td colspan="10" class="empty">Gagal memuat data: '+esc(e.message||'Periksa koneksi dan Firestore Rules.')+'</td></tr>';
+    ['sumTotal','sumBelum','sumLunas','sumHadir'].forEach(id=>$(id).textContent='ERR');
   }
 }
 function categoryLabel(){
@@ -103,7 +102,7 @@ function setTab(t){
   tab=t;
   [['tabBelum','belum'],['tabLunas','lunas'],['tabHadir','hadir']].forEach(([id,val])=>$(id).classList.toggle('active',t===val));
   $('search').value='';
-  load();
+  load(false);
 }
 function render(){
   const q=$('search').value.trim().toLowerCase();
@@ -153,12 +152,12 @@ async function confirmLunas(){
 function closeModal(){$('modal').classList.remove('show');document.body.style.overflow='';selected=null;}
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 function normalisasiWa(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);else if(n.startsWith('8'))n='62'+n;return n;}
-async function editPeserta(id){if(currentRole!=='admin')return alert('Hanya Admin yang dapat mengedit peserta.');const p=peserta.find(x=>x._docId===id);if(!p)return alert('Data peserta tidak ditemukan.');const nama=prompt('Nama peserta:',p.nama||'');if(nama===null)return;const toko=prompt('Nama toko:',p.toko||'');if(toko===null)return;const wa=prompt('Nomor WhatsApp:',p.wa||'');if(wa===null)return;const alamat=prompt('Alamat:',p.alamat||'');if(alamat===null)return;const email=prompt('Email:',p.email||'');if(email===null)return;const ukuran=prompt('Ukuran kaos:',p.ukuran||'');if(ukuran===null)return;if(!nama.trim()||!wa.trim())return alert('Nama dan WhatsApp wajib diisi.');if(!confirm('Simpan perubahan data '+p.kode+'?'))return;try{await db.collection('peserta').doc(id).update({nama:nama.trim(),toko:toko.trim(),wa:wa.trim(),waNormalized:normalisasiWa(wa),alamat:alamat.trim(),email:email.trim().toLowerCase(),ukuran:ukuran.trim()});alert('Data peserta berhasil diperbarui.');await load();}catch(e){console.error(e);alert('Gagal mengedit data: '+(e.message||e));}}
-async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Admin yang dapat menghapus peserta.');const p=peserta.find(x=>x._docId===id);if(!p)return alert('Data peserta tidak ditemukan.');if(!confirm('Hapus permanen data '+p.kode+' — '+p.nama+'? Tindakan ini tidak dapat dibatalkan.'))return;try{await db.collection('peserta').doc(id).delete();alert('Data peserta berhasil dihapus.');await load();}catch(e){console.error(e);alert('Gagal menghapus data: '+(e.message||e));}}
+async function editPeserta(id){if(currentRole!=='admin')return alert('Hanya Admin yang dapat mengedit peserta.');const p=peserta.find(x=>x._docId===id);if(!p)return alert('Data peserta tidak ditemukan.');const nama=prompt('Nama peserta:',p.nama||'');if(nama===null)return;const toko=prompt('Nama toko:',p.toko||'');if(toko===null)return;const wa=prompt('Nomor WhatsApp:',p.wa||'');if(wa===null)return;const alamat=prompt('Alamat:',p.alamat||'');if(alamat===null)return;const email=prompt('Email:',p.email||'');if(email===null)return;const ukuran=prompt('Ukuran kaos:',p.ukuran||'');if(ukuran===null)return;if(!nama.trim()||!wa.trim())return alert('Nama dan WhatsApp wajib diisi.');if(!confirm('Simpan perubahan data '+p.kode+'?'))return;try{await db.collection('peserta').doc(id).update({nama:nama.trim(),toko:toko.trim(),wa:wa.trim(),waNormalized:normalisasiWa(wa),alamat:alamat.trim(),email:email.trim().toLowerCase(),ukuran:ukuran.trim()});alert('Data peserta berhasil diperbarui.');cacheLoaded=false;await load(true);}catch(e){console.error(e);alert('Gagal mengedit data: '+(e.message||e));}}
+async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Admin yang dapat menghapus peserta.');const p=peserta.find(x=>x._docId===id);if(!p)return alert('Data peserta tidak ditemukan.');if(!confirm('Hapus permanen data '+p.kode+' — '+p.nama+'? Tindakan ini tidak dapat dibatalkan.'))return;try{await db.collection('peserta').doc(id).delete();alert('Data peserta berhasil dihapus.');cacheLoaded=false;await load(true);}catch(e){console.error(e);alert('Gagal menghapus data: '+(e.message||e));}}
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='review'){const p=peserta.find(x=>x._docId===id);if(!p){alert('Data peserta tidak ditemukan. Muat ulang halaman.');return;}openReview(p.kode);return;}if(b.dataset.action==='edit')editPeserta(id);else if(b.dataset.action==='delete')hapusPeserta(id);});
 // Pastikan fungsi yang dipanggil dari atribut HTML tersedia pada window.
-window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;
-(async()=>{try{if(await requireAccess())await load();}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
+window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;window.load=()=>{cacheLoaded=false;return load(true);};
+(async()=>{try{if(await requireAccess())await load(true);}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
 
 
