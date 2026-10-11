@@ -47,9 +47,26 @@ async function requireAccess(){
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
 async function updateSummaryCounts(){
-  // Count dijalankan melalui SDK modular; jangan memakai query.count() dari SDK compat.
-  if (typeof window.updateSummaryCountsFromServer === 'function') {
-    await window.updateSummaryCountsFromServer();
+  const ids=['sumTotal','sumBelum','sumLunas','sumHadir'];
+  ids.forEach(id=>$(id).textContent='…');
+  try{
+    // Firestore aggregation count: hanya mengembalikan angka, bukan dokumen peserta.
+    const pesertaRef=db.collection('peserta');
+    const [totalSnap,belumSnap,lunasSnap,hadirSnap]=await Promise.all([
+      pesertaRef.count().get(),
+      pesertaRef.where('statusPembayaran','==','BELUM LUNAS').count().get(),
+      pesertaRef.where('statusPembayaran','==','LUNAS').where('statusKehadiran','==','BELUM HADIR').count().get(),
+      pesertaRef.where('statusKehadiran','==','HADIR').count().get()
+    ]);
+    $('sumTotal').textContent=totalSnap.data().count.toLocaleString('id-ID');
+    $('sumBelum').textContent=belumSnap.data().count.toLocaleString('id-ID');
+    $('sumLunas').textContent=lunasSnap.data().count.toLocaleString('id-ID');
+    $('sumHadir').textContent=hadirSnap.data().count.toLocaleString('id-ID');
+    if($('categoryInfo').textContent.startsWith('Hitungan Firestore gagal:')) $('categoryInfo').textContent='Jumlah ringkasan dihitung langsung oleh Firestore; tabel hanya membaca kategori yang dipilih.';
+  }catch(e){
+    console.error('Gagal menghitung ringkasan Firestore:',e);
+    ids.forEach(id=>$(id).textContent='ERR');
+    $('categoryInfo').textContent='Hitungan Firestore gagal ('+(e.code||'tanpa kode')+'): '+(e.message||'Periksa dukungan SDK dan Firestore Rules.');
   }
 }
 async function load(){
@@ -144,50 +161,5 @@ window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=co
 (async()=>{try{if(await requireAccess())await load();}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
 
-<script type="module">
-  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getFirestore, collection, query, where, getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-  // Inisialisasi SDK modular secara eksplisit agar agregasi hitungan tidak
-  // bergantung pada instance compat yang dipakai tabel.
-  const config = {
-    apiKey: 'AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ',
-    authDomain: 'register-peserta.firebaseapp.com',
-    projectId: 'register-peserta',
-    storageBucket: 'register-peserta.firebasestorage.app',
-    messagingSenderId: '983090504866',
-    appId: '1:983090504866:web:7879b0784b9fecad4863fb'
-  };
-  const modularApp = getApps().find(a => a.name === 'summary-counter')
-    || initializeApp(config, 'summary-counter');
-  const modularDb = getFirestore(modularApp);
-
-  window.updateSummaryCountsFromServer = async function(){
-    const ids = ['sumTotal','sumBelum','sumLunas','sumHadir'];
-    ids.forEach(id => document.getElementById(id).textContent = '…');
-    const info = document.getElementById('categoryInfo');
-    try {
-      const pesertaRef = collection(modularDb, 'peserta');
-      const [totalSnap, belumSnap, lunasBelumHadirSnap, hadirSnap] = await Promise.all([
-        getCountFromServer(pesertaRef),
-        getCountFromServer(query(pesertaRef, where('statusPembayaran', '==', 'BELUM LUNAS'))),
-        getCountFromServer(query(pesertaRef, where('statusPembayaran', '==', 'LUNAS'), where('statusKehadiran', '==', 'BELUM HADIR'))),
-        getCountFromServer(query(pesertaRef, where('statusKehadiran', '==', 'HADIR')))
-      ]);
-      document.getElementById('sumTotal').textContent = totalSnap.data().count.toLocaleString('id-ID');
-      document.getElementById('sumBelum').textContent = belumSnap.data().count.toLocaleString('id-ID');
-      document.getElementById('sumLunas').textContent = lunasBelumHadirSnap.data().count.toLocaleString('id-ID');
-      document.getElementById('sumHadir').textContent = hadirSnap.data().count.toLocaleString('id-ID');
-      if (info && info.textContent.startsWith('Ringkasan gagal dihitung:')) {
-        info.textContent = 'Jumlah ringkasan dihitung langsung oleh Firestore; tabel hanya membaca kategori yang dipilih.';
-      }
-    } catch (error) {
-      console.error('Gagal menghitung ringkasan langsung dari Firestore:', error);
-      ids.forEach(id => document.getElementById(id).textContent = 'ERR');
-      if (info) info.textContent = 'Hitungan Firestore gagal: ' + (error.code || error.message || 'periksa Rules dan akses jaringan.');
-    }
-  };
-  await window.updateSummaryCountsFromServer();
-</script>
 
 </body></html>
