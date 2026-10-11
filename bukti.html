@@ -126,6 +126,108 @@
 @media(min-width:700px){#result{max-width:700px!important}.qr-card{max-width:600px!important}}
 @media print{.success-badge,.kode-box,.qr-caption,.data-row.size-row{print-color-adjust:exact;-webkit-print-color-adjust:exact}#result{max-width:none!important;padding:8px!important}.actions{display:none!important}}
 
+.qr-box {
+  width: 100%;
+  max-width: 600px;
+  margin: 18px auto;
+  padding: 12px 14px;
+  background: linear-gradient(145deg, #fff, #f8f8f8);
+  border: 1px solid #e4e4e4;
+  border-radius: 22px;
+  box-shadow: 0 6px 20px #00000010;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: visible;
+}
+
+#qrcode {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  background: #fff;
+}
+
+#qrcode img,
+#qrcode canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.qr-label {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 10px;
+  padding: 12px 10px;
+  background: #111;
+  color: #ffc107;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 900;
+  letter-spacing: .3px;
+}
+
+.qr-code-text {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 10px;
+  padding: 12px 10px;
+  background: #fff4c2;
+  border: 1px solid #f3cf4f;
+  border-radius: 12px;
+  color: #755500;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.qr-code-text b {
+  display: block;
+  margin-top: 4px;
+  color: #111;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: 3px;
+}
+
+.qr-status {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #a16207;
+}
+
+@media (max-width: 520px) {
+  .qr-box {
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  #qrcode {
+    max-width: min(100%, 420px);
+  }
+
+  .qr-label {
+    font-size: 11px;
+  }
+
+  .qr-code-text b {
+    font-size: 28px;
+  }
+}
+
 </style>
 </head>
 <body>
