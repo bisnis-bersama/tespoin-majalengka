@@ -103,27 +103,18 @@
     </form>
     <div id="status" role="status" aria-live="polite"></div>
     <section id="result">
-      <div class="success-badge">✓ REGISTRASI BERHASIL</div>
-      <h2 class="proof-title">BUKTI REGISTRASI PESERTA</h2>
-      <p class="proof-subtitle">Simpan bukti ini untuk registrasi ulang.</p>
-
-      <div id="dataRows"></div>
-
-      <div class="qr-card">
-        <div id="qr"></div>
-        <div class="qr-caption">SCAN QR CODE INI SAAT REGISTRASI ULANG</div>
-        <div class="kode-box">
-          <div class="kode-label">NOMOR UNDIAN DOORPRIZE</div>
-          <div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
-            <strong id="kodeValue" class="kode-value">-</strong>
-            <button type="button" class="copy-code" id="copyCodeButton" aria-label="Salin nomor undian">▢</button>
-          </div>
-        </div>
-        <div id="paymentStatus" class="payment-status">STATUS PEMBAYARAN: -</div>
-      </div>
-
-      <div class="reminder"><b>PENTING:</b> Simpan bukti registrasi JPG untuk digunakan saat registrasi ulang.</div>
-      <div class="actions">
+      <div style="font-weight:900;font-size:18px">BUKTI REGISTRASI <span style="color:#b00020">COD</span></div>
+  <div style="font-size:12px;color:#666;margin:6px 0 12px">DPD TESPOIN MAJALENGKA</div>
+  <div id="rNama" style="font-size:18px;font-weight:800"></div>
+  <div id="rToko" style="margin-top:4px;color:#555"></div>
+  <div id="rWa" style="margin-top:4px"></div>
+  <div id="rEmail" style="margin-top:4px"></div>
+  <div id="rUkuran" style="margin-top:4px"></div>
+  <div id="rHarga" style="margin-top:12px;font-weight:900;font-size:18px"></div>
+  <div style="display:flex;justify-content:center;margin:16px auto"><div id="qrcode"></div></div>
+  <div style="font-size:12px;color:#666">Kode Registrasi</div><div id="rKode" style="font-size:26px;letter-spacing:4px;font-weight:900"></div>
+  <div style="display:inline-block;margin-top:10px;padding:6px 12px;background:#e9f8ed;color:#087b25;border-radius:999px;font-weight:900">LUNAS • COD</div>
+  <button type="button" id="btnSimpanQR">SIMPAN BUKTI REGISTRASI</button>
         <button id="saveJpgButton" class="print-btn" type="button">SIMPAN BUKTI JPG & KIRIM WA</button>
         <button class="print-btn" type="button" onclick="window.print()">CETAK / SIMPAN PDF</button>
       </div>
