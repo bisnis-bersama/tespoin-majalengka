@@ -145,14 +145,27 @@ window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=co
 </script>
 
 <script type="module">
-  import { getApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, collection, query, where, getCountFromServer } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  const modularDb = getFirestore(getApp());
+  // Inisialisasi SDK modular secara eksplisit agar agregasi hitungan tidak
+  // bergantung pada instance compat yang dipakai tabel.
+  const config = {
+    apiKey: 'AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ',
+    authDomain: 'register-peserta.firebaseapp.com',
+    projectId: 'register-peserta',
+    storageBucket: 'register-peserta.firebasestorage.app',
+    messagingSenderId: '983090504866',
+    appId: '1:983090504866:web:7879b0784b9fecad4863fb'
+  };
+  const modularApp = getApps().find(a => a.name === 'summary-counter')
+    || initializeApp(config, 'summary-counter');
+  const modularDb = getFirestore(modularApp);
 
   window.updateSummaryCountsFromServer = async function(){
     const ids = ['sumTotal','sumBelum','sumLunas','sumHadir'];
     ids.forEach(id => document.getElementById(id).textContent = '…');
+    const info = document.getElementById('categoryInfo');
     try {
       const pesertaRef = collection(modularDb, 'peserta');
       const [totalSnap, belumSnap, lunasBelumHadirSnap, hadirSnap] = await Promise.all([
@@ -165,15 +178,15 @@ window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=co
       document.getElementById('sumBelum').textContent = belumSnap.data().count.toLocaleString('id-ID');
       document.getElementById('sumLunas').textContent = lunasBelumHadirSnap.data().count.toLocaleString('id-ID');
       document.getElementById('sumHadir').textContent = hadirSnap.data().count.toLocaleString('id-ID');
+      if (info && info.textContent.startsWith('Ringkasan gagal dihitung:')) {
+        info.textContent = 'Jumlah ringkasan dihitung langsung oleh Firestore; tabel hanya membaca kategori yang dipilih.';
+      }
     } catch (error) {
-      console.error('Gagal menghitung ringkasan peserta:', error);
+      console.error('Gagal menghitung ringkasan langsung dari Firestore:', error);
       ids.forEach(id => document.getElementById(id).textContent = 'ERR');
-      const info = document.getElementById('categoryInfo');
-      if (info) info.textContent = 'Ringkasan gagal dihitung: ' + (error.code || error.message || 'Periksa Firestore Rules.');
+      if (info) info.textContent = 'Hitungan Firestore gagal: ' + (error.code || error.message || 'periksa Rules dan akses jaringan.');
     }
   };
-
-  // Jika halaman sudah mulai memuat sebelum modul siap, hitung ulang setelah modul aktif.
   await window.updateSummaryCountsFromServer();
 </script>
 
