@@ -89,6 +89,62 @@
 @media(min-width:700px){#result{max-width:700px!important}.qr-card{max-width:600px!important}}
 @media print{.success-badge,.kode-box,.qr-caption,.data-row.size-row{print-color-adjust:exact;-webkit-print-color-adjust:exact}#result{max-width:none!important;padding:8px!important}.actions{display:none!important}}
 
+
+/* PERBAIKAN QR: tampilkan satu elemen QR saja.
+   qrcodejs membuat canvas dan img; aturan display:block!important pada keduanya
+   dapat memunculkan dua QR sekaligus karena mengalahkan display:none bawaan library. */
+#qr{
+  width:100%!important;
+  max-width:390px!important;
+  aspect-ratio:1 / 1!important;
+  height:auto!important;
+  min-height:0!important;
+  margin:0 auto 10px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:visible!important;
+  line-height:0!important;
+}
+#qr canvas{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:1 / 1!important;
+  max-width:100%!important;
+  image-rendering:pixelated;
+}
+#qr img{
+  display:none!important;
+}
+.qr-card{
+  width:100%!important;
+  max-width:600px!important;
+  padding:12px!important;
+  margin:0 auto 12px!important;
+  border:1px solid #e2e2e2!important;
+  border-radius:28px!important;
+  background:#fff!important;
+  text-align:center!important;
+  overflow:visible!important;
+}
+.qr-caption{
+  width:100%!important;
+  margin:0 0 10px!important;
+  padding:12px 8px!important;
+  border-radius:12px!important;
+  background:#111!important;
+  color:#ffc400!important;
+  font-size:clamp(12px,2.9vw,17px)!important;
+  font-weight:900!important;
+  line-height:1.3!important;
+}
+@media(max-width:520px){
+  #qr{max-width:min(100%,390px)!important}
+  .qr-card{padding:10px!important}
+}
+
 </style>
 </head>
 <body>
@@ -103,18 +159,27 @@
     </form>
     <div id="status" role="status" aria-live="polite"></div>
     <section id="result">
-      <div style="font-weight:900;font-size:18px">BUKTI REGISTRASI <span style="color:#b00020">COD</span></div>
-  <div style="font-size:12px;color:#666;margin:6px 0 12px">DPD TESPOIN MAJALENGKA</div>
-  <div id="rNama" style="font-size:18px;font-weight:800"></div>
-  <div id="rToko" style="margin-top:4px;color:#555"></div>
-  <div id="rWa" style="margin-top:4px"></div>
-  <div id="rEmail" style="margin-top:4px"></div>
-  <div id="rUkuran" style="margin-top:4px"></div>
-  <div id="rHarga" style="margin-top:12px;font-weight:900;font-size:18px"></div>
-  <div style="display:flex;justify-content:center;margin:16px auto"><div id="qrcode"></div></div>
-  <div style="font-size:12px;color:#666">Kode Registrasi</div><div id="rKode" style="font-size:26px;letter-spacing:4px;font-weight:900"></div>
-  <div style="display:inline-block;margin-top:10px;padding:6px 12px;background:#e9f8ed;color:#087b25;border-radius:999px;font-weight:900">LUNAS • COD</div>
-  <button type="button" id="btnSimpanQR">SIMPAN BUKTI REGISTRASI</button>
+      <div class="success-badge">✓ REGISTRASI BERHASIL</div>
+      <h2 class="proof-title">BUKTI REGISTRASI PESERTA</h2>
+      <p class="proof-subtitle">Simpan bukti ini untuk registrasi ulang.</p>
+
+      <div id="dataRows"></div>
+
+      <div class="qr-card">
+        <div id="qr"></div>
+        <div class="qr-caption">SCAN QR CODE INI SAAT REGISTRASI ULANG</div>
+        <div class="kode-box">
+          <div class="kode-label">NOMOR UNDIAN DOORPRIZE</div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong id="kodeValue" class="kode-value">-</strong>
+            <button type="button" class="copy-code" id="copyCodeButton" aria-label="Salin nomor undian">▢</button>
+          </div>
+        </div>
+        <div id="paymentStatus" class="payment-status">STATUS PEMBAYARAN: -</div>
+      </div>
+
+      <div class="reminder"><b>PENTING:</b> Simpan bukti registrasi JPG untuk digunakan saat registrasi ulang.</div>
+      <div class="actions">
         <button id="saveJpgButton" class="print-btn" type="button">SIMPAN BUKTI JPG & KIRIM WA</button>
         <button class="print-btn" type="button" onclick="window.print()">CETAK / SIMPAN PDF</button>
       </div>
@@ -203,7 +268,7 @@ function renderParticipant(p) {
   if (nominal != null && nominal !== "") addProofRow("Estimasi Pembayaran", "Rp " + Number(nominal).toLocaleString("id-ID"));
 
   document.getElementById("paymentStatus").textContent = "STATUS PEMBAYARAN: " + payment;
-  new QRCode(qrEl, {text:String(kode), width:280, height:280, correctLevel:QRCode.CorrectLevel.H});
+  new QRCode(qrEl, {text:String(kode), width:390, height:390, correctLevel:QRCode.CorrectLevel.H});
 
   document.getElementById("copyCodeButton").onclick = async () => {
     try {
@@ -238,7 +303,9 @@ function renderParticipant(p) {
     saveButton.disabled = true;
     try {
       saveButton.textContent = "MEMBUAT JPG...";
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise(resolve => setTimeout(resolve, 500));
+       const qrCanvas = resultEl.querySelector("#qr canvas");
+       if (!qrCanvas) throw new Error("QR Code belum selesai dibuat. Silakan coba lagi.");
       const canvas = await html2canvas(resultEl, {
         scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false, scrollX:0, scrollY:0,
         ignoreElements: element => element.classList && (
