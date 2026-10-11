@@ -53,7 +53,51 @@ function tampilkanBukti(p){
   $('qrcode').innerHTML='';new QRCode($('qrcode'),{text:p.kode,width:220,height:220,correctLevel:QRCode.CorrectLevel.H});$('hasil').classList.remove('hidden');
   window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
-$('btnSimpanQR').addEventListener('click',async function(){if(!lastParticipant)return;const btn=this;btn.disabled=true;const old=btn.textContent;try{btn.textContent='MENYIAPKAN BUKTI...';await new Promise(r=>setTimeout(r,150));const canvas=await html2canvas($('hasil'),{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});const a=document.createElement('a');a.href=canvas.toDataURL('image/jpeg',.95);a.download=lastParticipant.kode+'-BUKTI-COD.jpg';a.click();}catch(e){setMsg('Gagal membuat gambar bukti: '+(e.message||e),true);}finally{btn.disabled=false;btn.textContent=old;}});
+$('btnSimpanQR').addEventListener('click',async function(){
+  if(!lastParticipant)return;
+  const p=lastParticipant;
+  const btn=this;
+  btn.disabled=true;
+  const old=btn.textContent;
+  // Buka jendela WhatsApp langsung saat klik agar tidak diblokir browser.
+  let waWindow=null;
+  try{waWindow=window.open('about:blank','_blank');}catch(e){waWindow=null;}
+  try{
+    btn.textContent='MENYIAPKAN BUKTI...';
+    await new Promise(r=>setTimeout(r,150));
+    const canvas=await html2canvas($('hasil'),{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/jpeg',.95);
+    a.download=p.kode+'-BUKTI-COD.jpg';
+    a.click();
+
+    const nomor=normWa(p.waNormalized||p.wa);
+    if(!nomor)throw new Error('Nomor WhatsApp peserta tidak valid.');
+    const pesan=[
+      'Halo '+(p.nama||'Peserta')+',',
+      '',
+      'Registrasi COD Anda untuk acara DPD TESPOIN MAJALENGKA berhasil.',
+      'Status pembayaran: LUNAS • COD',
+      'Kode registrasi: '+p.kode,
+      'Nama: '+(p.nama||'-'),
+      'Toko: '+(p.toko||'-'),
+      'Ukuran kaos: '+(p.ukuran||'-'),
+      'Harga tiket: '+rupiah(p.hargaFinal),
+      '',
+      'Simpan bukti/barcode registrasi Anda dan tunjukkan saat registrasi ulang. Terima kasih.'
+    ].join('\n');
+    const url='https://wa.me/'+nomor+'?text='+encodeURIComponent(pesan);
+    if(waWindow&&!waWindow.closed){waWindow.location.href=url;}
+    else{window.location.href=url;}
+    setMsg('Bukti registrasi diunduh. WhatsApp peserta dibuka dengan pesan registrasi yang sudah disiapkan.',false);
+  }catch(e){
+    if(waWindow&&!waWindow.closed)waWindow.close();
+    setMsg('Gagal menyiapkan bukti/WhatsApp: '+(e.message||e),true);
+  }finally{
+    btn.disabled=false;
+    btn.textContent=old;
+  }
+});
 $('form').addEventListener('submit',async e=>{
   e.preventDefault();if(!ready||!user||!['admin','owner'].includes(role)){setMsg('Akses belum siap. Login kembali sebagai Admin atau Owner.',true);return;}
   const b=$('submit');b.disabled=true;b.textContent='MEMERIKSA & MENYIMPAN...';
