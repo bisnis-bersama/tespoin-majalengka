@@ -71,6 +71,10 @@ $('btnSimpanQR').addEventListener('click',async function(){
     a.download=p.kode+'-BUKTI-COD.jpg';
     a.click();
 
+    // Beri jeda agar proses unduhan bukti mulai terlebih dahulu sebelum WhatsApp dibuka.
+    btn.textContent='BUKTI DIUNDUH, MEMBUKA WHATSAPP...';
+    await new Promise(r=>setTimeout(r,1800));
+
     const nomor=normWa(p.waNormalized||p.wa);
     if(!nomor)throw new Error('Nomor WhatsApp peserta tidak valid.');
     const pesan=[
