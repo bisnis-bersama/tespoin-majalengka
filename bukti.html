@@ -55,24 +55,20 @@
 }
 
 #qr {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin: 0 auto 12px;
-  overflow: visible;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 auto 10px !important;
 }
 
 #qr img,
 #qr canvas {
-  display: block;
-  width: min(100%, 320px) !important;
+  display: block !important;
+  width: min(280px, 100%) !important;
   height: auto !important;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-  margin: 0 auto;
+  max-width: 100% !important;
 }
-
 .qr-caption {
   margin: 0 0 10px;
   padding: 12px 8px;
