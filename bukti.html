@@ -54,20 +54,24 @@
   overflow: hidden;
 }
 
-#qr {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 100% !important;
-  margin: 0 auto 10px !important;
+#qr{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:100%!important;
+  margin:0 auto 10px!important;
+  overflow:hidden!important;
+  min-height:0!important;
 }
 
 #qr img,
-#qr canvas {
-  display: block !important;
-  width: min(280px, 100%) !important;
-  height: auto !important;
-  max-width: 100% !important;
+#qr canvas{
+  display:block!important;
+  width:280px!important;
+  height:280px!important;
+  max-width:100%!important;
+  object-fit:contain!important;
+  flex:0 0 auto!important;
 }
 .qr-caption {
   margin: 0 0 10px;
