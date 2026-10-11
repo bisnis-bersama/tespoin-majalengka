@@ -46,29 +46,10 @@ async function requireAccess(){
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
-async function getQueryCount(query){
-  // Count aggregation menghitung dokumen di server tanpa mengunduh seluruh dokumen.
-  const result=await query.count().get();
-  return result.data().count;
-}
 async function updateSummaryCounts(){
-  const ids=['sumTotal','sumBelum','sumLunas','sumHadir'];
-  ids.forEach(id=>$(id).textContent='…');
-  try{
-    const base=db.collection('peserta');
-    const [total,belum,lunas,hadir]=await Promise.all([
-      getQueryCount(base),
-      getQueryCount(base.where('statusPembayaran','==','BELUM LUNAS')),
-      getQueryCount(base.where('statusPembayaran','==','LUNAS').where('statusKehadiran','==','BELUM HADIR')),
-      getQueryCount(base.where('statusKehadiran','==','HADIR'))
-    ]);
-    $('sumTotal').textContent=total;
-    $('sumBelum').textContent=belum;
-    $('sumLunas').textContent=lunas;
-    $('sumHadir').textContent=hadir;
-  }catch(err){
-    console.error('Gagal menghitung ringkasan:',err);
-    ids.forEach(id=>$(id).textContent='—');
+  // Count dijalankan melalui SDK modular; jangan memakai query.count() dari SDK compat.
+  if (typeof window.updateSummaryCountsFromServer === 'function') {
+    await window.updateSummaryCountsFromServer();
   }
 }
 async function load(){
@@ -169,30 +150,31 @@ window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=co
 
   const modularDb = getFirestore(getApp());
 
-  window.updateSummaryCounts = async function(){
+  window.updateSummaryCountsFromServer = async function(){
     const ids = ['sumTotal','sumBelum','sumLunas','sumHadir'];
+    ids.forEach(id => document.getElementById(id).textContent = '…');
     try {
       const pesertaRef = collection(modularDb, 'peserta');
-      const [totalSnap, lunasSnap, hadirSnap] = await Promise.all([
+      const [totalSnap, belumSnap, lunasBelumHadirSnap, hadirSnap] = await Promise.all([
         getCountFromServer(pesertaRef),
-        getCountFromServer(query(pesertaRef, where('statusPembayaran', '==', 'LUNAS'))),
+        getCountFromServer(query(pesertaRef, where('statusPembayaran', '==', 'BELUM LUNAS'))),
+        getCountFromServer(query(pesertaRef, where('statusPembayaran', '==', 'LUNAS'), where('statusKehadiran', '==', 'BELUM HADIR'))),
         getCountFromServer(query(pesertaRef, where('statusKehadiran', '==', 'HADIR')))
       ]);
-      const total = totalSnap.data().count || 0;
-      const lunas = lunasSnap.data().count || 0;
-      const hadir = hadirSnap.data().count || 0;
-      document.getElementById('sumTotal').textContent = total.toLocaleString('id-ID');
-      document.getElementById('sumBelum').textContent = Math.max(0, total-lunas).toLocaleString('id-ID');
-      document.getElementById('sumLunas').textContent = lunas.toLocaleString('id-ID');
-      document.getElementById('sumHadir').textContent = hadir.toLocaleString('id-ID');
+      document.getElementById('sumTotal').textContent = totalSnap.data().count.toLocaleString('id-ID');
+      document.getElementById('sumBelum').textContent = belumSnap.data().count.toLocaleString('id-ID');
+      document.getElementById('sumLunas').textContent = lunasBelumHadirSnap.data().count.toLocaleString('id-ID');
+      document.getElementById('sumHadir').textContent = hadirSnap.data().count.toLocaleString('id-ID');
     } catch (error) {
       console.error('Gagal menghitung ringkasan peserta:', error);
-      ids.forEach(id => document.getElementById(id).textContent = '!');
+      ids.forEach(id => document.getElementById(id).textContent = 'ERR');
       const info = document.getElementById('categoryInfo');
-      if (info) info.textContent += ' • Ringkasan gagal dihitung; periksa izin Firestore dan dukungan aggregation query.';
+      if (info) info.textContent = 'Ringkasan gagal dihitung: ' + (error.code || error.message || 'Periksa Firestore Rules.');
     }
   };
-  window.dispatchEvent(new Event('participant-count-ready'));
+
+  // Jika halaman sudah mulai memuat sebelum modul siap, hitung ulang setelah modul aktif.
+  await window.updateSummaryCountsFromServer();
 </script>
 
 </body></html>
