@@ -38,7 +38,21 @@ const $=id=>document.getElementById(id);
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function roleName(v){return String(v||'').trim().toLowerCase();}
 async function requireAccess(){
-  const user=await new Promise(resolve=>{const unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u);});});
+  const user=await new Promise(resolve=>{
+    let unsub=null;
+    let resolved=false;
+    unsub=auth.onAuthStateChanged(u=>{
+      if(resolved)return;
+      resolved=true;
+      if(typeof unsub==='function')unsub();
+      resolve(u);
+    }, err=>{
+      if(resolved)return;
+      resolved=true;
+      if(typeof unsub==='function')unsub();
+      resolve(null);
+    });
+  });
   if(!user){location.replace('login-panitia.html');return false;}
   const s=await db.collection('users').doc(user.uid).get();
   currentRole=s.exists?roleName(s.data().role):'';
@@ -156,7 +170,7 @@ async function editPeserta(id){if(currentRole!=='admin')return alert('Hanya Admi
 async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Admin yang dapat menghapus peserta.');const p=peserta.find(x=>x._docId===id);if(!p)return alert('Data peserta tidak ditemukan.');if(!confirm('Hapus permanen data '+p.kode+' — '+p.nama+'? Tindakan ini tidak dapat dibatalkan.'))return;try{await db.collection('peserta').doc(id).delete();alert('Data peserta berhasil dihapus.');cacheLoaded=false;await load(true);}catch(e){console.error(e);alert('Gagal menghapus data: '+(e.message||e));}}
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='review'){const p=peserta.find(x=>x._docId===id);if(!p){alert('Data peserta tidak ditemukan. Muat ulang halaman.');return;}openReview(p.kode);return;}if(b.dataset.action==='edit')editPeserta(id);else if(b.dataset.action==='delete')hapusPeserta(id);});
 // Pastikan fungsi yang dipanggil dari atribut HTML tersedia pada window.
-window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;window.load=()=>{cacheLoaded=false;return load(true);};
+window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;window.reloadParticipants=()=>{cacheLoaded=false;return load(true);};
 (async()=>{try{if(await requireAccess())await load(true);}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
 
