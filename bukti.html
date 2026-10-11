@@ -39,6 +39,56 @@
   .print-btn:disabled{opacity:.65;cursor:wait}
   @media(max-width:520px){#result{padding:12px;border-radius:16px}.qr-card{padding:12px}.data-row{grid-template-columns:minmax(100px,.8fr) 8px minmax(0,1.2fr);gap:7px;padding:11px 9px}.actions{grid-template-columns:1fr}.proof-subtitle{line-height:1.4}}
   @media print{body{background:#fff!important}header,.lookup-form,#status,.print-btn,.copy-code{display:none!important}.container{max-width:none!important;padding:0!important}.card{box-shadow:none!important;border:0!important;padding:0!important}#result{display:block!important;max-width:none;border:0;box-shadow:none;margin:0;padding:10px}.proof-top{print-color-adjust:exact;-webkit-print-color-adjust:exact}.detail-title,.kode-box,.reminder{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+
+/* Bukti registrasi: gaya seragam dengan barcode terbaru */
+#result{max-width:680px!important;padding:12px!important}
+.qr-card{max-width:560px!important;padding:12px!important;border-radius:20px!important}
+#qr{margin:6px auto 10px!important;overflow:visible!important}
+#qr img,#qr canvas{width:clamp(210px,58vw,300px)!important;height:auto!important;max-width:100%!important}
+.qr-caption{background:#111!important;color:#ffc400!important;border-radius:10px!important;padding:10px 8px!important;font-size:12px!important;font-weight:900!important;line-height:1.3}
+.kode-box{background:#fff3bf!important;border:1px solid #f2d96b!important;border-radius:14px!important;padding:10px!important}
+.kode-label{font-size:13px!important;font-weight:900!important;color:#795b08!important}
+.kode-value{display:block!important;font-size:clamp(34px,8vw,44px)!important;line-height:1.15!important;letter-spacing:5px!important;color:#111!important;font-weight:900!important}
+#dataRows{border:0!important;border-radius:0!important;overflow:visible!important;margin:10px 0 12px!important}
+.data-row{grid-template-columns:minmax(105px,.85fr) minmax(0,1.15fr)!important;gap:10px!important;padding:5px 2px!important;border-bottom:0!important;font-size:clamp(12px,2.5vw,15px)!important;line-height:1.35!important}
+.data-row .colon{display:none!important}
+.data-row b{text-align:right!important;font-weight:700!important}
+.data-row.size-row{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;margin:9px 0!important;padding:11px 12px!important;border:1px solid #f2d96b!important;border-radius:13px!important;background:#fff3bf!important}
+.data-row.size-row span{color:#795b08!important;font-size:clamp(14px,3vw,18px)!important;font-weight:900!important}
+.data-row.size-row b{color:#111!important;font-size:clamp(24px,5vw,30px)!important;font-weight:900!important;text-align:right!important}
+.detail-title{display:none!important}
+.reminder{display:none!important}
+.payment-status{margin-top:10px;text-align:center;font-size:clamp(13px,2.6vw,17px);font-weight:900;color:#946018}
+@media(max-width:520px){#result{padding:10px!important}.qr-card{padding:9px!important}.data-row{grid-template-columns:minmax(95px,.8fr) minmax(0,1.2fr)!important;gap:7px!important}.actions{grid-template-columns:1fr!important}}
+
+
+/* Layout bukti mengikuti contoh struk registrasi yang disetujui */
+.success-badge{display:table;margin:8px auto 14px;padding:12px 22px;border-radius:999px;background:#e7f7ec;color:#18743a;font-size:clamp(16px,3.6vw,23px);font-weight:900;text-align:center}
+#result{width:100%;max-width:700px!important;margin:18px auto 0!important;padding:12px 8px 16px!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;overflow:visible!important}
+.proof-top{display:none!important}
+.proof-title{font-size:clamp(22px,5vw,34px)!important;color:#171717!important;margin:0!important;line-height:1.15!important}
+.proof-subtitle{font-size:clamp(13px,3.4vw,19px)!important;color:#777!important;margin:10px 0 18px!important}
+#dataRows{display:block!important;margin:0 0 14px!important;border:0!important}
+.data-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important;padding:7px 1px!important;border:0!important;font-size:clamp(13px,3.2vw,18px)!important;line-height:1.35!important}
+.data-row span{color:#777!important}
+.data-row b{text-align:right!important;color:#171717!important;font-weight:700!important;overflow-wrap:anywhere!important}
+.data-row.size-row{display:flex!important;justify-content:space-between!important;align-items:center!important;margin:8px 0!important;padding:12px 14px!important;border:1px solid #f1d66c!important;border-radius:15px!important;background:#fff3bd!important}
+.data-row.size-row span{font-size:clamp(15px,3.8vw,22px)!important;color:#77590c!important;font-weight:900!important}
+.data-row.size-row b{font-size:clamp(25px,6vw,36px)!important;color:#111!important;font-weight:900!important}
+.qr-card{width:100%!important;max-width:600px!important;margin:0 auto 12px!important;padding:12px 10px!important;border:1px solid #e2e2e2!important;border-radius:28px!important;text-align:center!important;background:#fff!important}
+#qr{display:flex!important;justify-content:center!important;align-items:center!important;margin:0 auto 10px!important;overflow:visible!important;min-height:0!important}
+#qr img,#qr canvas{display:block!important;width:clamp(220px,62vw,390px)!important;height:auto!important;max-width:100%!important}
+.qr-caption{margin:0 0 10px!important;padding:12px 8px!important;border-radius:12px!important;background:#111!important;color:#ffc400!important;font-size:clamp(12px,2.9vw,17px)!important;font-weight:900!important;line-height:1.3!important}
+.kode-box{margin:0!important;padding:11px 8px!important;border:1px solid #f0d96d!important;border-radius:17px!important;background:#fff3bd!important;text-align:center!important}
+.kode-label{font-size:clamp(13px,3vw,18px)!important;color:#795b08!important;font-weight:900!important;margin-bottom:5px!important}
+.kode-value{font-size:clamp(35px,8vw,54px)!important;line-height:1.1!important;letter-spacing:5px!important;color:#111!important;font-weight:900!important}
+.copy-code{padding:3px 6px!important;margin:0!important;width:auto!important}
+.payment-status{margin-top:10px!important;text-align:center!important;color:#946018!important;font-size:clamp(13px,3vw,18px)!important;font-weight:900!important}
+.reminder{display:none!important}
+.actions{margin-top:14px!important;display:grid!important;grid-template-columns:1fr!important;gap:8px!important}
+@media(min-width:700px){#result{max-width:700px!important}.qr-card{max-width:600px!important}}
+@media print{.success-badge,.kode-box,.qr-caption,.data-row.size-row{print-color-adjust:exact;-webkit-print-color-adjust:exact}#result{max-width:none!important;padding:8px!important}.actions{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -53,30 +103,34 @@
     </form>
     <div id="status" role="status" aria-live="polite"></div>
     <section id="result">
-      <div class="proof-top"></div>
+      <div class="success-badge">✓ REGISTRASI BERHASIL</div>
       <h2 class="proof-title">BUKTI REGISTRASI PESERTA</h2>
-      <p class="proof-subtitle">Roadshow Sertifikasi Profesi BNSP TESPOIN DPD Majalengka</p>
+      <p class="proof-subtitle">Simpan bukti ini untuk registrasi ulang.</p>
+
+      <div id="dataRows"></div>
+
       <div class="qr-card">
         <div id="qr"></div>
-        <div class="qr-caption">SCAN QR CODE SAAT REGISTRASI ULANG</div>
+        <div class="qr-caption">SCAN QR CODE INI SAAT REGISTRASI ULANG</div>
         <div class="kode-box">
-          <div class="kode-label">KODE REGISTRASI</div>
+          <div class="kode-label">NOMOR UNDIAN DOORPRIZE</div>
           <div style="display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
             <strong id="kodeValue" class="kode-value">-</strong>
-            <button type="button" class="copy-code" id="copyCodeButton" aria-label="Salin kode registrasi">▢</button>
+            <button type="button" class="copy-code" id="copyCodeButton" aria-label="Salin nomor undian">▢</button>
           </div>
         </div>
+        <div id="paymentStatus" class="payment-status">STATUS PEMBAYARAN: -</div>
       </div>
-      <div class="detail-title">DATA PESERTA</div>
-      <div id="dataRows"></div>
-      <div class="reminder"><b>PENTING:</b> Simpan bukti registrasi ini dalam bentuk JPG atau PDF. QR Code akan digunakan untuk registrasi ulang saat hari acara.</div>
+
+      <div class="reminder"><b>PENTING:</b> Simpan bukti registrasi JPG untuk digunakan saat registrasi ulang.</div>
       <div class="actions">
-        <button id="saveJpgButton" class="print-btn" type="button">SIMPAN BUKTI JPG</button>
+        <button id="saveJpgButton" class="print-btn" type="button">SIMPAN BUKTI JPG & KIRIM WA</button>
         <button class="print-btn" type="button" onclick="window.print()">CETAK / SIMPAN PDF</button>
       </div>
     </section>
   </div>
 </div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -91,7 +145,7 @@ const firebaseConfig = {
   messagingSenderId: "983090504866",
   appId: "1:983090504866:web:7879b0784b9fecad4863fb"
 };
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -105,7 +159,7 @@ function normalizeWa(value) {
   if (n.startsWith("0")) n = "62" + n.slice(1);
   return n;
 }
-function showStatus(message, error = false) {
+function showStatus(message, error=false) {
   statusEl.textContent = message || "";
   statusEl.className = error ? "error" : "ok";
 }
@@ -122,110 +176,105 @@ function addRow(label, value) {
   row.append(left, colon, right);
   document.getElementById("dataRows").appendChild(row);
 }
-
 function renderParticipant(p) {
   const kode = p.kode || p.kodeRegistrasi || p._docId || "";
   if (!kode) throw new Error("Data peserta tidak memiliki kode registrasi.");
-
   const qrEl = document.getElementById("qr");
   const kodeEl = document.getElementById("kodeValue");
   const dataRows = document.getElementById("dataRows");
   const saveButton = document.getElementById("saveJpgButton");
+  const statusLabel = String(p.statusPembayaran || p.status || "BELUM DIKETAHUI").toUpperCase();
+  const cod = [p.tierRegistrasi,p.tierPembayaran,p.metodePembayaran,p.jenisRegistrasi]
+    .some(v => String(v || "").trim().toUpperCase() === "COD");
+  const payment = statusLabel === "LUNAS" && cod ? "LUNAS • COD" : statusLabel;
+  document.querySelector("#result .proof-title").textContent = cod ? "BUKTI REGISTRASI PESERTA COD" : "BUKTI REGISTRASI PESERTA";
 
   dataRows.replaceChildren();
   qrEl.replaceChildren();
   kodeEl.textContent = kode;
+  function addProofRow(label, value, cls = "") {
+    const row = document.createElement("div");
+    row.className = "data-row" + (cls ? " " + cls : "");
+    const left = document.createElement("span");
+    left.textContent = label;
+    const right = document.createElement("b");
+    right.textContent = value == null || value === "" ? "-" : String(value);
+    row.append(left, right);
+    dataRows.appendChild(row);
+  }
+  addProofRow("Nama Peserta", p.nama);
+  addProofRow("Nama Toko", p.toko);
+  addProofRow("No. WhatsApp", p.wa || p.noWa || p.nomorWhatsApp);
+  addProofRow("Email", p.email);
+  addProofRow("Alamat", p.alamat);
+  addProofRow("UKURAN KAOS", p.ukuran, "size-row");
+  const nominal = p.hargaFinal ?? p.nominalPembayaran ?? p.estimasiNominal;
+  if (nominal != null && nominal !== "") addProofRow("Estimasi Pembayaran", "Rp " + Number(nominal).toLocaleString("id-ID"));
 
-  addRow("Nama Peserta", p.nama);
-  addRow("Nama Toko", p.toko);
-  addRow("No. WhatsApp", p.wa || p.noWa || p.nomorWhatsApp);
-  addRow("Alamat", p.alamat);
-  addRow("Email", p.email);
-  addRow("Ukuran Kaos", p.ukuran);
-
-  // QR Code tetap dibuat setiap kali data peserta berhasil ditemukan.
-  new QRCode(qrEl, {
-    text: String(kode),
-    width: 280,
-    height: 280,
-    correctLevel: QRCode.CorrectLevel.H
-  });
+  document.getElementById("paymentStatus").textContent = "STATUS PEMBAYARAN: " + payment;
+  new QRCode(qrEl, {text:String(kode), width:280, height:280, correctLevel:QRCode.CorrectLevel.H});
 
   document.getElementById("copyCodeButton").onclick = async () => {
     try {
-      await navigator.clipboard.writeText(kode);
-      showStatus("Kode registrasi berhasil disalin.");
+      await navigator.clipboard.writeText(String(kode));
+      showStatus("Nomor undian berhasil disalin.");
     } catch (_) {
       const temporary = document.createElement("textarea");
-      temporary.value = kode;
+      temporary.value = String(kode);
       document.body.appendChild(temporary);
       temporary.select();
       document.execCommand("copy");
       temporary.remove();
-      showStatus("Kode registrasi berhasil disalin.");
+      showStatus("Nomor undian berhasil disalin.");
     }
   };
 
   resultEl.style.display = "block";
-
   saveButton.onclick = async () => {
     const oldText = saveButton.textContent;
     const nomorWA = normalizeWa(p.wa || p.noWa || p.nomorWhatsApp || "");
-
     if (!nomorWA) {
       showStatus("Nomor WhatsApp peserta tidak tersedia.", true);
       return;
     }
-
-    // Tab dibuka langsung dari klik agar browser tidak memblokirnya.
     const waTab = window.open("about:blank", "_blank");
     if (!waTab) {
       showStatus("Pop-up diblokir. Izinkan pop-up browser lalu coba lagi.", true);
       return;
     }
-    waTab.document.title = "Menyiapkan WhatsApp";
-    waTab.document.body.innerHTML = "<p style='font-family:Arial;text-align:center;margin-top:40px'>Bukti JPG sedang dibuat. WhatsApp akan dibuka setelah 10 detik.</p>";
-
+    waTab.document.title = "Menyiapkan bukti registrasi";
+    waTab.document.body.innerHTML = "<p style='font-family:Arial;text-align:center;margin-top:40px'>Bukti JPG sedang dibuat dan diunduh. WhatsApp akan dibuka setelah jeda.</p>";
     saveButton.disabled = true;
     try {
       saveButton.textContent = "MEMBUAT JPG...";
-      // Beri waktu agar QR dan tampilan bukti selesai dirender.
-      await new Promise(resolve => setTimeout(resolve, 300));
-
+      await new Promise(resolve => setTimeout(resolve, 350));
       const canvas = await html2canvas(resultEl, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
+        scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false, scrollX:0, scrollY:0,
         ignoreElements: element => element.classList && (
-          element.classList.contains("print-btn") ||
-          element.classList.contains("copy-code")
+          element.classList.contains("print-btn") || element.classList.contains("copy-code")
         )
       });
-
       const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/jpeg", 0.95);
-      link.download = kode + "-BUKTI-REGISTRASI.jpg";
+      link.href = canvas.toDataURL("image/jpeg", .95);
+      link.download = kode + (cod ? "-BUKTI-COD.jpg" : "-BUKTI-REGISTRASI.jpg");
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      saveButton.textContent = "MENUNGGU 10 DETIK...";
-      showStatus("JPG berhasil dibuat. WhatsApp dibuka dalam 10 detik.");
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      // Jeda sesudah unduhan dimulai agar browser sempat memproses unduhan JPG.
+      saveButton.textContent = "JPG DIUNDUH • MENUNGGU 3 DETIK...";
+      showStatus("Bukti JPG dibuat. WhatsApp peserta akan dibuka setelah jeda 3 detik.");
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       const pesanWA = "Halo " + (p.nama || "Peserta") +
-        ", berikut informasi bukti registrasi Anda. Kode registrasi: " + kode +
-        ". Mohon simpan bukti JPG untuk registrasi ulang.";
+        ", bukti registrasi Roadshow Sertifikasi Profesi BNSP TESPOIN DPD Majalengka Anda sudah dibuat." +
+        "\nKode registrasi / nomor undian doorprize: " + kode +
+        "\nStatus pembayaran: " + payment +
+        "\nUkuran kaos: " + (p.ukuran || "-") +
+        "\nMohon simpan bukti JPG dan tunjukkan saat registrasi ulang. Terima kasih.";
       const linkWA = "https://wa.me/" + nomorWA + "?text=" + encodeURIComponent(pesanWA);
-
-      if (waTab && !waTab.closed) {
-        waTab.location.href = linkWA;
-      } else {
-        showStatus("Tab WhatsApp ditutup sebelum proses selesai. Silakan tekan tombol JPG lagi.", true);
-      }
+      if (waTab && !waTab.closed) waTab.location.href = linkWA;
+      else showStatus("Tab WhatsApp ditutup sebelum proses selesai. Silakan ulangi.", true);
     } catch (error) {
       console.error("Gagal membuat JPG:", error);
       if (waTab && !waTab.closed) waTab.close();
@@ -236,7 +285,6 @@ function renderParticipant(p) {
     }
   };
 }
-
 async function waitForAuth() {
   return new Promise(resolve => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -274,35 +322,29 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const keyword = document.getElementById("keyword").value.trim();
   if (!keyword) return;
-
   button.disabled = true;
   button.textContent = "MENCARI...";
   resultEl.style.display = "none";
   showStatus("Mencari data peserta...");
-
   try {
     if (!auth.currentUser) throw new Error("Sesi Admin tidak ditemukan. Silakan login ulang.");
     const needleEmail = keyword.toLowerCase();
     const needleWa = normalizeWa(keyword);
     const snapshot = await db.collection("peserta").get();
     let found = null;
-
     snapshot.forEach(doc => {
       if (found) return;
       const p = doc.data() || {};
       const email = String(p.email || "").trim().toLowerCase();
       const wa = normalizeWa(p.wa || p.noWa || p.nomorWhatsApp || "");
-      if ((keyword.includes("@") && email === needleEmail) ||
-          (!keyword.includes("@") && wa && wa === needleWa)) {
-        found = { ...p, _docId: doc.id };
+      if ((keyword.includes("@") && email === needleEmail) || (!keyword.includes("@") && wa && wa === needleWa)) {
+        found = {...p, _docId: doc.id};
       }
     });
-
     if (!found) {
       showStatus("Data registrasi tidak ditemukan. Periksa kembali email atau nomor WhatsApp.", true);
       return;
     }
-
     renderParticipant(found);
     showStatus("Data registrasi ditemukan.");
   } catch (error) {
