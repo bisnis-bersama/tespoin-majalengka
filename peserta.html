@@ -46,20 +46,40 @@ async function requireAccess(){
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
+async function getQueryCount(query){
+  // Count aggregation menghitung dokumen di server tanpa mengunduh seluruh dokumen.
+  const result=await query.count().get();
+  return result.data().count;
+}
+async function updateSummaryCounts(){
+  const ids=['sumTotal','sumBelum','sumLunas','sumHadir'];
+  ids.forEach(id=>$(id).textContent='…');
+  try{
+    const base=db.collection('peserta');
+    const [total,belum,lunas,hadir]=await Promise.all([
+      getQueryCount(base),
+      getQueryCount(base.where('statusPembayaran','==','BELUM LUNAS')),
+      getQueryCount(base.where('statusPembayaran','==','LUNAS').where('statusKehadiran','==','BELUM HADIR')),
+      getQueryCount(base.where('statusKehadiran','==','HADIR'))
+    ]);
+    $('sumTotal').textContent=total;
+    $('sumBelum').textContent=belum;
+    $('sumLunas').textContent=lunas;
+    $('sumHadir').textContent=hadir;
+  }catch(err){
+    console.error('Gagal menghitung ringkasan:',err);
+    ids.forEach(id=>$(id).textContent='—');
+  }
+}
 async function load(){
   const sequence=++loadSequence;
+  updateSummaryCounts();
   $('tbody').innerHTML='<tr><td colspan="10" class="empty">Memuat kategori dari Firestore...</td></tr>';
   $('categoryInfo').textContent='Memuat data kategori '+categoryLabel()+ '...';
   try{
     let query=db.collection('peserta');
     if(tab==='belum') query=query.where('statusPembayaran','==','BELUM LUNAS');
-    else if(tab==='lunas') {
-      // Hanya peserta yang sudah lunas tetapi belum check-in.
-      // Peserta berstatus HADIR otomatis tidak masuk kategori ini.
-      query=query
-        .where('statusPembayaran','==','LUNAS')
-        .where('statusKehadiran','==','BELUM HADIR');
-    }
+    else if(tab==='lunas') query=query.where('statusPembayaran','==','LUNAS').where('statusKehadiran','==','BELUM HADIR');
     else if(tab==='hadir') query=query.where('statusKehadiran','==','HADIR');
     const snap=await query.get();
     if(sequence!==loadSequence)return;
