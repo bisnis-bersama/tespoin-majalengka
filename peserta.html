@@ -38,20 +38,14 @@ const $=id=>document.getElementById(id);
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function roleName(v){return String(v||'').trim().toLowerCase();}
 async function requireAccess(){
-  // Halaman ini berada di dalam aplikasi yang sudah login.
-  // Jangan mengalihkan atau menolak halaman berdasarkan role di sini.
-  // Role hanya dipakai untuk membatasi aksi; approval tetap khusus Admin.
-  const user=auth.currentUser||await new Promise(resolve=>{
+  const user=await new Promise(resolve=>{
     let unsub=null,resolved=false;
     unsub=auth.onAuthStateChanged(u=>{if(resolved)return;resolved=true;if(typeof unsub==='function')unsub();resolve(u);},err=>{if(resolved)return;resolved=true;if(typeof unsub==='function')unsub();resolve(null);});
   });
-  currentRole='';
-  if(user){
-    try{
-      const s=await db.collection('users').doc(user.uid).get();
-      currentRole=s.exists?roleName(s.data().role):'';
-    }catch(e){console.error('Gagal membaca role pengguna:',e);}
-  }
+  if(!user){location.replace('login-panitia.html');return false;}
+  const s=await db.collection('users').doc(user.uid).get();
+  currentRole=s.exists?roleName(s.data().role):'';
+  if(!['admin','owner'].includes(currentRole)){alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');location.replace('login-panitia.html');return false;}
   return true;
 }
 function normalizeParticipant(doc){const d=doc.data()||{};return {...d,_docId:doc.id,kode:d.kode||doc.id,nama:d.nama||'',toko:d.toko||d.namaToko||'',wa:d.wa||d.noWa||'',email:d.email||'',alamat:d.alamat||'',ukuran:d.ukuran||'',statusPembayaran:d.statusPembayaran||'BELUM LUNAS',statusKehadiran:d.statusKehadiran||'BELUM HADIR',jamCheckin:d.jamCheckin||d.jamCheckIn||'',nominalPembayaran:d.nominalPembayaran??d.hargaFinal??'',estimasiNominal:d.estimasiNominal??d.estimasiHarga??150000,buktiNama:d.buktiNama||d.namaPadaBukti||'',buktiTeks:d.buktiTeks||d.buktiTransferTeks||d.hasilOCR||d.ocrText||d.ocr||''};}
@@ -128,12 +122,14 @@ async function confirmLunas(){
   }
   if(!confirm('Ubah status pembayaran '+(selected.nama||selected.kode)+' dari BELUM LUNAS menjadi LUNAS?'))return;
   const btn=$('confirmBtn');
-  btn.disabled=true;btn.textContent='MENYIMPAN...';
-  $('modalMsg').className='msg';$('modalMsg').textContent='';
+  btn.disabled=true;
+  btn.textContent='MENYIMPAN...';
+  $('modalMsg').className='msg';
+  $('modalMsg').textContent='';
   try{
     const docId=selected._docId||selected.kode;
-    const ref=db.collection('peserta').doc(docId);
-    await ref.update({statusPembayaran:'LUNAS'});
+    // Perubahan Firestore dibatasi hanya pada field statusPembayaran.
+    await db.collection('peserta').doc(docId).update({statusPembayaran:'LUNAS'});
 
     const merged={...selected,statusPembayaran:'LUNAS'};
     selected=merged;
@@ -174,6 +170,6 @@ async function editPeserta(id){if(currentRole!=='admin')return alert('Hanya Admi
 async function hapusPeserta(id){if(currentRole!=='admin')return alert('Hanya Admin yang dapat menghapus peserta.');const p=peserta.find(x=>x._docId===id);if(!p)return alert('Data peserta tidak ditemukan.');if(!confirm('Hapus permanen data '+p.kode+' — '+p.nama+'? Tindakan ini tidak dapat dibatalkan.'))return;try{await db.collection('peserta').doc(id).delete();alert('Data peserta berhasil dihapus.');cacheLoaded=false;await load(true);}catch(e){console.error(e);alert('Gagal menghapus data: '+(e.message||e));}}
 $('tbody').addEventListener('click',e=>{const b=e.target.closest('button[data-action][data-id]');if(!b)return;const id=b.dataset.id;if(b.dataset.action==='review'){const p=peserta.find(x=>x._docId===id);if(!p){alert('Data peserta tidak ditemukan. Muat ulang halaman.');return;}openReview(p.kode);return;}if(b.dataset.action==='edit')editPeserta(id);else if(b.dataset.action==='delete')hapusPeserta(id);});
 window.openReview=openReview;window.closeModal=closeModal;window.confirmLunas=confirmLunas;window.setTab=setTab;window.render=render;window.reloadParticipants=()=>{cacheLoaded=false;return load(true);};
-(async()=>{try{if(await requireAccess())await load(true);}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));}})();
+(async()=>{try{if(await requireAccess())await load(true);}catch(e){console.error(e);alert('Tidak dapat memeriksa akses: '+(e.message||e));location.replace('login-panitia.html');}})();
 </script>
 </body></html>
