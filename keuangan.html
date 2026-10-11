@@ -52,8 +52,9 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
 
   <div class="top-actions">
     <button class="btn-dark" onclick="location.href='index-admin.html'">← Kembali ke Dashboard</button>
-    <button id="refreshBtn" class="btn-green">↻ Muat Ulang Data</button>
-    <button id="exportBtn" class="btn-gold">⇩ Ekspor CSV / Excel</button>
+    <button id="togglePesertaBtn" class="btn-gold" type="button" disabled>Tampilkan Data Peserta</button>
+    <button id="refreshBtn" class="btn-green" type="button" disabled>↻ Muat Ulang Data</button>
+    <button id="exportBtn" class="btn-gold" type="button" disabled>⇩ Ekspor CSV / Excel</button>
   </div>
   <div id="status" class="status" role="status" aria-live="polite"></div>
 
@@ -77,13 +78,13 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
   <section class="panel">
     <h2>Rincian Keuangan Peserta</h2>
     <div class="filters">
-      <input id="search" type="search" placeholder="Cari nama, toko, WA, atau kode registrasi...">
-      <select id="filterStatus">
+      <input id="search" type="search" placeholder="Cari nama, toko, WA, atau kode registrasi..." disabled>
+      <select id="filterStatus" disabled>
         <option value="semua">Semua status pembayaran</option>
         <option value="lunas">Lunas</option>
         <option value="belum">Belum lunas</option>
       </select>
-      <select id="filterMetode">
+      <select id="filterMetode" disabled>
         <option value="semua">Semua metode pembayaran</option>
         <option value="cod">COD</option>
         <option value="noncod">Non-COD / transfer</option>
@@ -95,10 +96,10 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
           <th>KODE</th><th>NAMA PESERTA</th><th>NO. WA</th><th>METODE</th>
           <th>NOMINAL</th><th>STATUS</th><th>KATEGORI</th>
         </tr></thead>
-        <tbody id="rows"><tr><td colspan="7">Memuat data...</td></tr></tbody>
+        <tbody id="rows"><tr><td colspan="7">Data peserta belum dimuat. Tekan “Tampilkan Data Peserta”.</td></tr></tbody>
       </table>
     </div>
-    <p id="tableSummary" class="note">Menampilkan 0 peserta.</p>
+    <p id="tableSummary" class="note">Data peserta belum dimuat.</p>
   </section>
   <footer>Sumber data: Firebase Firestore • Koleksi peserta</footer>
 </div>
@@ -119,8 +120,14 @@ if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth(),db=firebase.firestore();
 const $=id=>document.getElementById(id);
 let records=[];
+let adminSiap=false;
+let pesertaDitampilkan=false;
+let sedangMemuat=false;
 
-function status(msg,error=false){$('status').textContent=msg;$('status').className='status show '+(error?'err':'ok')}
+function status(msg,error=false){
+  $('status').textContent=msg;
+  $('status').className='status show '+(error?'err':'ok');
+}
 function clean(v){return String(v==null?'':v).trim()}
 function upper(v){return clean(v).toUpperCase()}
 function rupiah(v){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(v)||0)}
@@ -162,10 +169,10 @@ function renderSummary(list){
   $('codLunas').textContent=rupiah(codLunas);
   $('codBelum').textContent=rupiah(codBelum);
 }
-function renderTable(){
+function filteredRecords(){
   const q=$('search').value.trim().toLowerCase();
   const fs=$('filterStatus').value, fm=$('filterMetode').value;
-  let list=records.filter(p=>{
+  return records.filter(p=>{
     const hay=[p.kode,p.kodeRegistrasi,p.nomorRegistrasi,p._docId,p.nama,p.namaPeserta,p.toko,p.wa,p.noWa,p.nomorWhatsApp].map(clean).join(' ').toLowerCase();
     if(q&&!hay.includes(q))return false;
     if(fs==='lunas'&&!paid(p))return false;
@@ -174,10 +181,22 @@ function renderTable(){
     if(fm==='noncod'&&method(p)==='COD')return false;
     return true;
   });
-  const body=$('rows');body.replaceChildren();
+}
+function renderTable(){
+  const body=$('rows');
+  body.replaceChildren();
+  if(!pesertaDitampilkan){
+    const tr=document.createElement('tr'),td=document.createElement('td');
+    td.colSpan=7;td.textContent='Data peserta belum ditampilkan.';
+    tr.appendChild(td);body.appendChild(tr);
+    $('tableSummary').textContent='Data peserta belum dimuat.';
+    return;
+  }
+  const list=filteredRecords();
   if(!list.length){
     const tr=document.createElement('tr'),td=document.createElement('td');
-    td.colSpan=7;td.textContent='Tidak ada data yang sesuai.';tr.appendChild(td);body.appendChild(tr);
+    td.colSpan=7;td.textContent='Tidak ada data yang sesuai.';
+    tr.appendChild(td);body.appendChild(tr);
   }else list.forEach(p=>{
     const tr=document.createElement('tr');
     const values=[
@@ -199,41 +218,84 @@ function renderTable(){
   });
   $('tableSummary').textContent='Menampilkan '+list.length+' dari '+records.length+' peserta.';
 }
-async function loadData(){
+function setFiltersEnabled(enabled){
+  ['search','filterStatus','filterMetode'].forEach(id=>$(id).disabled=!enabled);
+}
+async function initAccess(){
+  $('togglePesertaBtn').disabled=true;
   $('refreshBtn').disabled=true;
-  status('Memeriksa akses Admin dan memuat data keuangan...');
+  $('exportBtn').disabled=true;
+  status('Memeriksa akses Admin/Owner tanpa membaca koleksi peserta...');
   try{
     const user=await new Promise((resolve,reject)=>{
       let unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u)},reject);
     });
-    if(!user){location.href='login-panitia.html';return}
+    if(!user){location.href='login-panitia.html';return;}
     const roleSnap=await db.collection('users').doc(user.uid).get();
     const role=roleSnap.exists?upper(roleSnap.data().role):'';
     if(role!=='ADMIN'&&role!=='OWNER'){
       status('Akses ditolak. Halaman ini khusus Admin atau Owner.',true);
       return;
     }
+    adminSiap=true;
+    records=[];
+    pesertaDitampilkan=false;
+    renderSummary([]);
+    renderTable();
+    setFiltersEnabled(false);
+    $('togglePesertaBtn').disabled=false;
+    $('togglePesertaBtn').textContent='Tampilkan Data Peserta';
+    status('Akses diterima. Data peserta belum dibaca dari Firebase.');
+  }catch(e){
+    console.error(e);
+    status('Gagal memeriksa akses: '+(e.message||e),true);
+  }
+}
+async function loadData(){
+  if(!adminSiap||sedangMemuat)return;
+  sedangMemuat=true;
+  $('togglePesertaBtn').disabled=true;
+  $('refreshBtn').disabled=true;
+  status('Memuat data peserta dari Firebase...');
+  try{
     const snap=await db.collection('peserta').get();
     records=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+    pesertaDitampilkan=true;
     renderSummary(records);
+    setFiltersEnabled(true);
     renderTable();
+    $('togglePesertaBtn').textContent='Sembunyikan Data Peserta';
+    $('exportBtn').disabled=false;
     status('Data keuangan berhasil dimuat: '+records.length+' peserta.');
   }catch(e){
     console.error(e);
     status('Gagal memuat data: '+(e.message||e),true);
-  }finally{$('refreshBtn').disabled=false}
+  }finally{
+    sedangMemuat=false;
+    $('togglePesertaBtn').disabled=!adminSiap;
+    $('refreshBtn').disabled=!pesertaDitampilkan;
+  }
+}
+function hideParticipantData(){
+  records=[];
+  pesertaDitampilkan=false;
+  $('search').value='';
+  $('filterStatus').value='semua';
+  $('filterMetode').value='semua';
+  setFiltersEnabled(false);
+  renderSummary([]);
+  renderTable();
+  $('togglePesertaBtn').textContent='Tampilkan Data Peserta';
+  $('refreshBtn').disabled=true;
+  $('exportBtn').disabled=true;
+  status('Data peserta disembunyikan dari halaman. Data tidak dihapus dari Firebase.');
 }
 function exportCsv(){
-  const q=$('search').value.trim().toLowerCase(),fs=$('filterStatus').value,fm=$('filterMetode').value;
-  const list=records.filter(p=>{
-    const hay=[p.kode,p.kodeRegistrasi,p.nomorRegistrasi,p._docId,p.nama,p.namaPeserta,p.toko,p.wa,p.noWa,p.nomorWhatsApp].map(clean).join(' ').toLowerCase();
-    if(q&&!hay.includes(q))return false;
-    if(fs==='lunas'&&!paid(p))return false;
-    if(fs==='belum'&&paid(p))return false;
-    if(fm==='cod'&&method(p)!=='COD')return false;
-    if(fm==='noncod'&&method(p)==='COD')return false;
-    return true;
-  });
+  if(!pesertaDitampilkan){
+    status('Tampilkan data peserta terlebih dahulu sebelum ekspor.',true);
+    return;
+  }
+  const list=filteredRecords();
   const rows=[['Kode Registrasi','Nama Peserta','Toko','WhatsApp','Metode Pembayaran','Nominal','Status Pembayaran','Kategori']];
   list.forEach(p=>rows.push([
     p.kode||p.kodeRegistrasi||p.nomorRegistrasi||p._docId||'',
@@ -244,12 +306,23 @@ function exportCsv(){
   const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='laporan-keuangan-peserta.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  a.href=url;a.download='laporan-keuangan-peserta.csv';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+$('togglePesertaBtn').addEventListener('click',async()=>{
+  if(!adminSiap)return;
+  if(pesertaDitampilkan)hideParticipantData();
+  else await loadData();
+});
 $('refreshBtn').addEventListener('click',loadData);
 $('exportBtn').addEventListener('click',exportCsv);
-['search','filterStatus','filterMetode'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',renderTable));
-loadData();
+['search','filterStatus','filterMetode'].forEach(id=>{
+  $(id).addEventListener(id==='search'?'input':'change',()=>{
+    if(pesertaDitampilkan)renderTable();
+  });
+});
+initAccess();
 </script>
 </body>
 </html>
