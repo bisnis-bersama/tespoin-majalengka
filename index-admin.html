@@ -445,6 +445,7 @@ body{
     </button>
 
     <button
+      id="btnPengaturanAcara"
       class="btn btn-setting"
       onclick="location.href='pengaturan.html'">
 
@@ -789,7 +790,7 @@ body{
     </a>
 
 
-    <a href="pengaturan.html">
+    <a id="menuPengaturanAcara" href="pengaturan.html">
 
       <div class="icon">
         ⚙️
@@ -943,26 +944,33 @@ function waitForAuth(){
 async function requireAdmin(){
   const user = await waitForAuth();
   if(!user){
-    window.location.href = 'login.html';
+    window.location.href = 'login-panitia.html';
     return false;
   }
 
   try{
     const snap = await db.collection('users').doc(user.uid).get();
     const role = snap.exists ? String(snap.data().role || '').toLowerCase() : '';
-    if(role !== 'admin'){
-      alert('Akses ditolak. Halaman ini khusus Admin.');
+    if(!['admin','owner'].includes(role)){
+      alert('Akses ditolak. Halaman ini khusus Admin dan Owner.');
       await auth.signOut();
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
       return false;
     }
     currentRole = role;
+    // Menu pengaturan acara hanya ditampilkan untuk Admin.
+    const btnPengaturan = document.getElementById('btnPengaturanAcara');
+    const menuPengaturan = document.getElementById('menuPengaturanAcara');
+    if(currentRole === 'owner'){
+      if(btnPengaturan) btnPengaturan.style.display = 'none';
+      if(menuPengaturan) menuPengaturan.style.display = 'none';
+    }
     return true;
   }catch(err){
     console.error(err);
     alert('Gagal memeriksa hak akses Admin.');
     await auth.signOut();
-    window.location.href = 'login.html';
+    window.location.href = 'login-panitia.html';
     return false;
   }
 }
@@ -1354,7 +1362,7 @@ function logout(){
   ){
 
     auth.signOut().finally(() => {
-      window.location.href = 'login.html';
+      window.location.href = 'login-panitia.html';
     });
 
   }
