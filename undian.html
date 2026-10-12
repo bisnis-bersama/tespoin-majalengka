@@ -1,359 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101820">
 <title>Undian Doorprize | DPD TESPOIN Majalengka</title>
 <style>
-*{box-sizing:border-box}
-:root{--gold:#f5c400;--black:#101820;--green:#198754;--muted:#64748b}
+*{box-sizing:border-box} :root{--gold:#f5c400;--dark:#101820;--green:#198754}
 html,body{margin:0;min-height:100%;background:#eef1f5;color:#171717;font-family:Arial,Helvetica,sans-serif}
-body{min-height:100vh}
-.wrap{max-width:1440px;margin:auto;padding:16px}
-.header{background:#111;color:#fff;border-radius:18px;padding:18px 22px;text-align:center}
-.header h1{margin:0;color:var(--gold);font-size:clamp(22px,2.2vw,34px);letter-spacing:.5px}
-.header p{margin:7px 0 0;color:#ddd;font-size:13px;letter-spacing:1.5px}
-.panel{background:#fff;margin-top:14px;padding:18px;border-radius:16px;box-shadow:0 4px 16px #0000000d}
-.status{display:none;padding:11px 13px;border-radius:10px;margin-top:12px;font-size:13px;font-weight:bold}
-.status.show{display:block}.ok{background:#dcfce7;color:#166534}.err{background:#fee2e2;color:#991b1b}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.controls select,.controls button,.action{font-size:14px;font-weight:700;border:0;border-radius:10px;padding:12px 14px}
-.controls select{background:#f3f4f6;flex:1;min-width:240px}
-.btn{cursor:pointer}.yellow{background:var(--gold);color:#111}.dark{background:#111;color:#fff}.green{background:var(--green);color:#fff}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.small{font-size:12px;color:#666;line-height:1.5}
-.statline{font-size:14px;font-weight:800;margin-top:10px}
-.main-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:14px;align-items:start}
-.wheel-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:560px}
-.wheel-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 18px;width:100%}
-.pointer{font-size:32px;color:#dc2626;line-height:1;position:relative;z-index:5;margin-bottom:-2px;text-shadow:0 2px 3px #0002}
-.wheel{width:min(62vh, min(66vw,520px));aspect-ratio:1;border-radius:50%;border:9px solid #111;box-shadow:0 7px 20px #0002;position:relative;overflow:hidden;background:#fff;will-change:transform;transform:rotate(0deg);transition:none!important;animation:none}
-.wheel:after{content:'TESPOIN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(76px,10vh,112px);height:clamp(76px,10vh,112px);border-radius:50%;background:#111;color:#f5c400;border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(13px,1.6vw,18px);box-shadow:0 2px 8px #0003;z-index:3}
-.wheel-labels{position:absolute;inset:0;border-radius:50%;overflow:hidden}
-.wheel-label{position:absolute;left:50%;top:50%;width:42%;margin-left:-21%;height:24px;margin-top:-12px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transform-origin:50% 50%;font-weight:900;font-size:clamp(7px,1vw,12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;text-shadow:0 1px 1px #ffffff70}
-.spin-controls{display:flex;justify-content:center;gap:12px;width:100%;max-width:560px}
-.spin-controls button{flex:1;min-height:52px;font-size:16px}
-.result{display:none;text-align:center;border:2px solid var(--gold);background:#fffbea;border-radius:14px;padding:20px}
-.result.show{display:block}
-.result .caption{font-size:12px;font-weight:900;color:#666;letter-spacing:1px}
-.winner-name{font-size:clamp(22px,3vw,40px);font-weight:900;margin:10px 0;color:#111;overflow-wrap:anywhere}
-.winner-code{font-size:22px;font-weight:900;color:#8a6500}
-.history{padding-left:22px;margin-bottom:0}.history li{margin:8px 0;overflow-wrap:anywhere}
-.footer{font-size:11px;color:#777;text-align:center;padding:14px}
-.side-panel{display:flex;flex-direction:column;gap:14px}.side-panel .panel{margin-top:0}
-.celebration{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
-.celebration.show{display:flex}
-.celebration-message{position:relative;z-index:2;background:#101820;color:#f5c400;border:3px solid #f5c400;border-radius:22px;padding:24px 30px;text-align:center;font-weight:900;font-size:clamp(25px,5vw,54px);box-shadow:0 12px 45px #0005;animation:popCelebrate .65s cubic-bezier(.2,1.6,.4,1) both}
-.celebration-message small{display:block;color:#fff;font-size:clamp(13px,2vw,19px);margin-top:8px;letter-spacing:2px}
-.confetti{position:absolute;top:-24px;width:10px;height:16px;opacity:.95;animation:confettiFall var(--fall,3s) linear forwards;left:var(--left,50%);background:var(--color,#f5c400);transform:rotate(var(--rot,0deg))}
-@keyframes confettiFall{to{transform:translate3d(var(--drift,30px),110vh,0) rotate(900deg);opacity:1}}
-@keyframes popCelebrate{0%{transform:scale(.35);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
-@media(min-width:1000px) and (orientation:landscape){
-  .wrap{padding:12px 20px}.header{padding:13px 20px}
-  .main-grid{grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)}
-  .wheel-panel{min-height:calc(100vh - 150px);padding:10px 18px}
-  .wheel{width:min(61vh,520px)}
-}
+.wrap{max-width:1440px;margin:auto;padding:16px}.header{background:#111;color:#fff;border-radius:18px;padding:18px 22px;text-align:center}
+.header h1{margin:0;color:var(--gold);font-size:clamp(22px,2.2vw,34px)}.header p{margin:7px 0 0;color:#ddd;font-size:12px;letter-spacing:1.5px}
+.panel{background:#fff;margin-top:14px;padding:18px;border-radius:16px;box-shadow:0 4px 16px #0000000d;min-width:0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.controls select,.controls button{font-size:14px;font-weight:700;border:0;border-radius:10px;padding:12px 14px}
+.controls select{background:#f3f4f6;flex:1;min-width:220px}.btn{cursor:pointer}.yellow{background:var(--gold);color:#111}.dark{background:#111;color:#fff}.green{background:var(--green);color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}
+.status{display:none;padding:11px 13px;border-radius:10px;margin-top:12px;font-size:13px;font-weight:700;overflow-wrap:anywhere}.status.show{display:block}.ok{background:#dcfce7;color:#166534}.err{background:#fee2e2;color:#991b1b}
+.small{font-size:12px;color:#666;line-height:1.6}.statline{font-size:14px;font-weight:800;margin-top:10px}
+.main-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:14px;align-items:start}.wheel-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:560px}
+.wheel-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 18px;width:100%}.pointer{font-size:34px;color:#dc2626;line-height:1;position:relative;z-index:5;margin-bottom:-2px;text-shadow:0 2px 3px #0002}
+.wheel{width:min(62vh,min(66vw,520px));aspect-ratio:1;border-radius:50%;border:9px solid #111;box-shadow:0 7px 20px #0002;position:relative;overflow:hidden;background:#fff;will-change:transform;transform:rotate(0deg);transition:none!important}
+.wheel:after{content:'TESPOIN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(76px,10vh,112px);height:clamp(76px,10vh,112px);border-radius:50%;background:#111;color:var(--gold);border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(13px,1.6vw,18px);box-shadow:0 2px 8px #0003;z-index:3}
+.wheel-labels{position:absolute;inset:0;border-radius:50%;pointer-events:none}.wheel-label{position:absolute;left:50%;top:50%;width:42%;margin-left:-21%;height:24px;margin-top:-12px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transform-origin:50% 50%;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spin-controls{display:flex;justify-content:center;gap:12px;width:100%;max-width:560px}.spin-controls button{flex:1;min-height:52px;font-size:16px}
+.result{display:none;text-align:center;border:3px solid var(--gold);background:#fffbea;border-radius:16px;padding:22px;overflow-wrap:anywhere}.result.show{display:block}
+.caption{font-size:14px;font-weight:900;color:#8a6500;letter-spacing:1.5px;margin-bottom:18px}.result-label{font-size:11px;font-weight:800;color:#64748b;letter-spacing:1.2px;margin-top:14px}
+.winner-code{font-size:clamp(30px,5vw,46px);font-weight:900;color:#8a6500;margin:6px 0 12px}.winner-name{font-size:clamp(22px,3vw,34px);font-weight:900;margin:6px 0 12px;color:#111;line-height:1.25}.winner-address{font-size:clamp(15px,2vw,19px);font-weight:700;line-height:1.7;color:#334155;margin-top:6px}
+.history{padding-left:24px;margin-bottom:0}.history li{margin:10px 0;overflow-wrap:anywhere;line-height:1.5}.side-panel{display:flex;flex-direction:column;gap:14px;min-width:0}.side-panel .panel{margin-top:0}.footer{font-size:11px;color:#777;text-align:center;padding:14px}
+.celebration{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}.celebration.show{display:flex}
+.celebration-message{position:relative;z-index:2;background:#101820;color:var(--gold);border:3px solid var(--gold);border-radius:22px;padding:24px 30px;text-align:center;font-weight:900;font-size:clamp(25px,5vw,54px);box-shadow:0 12px 45px #0005;animation:pop .65s cubic-bezier(.2,1.6,.4,1) both}
+.celebration-message small{display:block;color:#fff;font-size:clamp(13px,2vw,19px);margin-top:8px;letter-spacing:2px}.confetti{position:absolute;top:-24px;width:10px;height:16px;animation:fall var(--fall,3s) linear forwards;left:var(--left,50%);background:var(--color,var(--gold));transform:rotate(var(--rot,0deg))}
+@keyframes fall{to{transform:translate3d(var(--drift,30px),110vh,0) rotate(900deg)}}@keyframes pop{0%{transform:scale(.35);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@media(min-width:1000px) and (orientation:landscape){.wrap{padding:12px 20px}.header{padding:13px 20px}.main-grid{grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)}.wheel-panel{min-height:calc(100vh - 150px);padding:10px 18px}.wheel{width:min(61vh,520px)}}
 @media(max-width:850px){.main-grid{grid-template-columns:1fr}.wheel-panel{min-height:auto}.wheel{width:min(78vw,480px)}}
-@media(max-width:500px){
-  .wrap{padding:10px}.header h1{font-size:20px}.panel{padding:14px}
-  .controls select,.controls button{width:100%}
-  .spin-controls{gap:8px}.spin-controls button{font-size:14px;padding:12px 8px}
-}
-@media(prefers-reduced-motion:reduce){.wheel{transition:none!important}}
+@media(max-width:500px){.wrap{padding:10px}.header{padding:16px 12px}.header h1{font-size:20px}.header p{font-size:11px;letter-spacing:1px}.panel{padding:14px}.controls select,.controls button{width:100%;min-width:0}.spin-controls{gap:8px}.spin-controls button{font-size:14px;padding:12px 8px}.wheel{border-width:6px}.wheel-label{height:20px;margin-top:-10px;padding-right:3px}}
+@media(prefers-reduced-motion:reduce){.celebration-message{animation:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="header">
-    <h1>DPD TESPOIN MAJALENGKA</h1>
-    <p>PUTARAN SPIN UNDIAN DOORPRIZE</p>
-  </header>
-  <section class="panel">
-    <div class="controls">
-      <select id="jenisUndian" aria-label="Pilih jenis undian">
-        <option value="motor">Undian Sepeda Motor — Semua peserta berbayar</option>
-        <option value="listrik">Undian Sepeda Listrik — Khusus peserta Majalengka</option>
-      </select>
-      <button id="muat" class="btn yellow">↻ Muat Data Peserta</button>
-    </div>
-    <div id="status" class="status" role="status" aria-live="polite"></div>
-    <div class="statline" id="jumlah">Data peserta belum dimuat.</div>
-    <p class="small">Peserta yang masuk undian adalah peserta dengan status pembayaran <b>LUNAS</b>. Peserta gratis tidak diikutsertakan. Pemenang yang sudah keluar tidak akan diundi kembali pada jenis undian yang sama.</p>
-  </section>
-  <div class="main-grid">
-    <section class="panel wheel-panel">
-      <div class="wheel-wrap">
-        <div class="pointer">▼</div>
-        <div id="wheel" class="wheel" aria-label="Roda undian"><div id="wheelLabels" class="wheel-labels"></div></div>
-      </div>
-      <div class="controls spin-controls">
-        <button id="putar" class="btn green" disabled>▶ PUTAR SPIN</button>
-        <button id="stop" class="btn dark" disabled>■ STOP</button>
-      </div>
-    </section>
-    <div class="side-panel">
-      <section id="hasil" class="panel result" aria-live="polite">
-        <div class="caption">PEMENANG UNDIAN</div>
-        <div id="namaMenang" class="winner-name">—</div>
-        <div class="small">Nomor Registrasi</div>
-        <div id="kodeMenang" class="winner-code">—</div>
-      </section>
-      <section class="panel">
-        <b>Riwayat pemenang</b>
-        <ol id="riwayat" class="history"><li class="small">Belum ada pemenang.</li></ol>
-        <p class="small">Riwayat ini tersimpan di halaman selama halaman tetap terbuka. Catat hasil undian sebelum menutup halaman.</p>
-      </section>
-    </div>
+<header class="header"><h1>DPD TESPOIN MAJALENGKA</h1><p>PUTARAN SPIN UNDIAN DOORPRIZE</p></header>
+<section class="panel">
+  <div class="controls">
+    <select id="jenisUndian" aria-label="Pilih putaran undian"><option value="motor">Undian 1</option><option value="listrik">Undian 2</option></select>
+    <button id="muat" class="btn yellow" type="button">↻ Muat Data Peserta</button>
   </div>
-  <div class="footer">Sumber data: Firebase Firestore • Koleksi peserta</div>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <div class="statline" id="jumlah">Data peserta belum dimuat.</div>
+  <p class="small">Semua peserta dengan status pembayaran <b>LUNAS</b> memenuhi syarat untuk setiap putaran. Pemenang tidak akan terpilih kembali pada putaran yang sama selama halaman ini tetap terbuka.</p>
+</section>
+<div class="main-grid">
+  <section class="panel wheel-panel">
+    <div class="wheel-wrap"><div class="pointer" aria-hidden="true">▼</div><div id="wheel" class="wheel" role="img" aria-label="Roda undian"><div id="wheelLabels" class="wheel-labels"></div></div></div>
+    <div class="controls spin-controls"><button id="putar" class="btn green" type="button" disabled>▶ PUTAR SPIN</button><button id="stop" class="btn dark" type="button" disabled>■ STOP</button></div>
+  </section>
+  <div class="side-panel">
+    <section id="hasil" class="panel result" aria-live="polite">
+      <div class="caption">PEMENANG UNDIAN</div>
+      <div class="result-label">NOMOR UNDIAN</div><div id="kodeMenang" class="winner-code">—</div>
+      <div class="result-label">NAMA LENGKAP</div><div id="namaMenang" class="winner-name">—</div>
+      <div class="result-label">ALAMAT PESERTA</div><div id="alamatMenang" class="winner-address">—</div>
+    </section>
+    <section class="panel"><b>Riwayat pemenang</b><ol id="riwayat" class="history"><li class="small">Belum ada pemenang.</li></ol><p class="small">Riwayat pada halaman ini bersifat sementara dan akan hilang jika halaman dimuat ulang atau ditutup.</p></section>
+  </div>
 </div>
-<div id="celebration" class="celebration" aria-hidden="true">
-  <div class="celebration-message">🎉 SELAMAT! 🎉<small>PEMENANG DOORPRIZE</small></div>
+<div class="footer">Sumber data: Firebase Firestore • Koleksi peserta</div>
 </div>
-<audio id="applauseAudio" preload="auto">
-  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_783f6a1f3d.mp3" type="audio/mpeg">
-</audio>
+<div id="celebration" class="celebration" aria-hidden="true"></div>
+<audio id="applauseAudio" preload="none"><source src="https://cdn.pixabay.com/audio/2022/03/15/audio_783f6a1f3d.mp3" type="audio/mpeg"></audio>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig={apiKey:"AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",authDomain:"register-peserta.firebaseapp.com",projectId:"register-peserta",storageBucket:"register-peserta.firebasestorage.app",messagingSenderId:"983090504866",appId:"1:983090504866:web:7879b0784b9fecad4863fb"};
 if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth(),db=firebase.firestore();
-const $=id=>document.getElementById(id);
+const auth=firebase.auth(),db=firebase.firestore(),$=id=>document.getElementById(id);
 let peserta=[],eligible=[],winners={motor:new Set(),listrik:new Set()};
-let isSpinning=false,isSlowing=false,spinFrame=null,spinStarted=0,currentAngle=0,lastFrame=0,selectedWinner=null;
+let isSpinning=false,isSlowing=false,spinFrame=null,spinStarted=0,currentAngle=0,lastFrame=0,selectedWinner=null,resultTimer=null;
 
 function showStatus(msg,type='ok'){$('status').textContent=msg;$('status').className='status show '+(type==='err'?'err':'ok')}
 function clean(v){return String(v==null?'':v).trim()}
 function upper(v){return clean(v).toUpperCase()}
 function kode(p){return clean(p.kode||p.kodeRegistrasi||p.nomorRegistrasi||p._docId||'-')}
 function nama(p){return clean(p.nama||p.namaPeserta||p.name||'Nama tidak tersedia')}
-function isFree(p){
-  const fields=[p.tierRegistrasi,p.tierPembayaran,p.jenisRegistrasi,p.jenisPembayaran,p.tipeTiket,p.kategoriTiket];
-  if(fields.some(v=>['FREE','GRATIS','TIKET GRATIS'].includes(upper(v))))return true;
-  const raw=p.hargaFinal??p.nominalPembayaran??p.estimasiNominal;
-  if(raw===undefined||raw===null||clean(raw)==='')return false;
-  const amount=Number(String(raw).replace(/[^0-9]/g,''));
-  return Number.isFinite(amount)&&amount===0;
-}
-function isMajalengka(p){
-  const text=[p.alamat,p.toko,p.kota,p.kabupaten,p.domisili,p.asal].map(clean).join(' ').toLowerCase();
-  return text.includes('majalengka');
-}
-function updateEligible(){
+function alamat(p){return clean(p.alamatLengkap||p.alamat||p.alamatPeserta||p.domisili||p.kota||p.kabupaten||'Alamat tidak tersedia')}
+
+function updateEligible(renderWheel=true){
   const type=$('jenisUndian').value;
-  eligible=peserta.filter(p=>upper(p.statusPembayaran)==='LUNAS'&&!isFree(p));
-  if(type==='listrik')eligible=eligible.filter(isMajalengka);
-  eligible=eligible.filter(p=>!winners[type].has(kode(p)));
+  eligible=peserta.filter(p=>upper(p.statusPembayaran)==='LUNAS'&&!winners[type].has(kode(p)));
   $('jumlah').textContent='Peserta yang memenuhi syarat: '+eligible.length;
   $('putar').disabled=eligible.length===0||isSpinning||isSlowing;
   $('stop').disabled=!isSpinning;
-  drawWheel();
+  if(renderWheel)drawWheel();
 }
+
 function drawWheel(){
   const wheel=$('wheel'),labels=$('wheelLabels');
-  // Render ulang daftar nama tidak boleh memulai animasi roda.
-  wheel.classList.remove('spinning');
-  wheel.style.animation='none';
   labels.replaceChildren();
-  const list=eligible.length?eligible:[];
-  if(!list.length){
-    wheel.style.background='conic-gradient(#f5c400 0deg 90deg,#fff 90deg 180deg,#111 180deg 270deg,#f5c400 270deg 360deg)';
-    return;
-  }
+  if(!eligible.length){wheel.style.background='conic-gradient(#f5c400 0deg 90deg,#fff 90deg 180deg,#111 180deg 270deg,#f5c400 270deg 360deg)';return}
   const colors=['#f5c400','#ffffff','#111111','#f4d35e','#dbeafe','#e5e7eb'];
-  const step=360/list.length;
-  const stops=list.map((p,i)=>`${colors[i%colors.length]} ${i*step}deg ${(i+1)*step}deg`).join(',');
-  wheel.style.background=`conic-gradient(${stops})`;
-  list.forEach((p,i)=>{
-    const label=document.createElement('div');
-    label.className='wheel-label';
-    label.textContent=nama(p);
-    label.title=nama(p)+' — '+kode(p);
-    const angle=i*step+step/2;
-    label.style.transform=`rotate(${angle}deg) translateY(${-Math.min(wheel.clientWidth*.37,190)}px) rotate(90deg)`;
-    label.style.color=colors[i%colors.length]==='#111111'?'#fff':'#111';
-    labels.appendChild(label);
+  const step=360/eligible.length;
+  wheel.style.background='conic-gradient('+eligible.map((p,i)=>`${colors[i%colors.length]} ${i*step}deg ${(i+1)*step}deg`).join(',')+')';
+  const radius=Math.min(wheel.clientWidth*.37,190);
+  const fontSize=eligible.length<=16?12:eligible.length<=32?10:eligible.length<=60?8:7;
+  eligible.forEach((p,i)=>{
+    const label=document.createElement('div');label.className='wheel-label';label.textContent=nama(p);label.title=nama(p)+' — No. '+kode(p);label.style.fontSize=fontSize+'px';
+    label.style.transform=`rotate(${i*step+step/2}deg) translateY(-${radius}px) rotate(90deg)`;
+    label.style.color=colors[i%colors.length]==='#111111'?'#fff':'#111';labels.appendChild(label);
   });
 }
+
 async function loadData(){
-  $('muat').disabled=true;
-  showStatus('Memeriksa akses dan mengambil data peserta...');
+  $('muat').disabled=true;showStatus('Memeriksa akses dan mengambil data peserta...');
   try{
-    const user=await new Promise((resolve,reject)=>{
-      let unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u)},reject);
-    });
+    const user=await new Promise((resolve,reject)=>{let unsub=()=>{};unsub=auth.onAuthStateChanged(u=>{unsub();resolve(u)},e=>{unsub();reject(e)})});
     if(!user){location.href='login.html';return}
-    const roleSnap=await db.collection('users').doc(user.uid).get();
-    const role=roleSnap.exists?upper(roleSnap.data().role):'';
-    if(role!=='ADMIN'){
-      showStatus('Akses ditolak. Halaman undian khusus Admin.','err');
-      await auth.signOut();
-      setTimeout(()=>location.href='login.html',1200);
-      return;
-    }
-    const snap=await db.collection('peserta').get();
-    peserta=snap.docs.map(d=>({...d.data(),_docId:d.id}));
-    updateEligible();
+    const roleSnap=await db.collection('users').doc(user.uid).get(),role=roleSnap.exists?upper(roleSnap.data().role):'';
+    if(role!=='ADMIN'){showStatus('Akses ditolak. Halaman undian khusus Admin.','err');await auth.signOut();setTimeout(()=>location.href='login.html',1200);return}
+    const snap=await db.collection('peserta').get();peserta=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+    winners={motor:new Set(),listrik:new Set()};$('hasil').classList.remove('show');
+    $('riwayat').replaceChildren();const empty=document.createElement('li');empty.className='small';empty.textContent='Belum ada pemenang.';$('riwayat').appendChild(empty);
+    currentAngle=0;$('wheel').style.transform='rotate(0deg)';updateEligible();
     showStatus('Data berhasil dimuat dari Firestore ('+peserta.length+' peserta).');
-  }catch(e){
-    console.error(e);
-    showStatus('Gagal memuat data: '+(e.message||e),'err');
-  }finally{$('muat').disabled=false}
+  }catch(e){console.error(e);showStatus('Gagal memuat data: '+(e.message||e),'err')}
+  finally{$('muat').disabled=false}
 }
+
 function animateSpin(timestamp){
   if(!isSpinning)return;
   if(!lastFrame)lastFrame=timestamp;
-  const dt=Math.min((timestamp-lastFrame)/1000,.05);
-  lastFrame=timestamp;
-  const elapsed=(timestamp-spinStarted)/1000;
-  // Awal sangat cepat, lalu stabil pada kecepatan sedang-cepat.
-  const speed=elapsed<1.25?1500:900;
-  currentAngle=(currentAngle+speed*dt)%360;
-  $('wheel').style.transform=`rotate(${currentAngle}deg)`;
+  const dt=Math.min((timestamp-lastFrame)/1000,.05);lastFrame=timestamp;
+  const elapsed=(timestamp-spinStarted)/1000,speed=elapsed<1.25?1500:900;
+  currentAngle=(currentAngle+speed*dt)%360;$('wheel').style.transform=`rotate(${currentAngle}deg)`;
   spinFrame=requestAnimationFrame(animateSpin);
 }
+
 function startSpin(){
   if(!eligible.length||isSpinning||isSlowing)return;
-  isSpinning=true;
-  selectedWinner=null;
-  $('hasil').classList.remove('show');
-  $('putar').disabled=true;$('stop').disabled=false;$('muat').disabled=true;$('jenisUndian').disabled=true;
-  spinStarted=performance.now();lastFrame=0;
-  showStatus('Roda berputar cepat lalu stabil. Tekan STOP untuk memperlambat roda selama 5 detik.');
-  spinFrame=requestAnimationFrame(animateSpin);
+  drawWheel();isSpinning=true;selectedWinner=null;
+  if(resultTimer){clearTimeout(resultTimer);resultTimer=null}
+  $('hasil').classList.remove('show');$('putar').disabled=true;$('stop').disabled=false;$('muat').disabled=true;$('jenisUndian').disabled=true;
+  spinStarted=performance.now();lastFrame=0;showStatus('Roda berputar. Tekan STOP untuk memperlambat roda.');spinFrame=requestAnimationFrame(animateSpin);
 }
+
 function stopSpin(){
   if(!isSpinning||isSlowing)return;
-  isSpinning=false;isSlowing=true;
-  if(spinFrame)cancelAnimationFrame(spinFrame);
-  const type=$('jenisUndian').value;
-  const pool=eligible.filter(p=>!winners[type].has(kode(p)));
-  if(!pool.length){
-    isSlowing=false;
-    showStatus('Tidak ada peserta tersisa untuk jenis undian ini.','err');
-    finishSpin();return;
-  }
-  // Pemenang ditentukan saat STOP ditekan, roda melambat menuju bidang namanya.
+  isSpinning=false;isSlowing=true;if(spinFrame)cancelAnimationFrame(spinFrame);
+  const type=$('jenisUndian').value,pool=eligible.filter(p=>!winners[type].has(kode(p)));
+  if(!pool.length){isSlowing=false;showStatus('Tidak ada peserta tersisa untuk putaran ini.','err');finishSpin();return}
   selectedWinner=pool[Math.floor(Math.random()*pool.length)];
   const index=eligible.findIndex(p=>kode(p)===kode(selectedWinner));
-  const step=360/eligible.length;
-  const center=index*step+step/2;
-  const targetMod=((360-center)%360+360)%360;
-  const currentMod=((currentAngle%360)+360)%360;
-  let delta=(targetMod-currentMod+360)%360;
-  delta+=360*5; // beberapa putaran tambahan selama efek melambat
-  const startAngle=currentAngle;
-  const endAngle=startAngle+delta;
-  const startTime=performance.now();
-  const duration=7000;
-  $('stop').disabled=true;
-  showStatus('STOP ditekan. Roda melambat perlahan selama 7 detik...');
+  if(index<0){isSlowing=false;showStatus('Peserta terpilih tidak ditemukan pada roda.','err');finishSpin();return}
+  const step=360/eligible.length,center=(index+.5)*step;
+  const targetMod=((360-center)%360+360)%360,currentMod=((currentAngle%360)+360)%360;
+  let delta=(targetMod-currentMod+360)%360;delta+=360*5;
+  const startAngle=currentAngle,endAngle=startAngle+delta,startTime=performance.now(),duration=7000;
+  $('stop').disabled=true;showStatus('Roda melambat. Hasil akan ditampilkan setelah roda berhenti.');
 
-  // Ease-out quintic yang lebih panjang: penurunan kecepatan makin
-  // terasa di bagian akhir, lalu berhenti tanpa koreksi sudut mendadak.
   function slowFrame(now){
-    const t=Math.min(1,(now-startTime)/duration);
-    const remaining=1-t;
-    const eased=1-Math.pow(remaining,7);
-    currentAngle=startAngle+(endAngle-startAngle)*eased;
-    $('wheel').style.transform=`rotate(${currentAngle}deg)`;
-
-    if(t<1){
-      requestAnimationFrame(slowFrame);
-      return;
-    }
-
-    // Jangan membulatkan sudut ke nilai lain saat frame terakhir,
-    // supaya roda tidak terlihat melompat ketika berhenti.
-    const finalAngle=endAngle;
-    currentAngle=finalAngle;
-    const wheelEl=$('wheel');
-    wheelEl.classList.remove('spinning');
-    wheelEl.style.setProperty('animation','none','important');
-    wheelEl.style.setProperty('transition','none','important');
-    wheelEl.style.transform=`rotate(${finalAngle}deg)`;
-    // Paksa browser menerapkan posisi akhir sebelum menunggu pengumuman.
-    void wheelEl.offsetWidth;
-
-    // Roda benar-benar sudah berhenti. Tahan 2 detik sebelum
-    // nama pemenang ditampilkan, lalu jalankan efek perayaan.
-    showStatus('Roda sudah berhenti. Menyiapkan pengumuman pemenang...');
-    setTimeout(()=>{
-      winners[type].add(kode(selectedWinner));
-      $('namaMenang').textContent=nama(selectedWinner);
-      $('kodeMenang').textContent=kode(selectedWinner);
-      $('hasil').classList.add('show');
-
-      const li=document.createElement('li');
-      li.textContent=nama(selectedWinner)+' — '+kode(selectedWinner);
-      const list=$('riwayat');
-      if(list.querySelector('li.small'))list.replaceChildren();
-      list.prepend(li);
-
-      // Kunci roda tetap diam ketika nama pemenang muncul.
-      wheelEl.classList.remove('spinning');
-      wheelEl.style.setProperty('animation','none','important');
-      wheelEl.style.setProperty('transition','none','important');
-      // Jangan set ulang sudut roda saat nama muncul; biarkan tetap di posisi final.
-
-      playCelebration();
-      isSlowing=false;
-      showStatus('Pemenang: '+nama(selectedWinner));
-      finishSpin();
-    },1000);
+    const t=Math.min(1,(now-startTime)/duration),eased=1-Math.pow(1-t,7);
+    currentAngle=startAngle+(endAngle-startAngle)*eased;$('wheel').style.transform=`rotate(${currentAngle}deg)`;
+    if(t<1){requestAnimationFrame(slowFrame);return}
+    currentAngle=endAngle;
+    const wheelEl=$('wheel');wheelEl.style.setProperty('animation','none','important');wheelEl.style.setProperty('transition','none','important');wheelEl.style.transform=`rotate(${endAngle}deg)`;void wheelEl.offsetWidth;
+    showStatus('Roda berhenti. Menyiapkan hasil pemenang...');
+    resultTimer=setTimeout(()=>{
+      const winner=selectedWinner;if(!winner){isSlowing=false;finishSpin();return}
+      winners[type].add(kode(winner));
+      $('kodeMenang').textContent=kode(winner);$('namaMenang').textContent=nama(winner);$('alamatMenang').textContent=alamat(winner);$('hasil').classList.add('show');
+      const li=document.createElement('li');li.textContent='No. '+kode(winner)+' — '+nama(winner)+' — '+alamat(winner);
+      const history=$('riwayat');if(history.querySelector('li.small'))history.replaceChildren();history.prepend(li);
+      playCelebration();isSlowing=false;showStatus('Pemenang ditetapkan: No. '+kode(winner));
+      // Jangan gambar ulang sektor setelah hasil muncul; posisi roda tetap sesuai pemenang.
+      finishSpin();resultTimer=null;
+    },1200);
   }
   requestAnimationFrame(slowFrame);
 }
-function playCelebration(){
-  const overlay=$('celebration');
-  overlay.replaceChildren();
-  const message=document.createElement('div');
-  message.className='celebration-message';
-  message.innerHTML='🎉 SELAMAT! 🎉<small>PEMENANG DOORPRIZE</small>';
-  overlay.appendChild(message);
-  overlay.classList.add('show');
-  overlay.setAttribute('aria-hidden','false');
 
+function playCelebration(){
+  const overlay=$('celebration');overlay.replaceChildren();
+  const message=document.createElement('div');message.className='celebration-message';message.innerHTML='🎉 SELAMAT! 🎉<small>PEMENANG DOORPRIZE</small>';overlay.appendChild(message);
+  overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');
   const colors=['#f5c400','#198754','#ef4444','#3b82f6','#ec4899','#ffffff'];
-  for(let i=0;i<110;i++){
-    const piece=document.createElement('i');
-    piece.className='confetti';
-    piece.style.setProperty('--left',Math.random()*100+'%');
-    piece.style.setProperty('--color',colors[i%colors.length]);
-    piece.style.setProperty('--fall',(2.5+Math.random()*2.5)+'s');
-    piece.style.setProperty('--drift',((Math.random()-.5)*260)+'px');
-    piece.style.setProperty('--rot',(Math.random()*360)+'deg');
-    piece.style.animationDelay=(Math.random()*.8)+'s';
-    overlay.appendChild(piece);
-  }
-  const audio=$('applauseAudio');
-  if(audio){
-    audio.currentTime=0;
-    const promise=audio.play();
-    if(promise&&promise.catch)promise.catch(()=>{});
-  }
-  setTimeout(()=>{
-    overlay.classList.remove('show');
-    overlay.setAttribute('aria-hidden','true');
-    overlay.replaceChildren();
-    if(audio){audio.pause();audio.currentTime=0;}
-  },5000);
+  for(let i=0;i<110;i++){const piece=document.createElement('i');piece.className='confetti';piece.style.setProperty('--left',Math.random()*100+'%');piece.style.setProperty('--color',colors[i%colors.length]);piece.style.setProperty('--fall',(2.5+Math.random()*2.5)+'s');piece.style.setProperty('--drift',((Math.random()-.5)*260)+'px');piece.style.setProperty('--rot',(Math.random()*360)+'deg');piece.style.animationDelay=(Math.random()*.8)+'s';overlay.appendChild(piece)}
+  const audio=$('applauseAudio');if(audio){audio.currentTime=0;const promise=audio.play();if(promise&&promise.catch)promise.catch(()=>{})}
+  setTimeout(()=>{overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');overlay.replaceChildren();if(audio){audio.pause();audio.currentTime=0}},5000);
 }
+
 function finishSpin(){
-  isSpinning=false;isSlowing=false;
-  $('stop').disabled=true;
-  $('muat').disabled=false;
-  $('jenisUndian').disabled=false;
-  updateEligible();
+  isSpinning=false;isSlowing=false;$('stop').disabled=true;$('muat').disabled=false;$('jenisUndian').disabled=false;
+  // Update jumlah dan tombol tanpa mengganti sektor yang baru saja menang.
+  updateEligible(false);
 }
+
 $('muat').addEventListener('click',loadData);
 $('putar').addEventListener('click',startSpin);
 $('stop').addEventListener('click',stopSpin);
-$('jenisUndian').addEventListener('change',()=>{updateEligible();$('hasil').classList.remove('show')});
-window.addEventListener('resize',()=>{if(!isSpinning&&!isSlowing)drawWheel()});
+$('jenisUndian').addEventListener('change',()=>{$('hasil').classList.remove('show');updateEligible(true)});
+window.addEventListener('resize',()=>{if(!isSpinning&&!isSlowing&&!$('hasil').classList.contains('show'))drawWheel()});
 loadData();
 </script>
 </body>
