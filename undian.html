@@ -19,8 +19,8 @@ html,body{margin:0;min-height:100%;background:#eef1f5;color:#171717;font-family:
 .wheel-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0 18px;width:100%}.pointer{font-size:34px;color:#dc2626;line-height:1;position:relative;z-index:5;margin-bottom:-2px;text-shadow:0 2px 3px #0002}
 .wheel{width:min(62vh,min(66vw,520px));aspect-ratio:1;border-radius:50%;border:9px solid #111;box-shadow:0 7px 20px #0002;position:relative;overflow:hidden;background:#fff;will-change:transform;transform:rotate(0deg);transition:none!important}
 .wheel:after{content:'TESPOIN';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:clamp(76px,10vh,112px);height:clamp(76px,10vh,112px);border-radius:50%;background:#111;color:var(--gold);border:5px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:clamp(13px,1.6vw,18px);box-shadow:0 2px 8px #0003;z-index:3}
-.wheel-labels{position:absolute;inset:0;border-radius:50%;pointer-events:none}.wheel-label{position:absolute;left:50%;top:50%;width:42%;margin-left:-21%;height:24px;margin-top:-12px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transform-origin:50% 50%;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.spin-controls{display:flex;justify-content:center;gap:12px;width:100%;max-width:560px}.spin-controls button{flex:1;min-height:52px;font-size:16px}
+.wheel-labels{position:absolute;inset:0;border-radius:50%;pointer-events:none}.wheel-label{position:absolute;left:50%;top:50%;width:47%;margin-left:-23.5%;height:20px;margin-top:-10px;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;transform-origin:50% 50%;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:clip;letter-spacing:-.25px}
+.pointer-name{margin-top:10px;max-width:520px;width:100%;min-height:42px;padding:10px 14px;border:1px solid #e5c54a;border-radius:10px;background:#fffbea;text-align:center;font-weight:800;font-size:clamp(13px,1.8vw,18px);line-height:1.35;overflow-wrap:anywhere;color:#222}.spin-controls{display:flex;justify-content:center;gap:12px;width:100%;max-width:560px}.spin-controls button{flex:1;min-height:52px;font-size:16px}
 .result{display:none;text-align:center;border:3px solid var(--gold);background:#fffbea;border-radius:16px;padding:22px;overflow-wrap:anywhere}.result.show{display:block}
 .caption{font-size:14px;font-weight:900;color:#8a6500;letter-spacing:1.5px;margin-bottom:18px}.result-label{font-size:11px;font-weight:800;color:#64748b;letter-spacing:1.2px;margin-top:14px}
 .winner-code{font-size:clamp(30px,5vw,46px);font-weight:900;color:#8a6500;margin:6px 0 12px}.winner-name{font-size:clamp(22px,3vw,34px);font-weight:900;margin:6px 0 12px;color:#111;line-height:1.25}.winner-address{font-size:clamp(15px,2vw,19px);font-weight:700;line-height:1.7;color:#334155;margin-top:6px}
@@ -31,7 +31,7 @@ html,body{margin:0;min-height:100%;background:#eef1f5;color:#171717;font-family:
 @keyframes fall{to{transform:translate3d(var(--drift,30px),110vh,0) rotate(900deg)}}@keyframes pop{0%{transform:scale(.35);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
 @media(min-width:1000px) and (orientation:landscape){.wrap{padding:12px 20px}.header{padding:13px 20px}.main-grid{grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)}.wheel-panel{min-height:calc(100vh - 150px);padding:10px 18px}.wheel{width:min(61vh,520px)}}
 @media(max-width:850px){.main-grid{grid-template-columns:1fr}.wheel-panel{min-height:auto}.wheel{width:min(78vw,480px)}}
-@media(max-width:500px){.wrap{padding:10px}.header{padding:16px 12px}.header h1{font-size:20px}.header p{font-size:11px;letter-spacing:1px}.panel{padding:14px}.controls select,.controls button{width:100%;min-width:0}.spin-controls{gap:8px}.spin-controls button{font-size:14px;padding:12px 8px}.wheel{border-width:6px}.wheel-label{height:20px;margin-top:-10px;padding-right:3px}}
+@media(max-width:500px){.wrap{padding:10px}.header{padding:16px 12px}.header h1{font-size:20px}.header p{font-size:11px;letter-spacing:1px}.panel{padding:14px}.controls select,.controls button{width:100%;min-width:0}.spin-controls{gap:8px}.spin-controls button{font-size:14px;padding:12px 8px}.wheel{border-width:6px}.wheel-label{height:16px;margin-top:-8px;padding-right:2px}}
 @media(prefers-reduced-motion:reduce){.celebration-message{animation:none}}
 </style>
 </head>
@@ -49,7 +49,7 @@ html,body{margin:0;min-height:100%;background:#eef1f5;color:#171717;font-family:
 </section>
 <div class="main-grid">
   <section class="panel wheel-panel">
-    <div class="wheel-wrap"><div class="pointer" aria-hidden="true">▼</div><div id="wheel" class="wheel" role="img" aria-label="Roda undian"><div id="wheelLabels" class="wheel-labels"></div></div></div>
+    <div class="wheel-wrap"><div class="pointer" aria-hidden="true">▼</div><div id="wheel" class="wheel" role="img" aria-label="Roda undian"><div id="wheelLabels" class="wheel-labels"></div></div><div class="pointer-name">Nomor undian ditampilkan pada roda</div></div>
     <div class="controls spin-controls"><button id="putar" class="btn green" type="button" disabled>▶ PUTAR SPIN</button><button id="stop" class="btn dark" type="button" disabled>■ STOP</button></div>
   </section>
   <div class="side-panel">
@@ -99,13 +99,36 @@ function drawWheel(){
   const colors=['#f5c400','#ffffff','#111111','#f4d35e','#dbeafe','#e5e7eb'];
   const step=360/eligible.length;
   wheel.style.background='conic-gradient('+eligible.map((p,i)=>`${colors[i%colors.length]} ${i*step}deg ${(i+1)*step}deg`).join(',')+')';
-  const radius=Math.min(wheel.clientWidth*.37,190);
-  const fontSize=eligible.length<=16?12:eligible.length<=32?10:eligible.length<=60?8:7;
+  // Nama ditempatkan mendekati tepi roda. Pada jumlah peserta sangat besar,
+  // teks di roda otomatis diperkecil; nama sektor di penunjuk tetap dibaca
+  // lewat label dinamis di bawah roda.
+  const radius=Math.min(wheel.clientWidth*.425,220);
+  const fontSize=eligible.length<=16?12:eligible.length<=32?10:eligible.length<=60?8:eligible.length<=120?6.5:5.5;
   eligible.forEach((p,i)=>{
-    const label=document.createElement('div');label.className='wheel-label';label.textContent=nama(p);label.title=nama(p)+' — No. '+kode(p);label.style.fontSize=fontSize+'px';
+    const label=document.createElement('div');
+    label.className='wheel-label';
+    label.textContent=kode(p);
+    label.title='No. undian '+kode(p)+' — '+nama(p);
+    label.style.fontSize=fontSize+'px';
     label.style.transform=`rotate(${i*step+step/2}deg) translateY(-${radius}px) rotate(90deg)`;
-    label.style.color=colors[i%colors.length]==='#111111'?'#fff':'#111';labels.appendChild(label);
+    label.style.color=colors[i%colors.length]==='#111111'?'#fff':'#111';
+    labels.appendChild(label);
   });
+  updatePointerName();
+}
+
+function getIndexAtPointer(){
+  if(!eligible.length)return -1;
+  const step=360/eligible.length;
+  const angle=((currentAngle%360)+360)%360;
+  // Sektor yang berada tepat di bawah penunjuk di bagian atas roda.
+  const index=Math.floor((((360-angle)%360)+360)%360/step);
+  return Math.max(0,Math.min(eligible.length-1,index));
+}
+
+function updatePointerName(){
+  // Nama tidak ditampilkan di papan/label roda; sektor roda hanya berisi nomor undian.
+  return;
 }
 
 async function loadData(){
@@ -118,7 +141,7 @@ async function loadData(){
     const snap=await db.collection('peserta').get();peserta=snap.docs.map(d=>({...d.data(),_docId:d.id}));
     winners={motor:new Set(),listrik:new Set()};$('hasil').classList.remove('show');
     $('riwayat').replaceChildren();const empty=document.createElement('li');empty.className='small';empty.textContent='Belum ada pemenang.';$('riwayat').appendChild(empty);
-    currentAngle=0;$('wheel').style.transform='rotate(0deg)';updateEligible();
+    currentAngle=0;$('wheel').style.transform='rotate(0deg)';updateEligible();updatePointerName();
     showStatus('Data berhasil dimuat dari Firestore ('+peserta.length+' peserta).');
   }catch(e){console.error(e);showStatus('Gagal memuat data: '+(e.message||e),'err')}
   finally{$('muat').disabled=false}
@@ -129,7 +152,7 @@ function animateSpin(timestamp){
   if(!lastFrame)lastFrame=timestamp;
   const dt=Math.min((timestamp-lastFrame)/1000,.05);lastFrame=timestamp;
   const elapsed=(timestamp-spinStarted)/1000,speed=elapsed<1.25?1500:900;
-  currentAngle=(currentAngle+speed*dt)%360;$('wheel').style.transform=`rotate(${currentAngle}deg)`;
+  currentAngle=(currentAngle+speed*dt)%360;$('wheel').style.transform=`rotate(${currentAngle}deg)`;updatePointerName();
   spinFrame=requestAnimationFrame(animateSpin);
 }
 
@@ -157,9 +180,10 @@ function stopSpin(){
 
   function slowFrame(now){
     const t=Math.min(1,(now-startTime)/duration),eased=1-Math.pow(1-t,7);
-    currentAngle=startAngle+(endAngle-startAngle)*eased;$('wheel').style.transform=`rotate(${currentAngle}deg)`;
+    currentAngle=startAngle+(endAngle-startAngle)*eased;$('wheel').style.transform=`rotate(${currentAngle}deg)`;updatePointerName();
     if(t<1){requestAnimationFrame(slowFrame);return}
     currentAngle=endAngle;
+    updatePointerName();
     const wheelEl=$('wheel');wheelEl.style.setProperty('animation','none','important');wheelEl.style.setProperty('transition','none','important');wheelEl.style.transform=`rotate(${endAngle}deg)`;void wheelEl.offsetWidth;
     showStatus('Roda berhenti. Menyiapkan hasil pemenang...');
     resultTimer=setTimeout(()=>{
@@ -196,7 +220,7 @@ $('muat').addEventListener('click',loadData);
 $('putar').addEventListener('click',startSpin);
 $('stop').addEventListener('click',stopSpin);
 $('jenisUndian').addEventListener('change',()=>{$('hasil').classList.remove('show');updateEligible(true)});
-window.addEventListener('resize',()=>{if(!isSpinning&&!isSlowing&&!$('hasil').classList.contains('show'))drawWheel()});
+window.addEventListener('resize',()=>{if(!isSpinning&&!isSlowing&&!$('hasil').classList.contains('show')){drawWheel();updatePointerName()}});
 loadData();
 </script>
 </body>
