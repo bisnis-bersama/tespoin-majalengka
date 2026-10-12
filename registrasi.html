@@ -129,7 +129,7 @@ form.addEventListener('submit',async e=>{
     else if(duplikat && duplikat.email) tampilPesan('Email sudah terdaftar. Gunakan alamat email lain.',true);
     else tampilPesan('Nomor WhatsApp atau email sudah digunakan, atau penyimpanan ditolak. Periksa kembali nomor dan email yang dimasukkan.',true);
   }else{tampilPesan(err.message||'Terjadi kesalahan saat menyimpan.',true);}
- }finally{btn.disabled=false;btn.textContent='SIMPAN KE FIRESTORE';}
+ }finally{btn.disabled=false;btn.textContent='SIMPAN & DAPATKAN BUKTI REGISTRASI';}
 });
 function buatKodeRegistrasi() {
   return String(Math.floor(1000 + Math.random() * 9000));
