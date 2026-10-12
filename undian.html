@@ -111,7 +111,8 @@ function drawWheel(){
     label.title='No. undian '+kode(p)+' — '+nama(p);
     label.style.fontSize=fontSize+'px';
     const angle=i*step+step/2;
-    const upright=((angle%360)>90&&(angle%360)<270)?180:0;\n    label.style.transform=`rotate(${angle}deg) translateY(-${radius}px) rotate(${90+upright}deg)`;
+    const upright=((angle%360)>90&&(angle%360)<270)?180:0;
+    label.style.transform=`rotate(${angle}deg) translateY(-${radius}px) rotate(${90+upright}deg)`;
     label.style.color=colors[i%colors.length]==='#111111'?'#fff':'#111';
     labels.appendChild(label);
   });
