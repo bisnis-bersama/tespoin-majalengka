@@ -267,7 +267,12 @@ function renderRab(){
   if(!rabItems.length){const tr=document.createElement('tr');makeCell(tr,'Belum ada item RAB.');const td=tr.lastChild;td.colSpan=8;body.appendChild(tr)}
   rabItems.forEach(item=>{
     const tr=document.createElement('tr');
-    makeCell(tr,item.namaItem);makeCell(tr,categoryName(item.kategori));makeCell(tr,String(item.volume)+' '+(item.satuan||''));makeCell(tr,rupiah(item.hargaSatuan));makeCell(tr,rupiah(totalRAB(item)));
+    makeCell(tr,item.namaItem);
+    makeCell(tr,categoryName(item.kategori));
+    makeCell(tr,String(item.volume));
+    makeCell(tr,String(unitMultiplier(item.satuan)));
+    makeCell(tr,rupiah(item.hargaSatuan));
+    makeCell(tr,rupiah(totalRAB(item)));
     const td=tr.insertCell();td.appendChild(stateBadge(item.status));
     const action=tr.insertCell();
     if(canWrite()){makeAction(action,'Edit','btn-light',()=>editRab(item));makeAction(action,'Status','btn-gold',()=>changeRabState(item));}
