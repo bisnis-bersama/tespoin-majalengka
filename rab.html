@@ -117,7 +117,7 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
         <div class="field"><label>Status item</label><select id="rabState"><option value="DIAJUKAN">Diajukan</option><option value="DISETUJUI">Disetujui</option><option value="DITOLAK">Ditolak</option></select></div>
         <div class="field full"><label>Catatan</label><textarea id="rabNote" placeholder="Keterangan tambahan"></textarea></div>
       </div>
-      <p class="note">Total item dihitung dari Volume × Satuan (pengali) × Harga Satuan. Contoh: 300 × 1 × Rp1.000 = Rp300.000. Hanya item berstatus DISETUJUI yang masuk total RAB disetujui.</p>
+      <p class="note">Total item dihitung dari volume × satuan (pengali) × harga satuan. Contoh: 300 × 1 × Rp1.000 = Rp300.000. Hanya item berstatus DISETUJUI yang masuk total RAB disetujui.</p>
       <div class="form-actions"><button class="btn-gold" type="submit">Simpan Item RAB</button><button id="cancelRabEdit" class="btn-light" type="button">Batal / Kosongkan</button></div>
     </form>
   </div>
@@ -225,8 +225,14 @@ function clean(v){return String(v==null?'':v).trim()}
 function up(v){return clean(v).toUpperCase()}
 function rupiah(v){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(v)||0)}
 function money(v){const n=Number(v);return Number.isFinite(n)&&n>=0?n:0}
-function satuanAngka(v){const n=Number(v);return Number.isFinite(n)&&n>0?n:1}
-function totalRAB(item){return money(item.volume)*satuanAngka(item.satuan)*money(item.hargaSatuan)}
+// Data satuan lama yang berupa teks (misalnya "orang" atau "hari") dianggap pengali 1.
+function unitMultiplier(v){
+  if(typeof v==='number' && Number.isFinite(v) && v>0) return v;
+  const text=clean(v).replace(',','.');
+  const n=Number(text);
+  return Number.isFinite(n)&&n>0?n:1;
+}
+function totalRAB(item){return money(item.volume)*unitMultiplier(item.satuan)*money(item.hargaSatuan)}
 function today(){return new Date().toLocaleDateString('en-CA')}
 function showStatus(message,error=false){$('status').textContent=message;$('status').className='status show '+(error?'err':'ok')}
 function categoryName(v){return ({TEMPAT:'Tempat/fasilitas',KONSUMSI:'Konsumsi',PERLENGKAPAN:'Perlengkapan',BNSP:'Sertifikasi BNSP',PUBLIKASI:'Publikasi/dokumentasi',PERALATAN:'Peralatan',OPERASIONAL:'Operasional',CADANGAN:'Dana cadangan',LAINNYA:'Lainnya',TIKET:'Tiket peserta',SPONSOR:'Sponsor',BANTUAN_DPW:'Bantuan DPW',DONASI:'Donasi'})[v]||v||'-'}
@@ -367,7 +373,7 @@ function tab(name){
 }
 function resetRab(){ $('rabForm').reset();$('rabId').value='';$('rabVolume').value='1';$('rabUnit').value='1';$('rabPrice').value='0'; }
 function editRab(item){
-  $('rabId').value=item.id;$('rabName').value=item.namaItem||'';$('rabCategory').value=item.kategori||'LAINNYA';$('rabVolume').value=item.volume??1;$('rabUnit').value=satuanAngka(item.satuan);$('rabPrice').value=item.hargaSatuan??0;$('rabState').value=item.status||'DIAJUKAN';$('rabNote').value=item.catatan||'';tab('rab');window.scrollTo({top:0,behavior:'smooth'});
+  $('rabId').value=item.id;$('rabName').value=item.namaItem||'';$('rabCategory').value=item.kategori||'LAINNYA';$('rabVolume').value=item.volume??1;$('rabUnit').value=unitMultiplier(item.satuan);$('rabPrice').value=item.hargaSatuan??0;$('rabState').value=item.status||'DIAJUKAN';$('rabNote').value=item.catatan||'';tab('rab');window.scrollTo({top:0,behavior:'smooth'});
 }
 async function changeRabState(item){
   const next=prompt('Masukkan status: DIAJUKAN, DISETUJUI, atau DITOLAK',item.status);
@@ -378,7 +384,7 @@ async function changeRabState(item){
 async function saveRab(e){
   e.preventDefault();if(!canWrite())return;
   const volume=Number($('rabVolume').value),satuan=Number($('rabUnit').value),price=Number($('rabPrice').value);
-  if(!Number.isFinite(volume)||volume<=0||!Number.isFinite(satuan)||satuan<=0||!Number.isFinite(price)||price<0){showStatus('Volume, satuan, atau harga tidak valid.',true);return}
+  if(!Number.isFinite(volume)||volume<=0||!Number.isFinite(satuan)||satuan<=0||!Number.isFinite(price)||price<0){showStatus('Volume, satuan (pengali), atau harga tidak valid.',true);return}
   const data={namaItem:$('rabName').value.trim(),kategori:$('rabCategory').value,volume,satuan,hargaSatuan:price,status:$('rabState').value,catatan:$('rabNote').value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
   try{
     const id=$('rabId').value;
@@ -466,7 +472,7 @@ function csvDownload(name,rows){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
-function exportRAB(){csvDownload('RAB-Roadshow-BNSP.csv',[['Nama Item','Kategori','Volume','Satuan','Harga Satuan','Total Anggaran','Status','Catatan'],...rabItems.map(x=>[x.namaItem,categoryName(x.kategori),x.volume,x.satuan,x.hargaSatuan,totalRAB(x),x.status,x.catatan])])}
+function exportRAB(){csvDownload('RAB-Roadshow-BNSP.csv',[['Nama Item','Kategori','Volume','Satuan','Harga Satuan','Total Anggaran','Status','Catatan'],...rabItems.map(x=>[x.namaItem,categoryName(x.kategori),x.volume,unitMultiplier(x.satuan),x.hargaSatuan,totalRAB(x),x.status,x.catatan])])}
 function exportTransactions(){csvDownload('Transaksi-Roadshow-BNSP.csv',[['Tanggal','Jenis','Kategori','Keterangan','Nominal','Metode','Status','Vendor/Referensi'],...transactions.map(x=>[x.tanggal,x.jenis,categoryName(x.kategori),x.keterangan,x.nominal,x.metode,x.status,x.vendor||x.referensi])])}
 
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
