@@ -112,18 +112,18 @@ footer{text-align:center;font-size:11px;color:#788391;padding:18px}
           <option value="TEMPAT">Tempat dan fasilitas</option><option value="KONSUMSI">Konsumsi</option><option value="PERLENGKAPAN">Perlengkapan peserta</option><option value="BNSP">Sertifikasi BNSP</option><option value="PUBLIKASI">Dokumentasi dan publikasi</option><option value="PERALATAN">Peralatan acara</option><option value="OPERASIONAL">Transportasi dan operasional</option><option value="CADANGAN">Dana cadangan</option><option value="LAINNYA">Lainnya</option>
         </select></div>
         <div class="field"><label>Volume</label><input id="rabVolume" type="number" min="0.01" step="any" required value="1"></div>
-        <div class="field"><label>Satuan</label><input id="rabUnit" required placeholder="hari, orang, paket, unit"></div>
+        <div class="field"><label>Satuan (pengali)</label><input id="rabUnit" type="number" min="0.01" step="any" required value="1" placeholder="Contoh: 1"></div>
         <div class="field"><label>Harga satuan (Rp)</label><input id="rabPrice" type="number" min="0" step="1" required value="0"></div>
         <div class="field"><label>Status item</label><select id="rabState"><option value="DIAJUKAN">Diajukan</option><option value="DISETUJUI">Disetujui</option><option value="DITOLAK">Ditolak</option></select></div>
         <div class="field full"><label>Catatan</label><textarea id="rabNote" placeholder="Keterangan tambahan"></textarea></div>
       </div>
-      <p class="note">Total item dihitung otomatis dari volume × harga satuan. Hanya item berstatus DISETUJUI yang masuk total RAB disetujui.</p>
+      <p class="note">Total item dihitung dari Volume × Satuan (pengali) × Harga Satuan. Contoh: 300 × 1 × Rp1.000 = Rp300.000. Hanya item berstatus DISETUJUI yang masuk total RAB disetujui.</p>
       <div class="form-actions"><button class="btn-gold" type="submit">Simpan Item RAB</button><button id="cancelRabEdit" class="btn-light" type="button">Batal / Kosongkan</button></div>
     </form>
   </div>
   <div class="panel">
     <h2>Daftar Rencana Anggaran</h2>
-    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Kategori</th><th>Volume</th><th>Harga Satuan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="rabRows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Kategori</th><th>Volume</th><th>Satuan (pengali)</th><th>Harga Satuan</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="rabRows"><tr><td colspan="8">Belum ada data.</td></tr></tbody></table></div>
   </div>
 </section>
 
@@ -225,6 +225,8 @@ function clean(v){return String(v==null?'':v).trim()}
 function up(v){return clean(v).toUpperCase()}
 function rupiah(v){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(v)||0)}
 function money(v){const n=Number(v);return Number.isFinite(n)&&n>=0?n:0}
+function satuanAngka(v){const n=Number(v);return Number.isFinite(n)&&n>0?n:1}
+function totalRAB(item){return money(item.volume)*satuanAngka(item.satuan)*money(item.hargaSatuan)}
 function today(){return new Date().toLocaleDateString('en-CA')}
 function showStatus(message,error=false){$('status').textContent=message;$('status').className='status show '+(error?'err':'ok')}
 function categoryName(v){return ({TEMPAT:'Tempat/fasilitas',KONSUMSI:'Konsumsi',PERLENGKAPAN:'Perlengkapan',BNSP:'Sertifikasi BNSP',PUBLIKASI:'Publikasi/dokumentasi',PERALATAN:'Peralatan',OPERASIONAL:'Operasional',CADANGAN:'Dana cadangan',LAINNYA:'Lainnya',TIKET:'Tiket peserta',SPONSOR:'Sponsor',BANTUAN_DPW:'Bantuan DPW',DONASI:'Donasi'})[v]||v||'-'}
@@ -237,7 +239,7 @@ function addAudit(action,targetId,reason){
 }
 function makeCell(tr,value){const td=document.createElement('td');td.textContent=value==null?'':String(value);tr.appendChild(td);return td}
 function makeAction(td,label,cls,fn){const b=document.createElement('button');b.textContent=label;b.className=cls;b.style.padding='6px 8px';b.style.margin='2px';b.addEventListener('click',fn);td.appendChild(b)}
-function approvedBudget(){return rabItems.filter(x=>x.status==='DISETUJUI').reduce((s,x)=>s+money(x.volume)*money(x.hargaSatuan),0)}
+function approvedBudget(){return rabItems.filter(x=>x.status==='DISETUJUI').reduce((s,x)=>s+totalRAB(x),0)}
 function confirmedTransactions(kind){return transactions.filter(x=>x.jenis===kind&&x.status==='TERKONFIRMASI')}
 function totalTx(kind){return confirmedTransactions(kind).reduce((s,x)=>s+money(x.nominal),0)}
 function renderSummary(){
@@ -251,15 +253,15 @@ function renderSummary(){
 function fillRabOptions(){
   const select=$('outRabItem'),old=select.value;select.replaceChildren();
   const opt=document.createElement('option');opt.value='';opt.textContent='Tidak ditautkan';select.appendChild(opt);
-  rabItems.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.namaItem+' — '+rupiah(money(item.volume)*money(item.hargaSatuan));select.appendChild(o)});
+  rabItems.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.namaItem+' — '+rupiah(totalRAB(item));select.appendChild(o)});
   select.value=old;
 }
 function renderRab(){
   const body=$('rabRows');body.replaceChildren();
-  if(!rabItems.length){const tr=document.createElement('tr');makeCell(tr,'Belum ada item RAB.');const td=tr.lastChild;td.colSpan=7;body.appendChild(tr)}
+  if(!rabItems.length){const tr=document.createElement('tr');makeCell(tr,'Belum ada item RAB.');const td=tr.lastChild;td.colSpan=8;body.appendChild(tr)}
   rabItems.forEach(item=>{
     const tr=document.createElement('tr');
-    makeCell(tr,item.namaItem);makeCell(tr,categoryName(item.kategori));makeCell(tr,String(item.volume)+' '+(item.satuan||''));makeCell(tr,rupiah(item.hargaSatuan));makeCell(tr,rupiah(money(item.volume)*money(item.hargaSatuan)));
+    makeCell(tr,item.namaItem);makeCell(tr,categoryName(item.kategori));makeCell(tr,String(item.volume)+' '+(item.satuan||''));makeCell(tr,rupiah(item.hargaSatuan));makeCell(tr,rupiah(totalRAB(item)));
     const td=tr.insertCell();td.appendChild(stateBadge(item.status));
     const action=tr.insertCell();
     if(canWrite()){makeAction(action,'Edit','btn-light',()=>editRab(item));makeAction(action,'Status','btn-gold',()=>changeRabState(item));}
@@ -293,7 +295,7 @@ function itemSpent(itemId){return confirmedTransactions('PENGELUARAN').filter(t=
 function fillAllocationOptions(){
   const select=$('allocRabItem'),old=select.value;select.replaceChildren();
   const first=document.createElement('option');first.value='';first.textContent='Pilih item RAB';select.appendChild(first);
-  rabItems.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.namaItem+' — RAB '+rupiah(money(item.volume)*money(item.hargaSatuan));select.appendChild(o)});
+  rabItems.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.namaItem+' — RAB '+rupiah(totalRAB(item));select.appendChild(o)});
   select.value=old;
 }
 function renderAllocations(){
@@ -306,7 +308,7 @@ function renderAllocations(){
     const item=rabItems.find(x=>x.id===a.rabItemId);
     const tr=document.createElement('tr');
     makeCell(tr,item?item.namaItem:'Item RAB tidak ditemukan');
-    makeCell(tr,item?rupiah(money(item.volume)*money(item.hargaSatuan)):'-');
+    makeCell(tr,item?rupiah(totalRAB(item)):'-');
     makeCell(tr,rupiah(a.nominal));
     makeCell(tr,rupiah(itemSpent(a.rabItemId)));
     makeCell(tr,rupiah(money(a.nominal)-itemSpent(a.rabItemId)));
@@ -333,7 +335,7 @@ async function saveAllocation(){
   const existing=allocations.find(a=>a.rabItemId===rabItemId);
   const editId=$('saveAllocBtn').dataset.editId|| (existing?existing.id:'');
   const otherAllocated=allocations.filter(a=>a.rabItemId===rabItemId&&a.id!==editId).reduce((s,a)=>s+money(a.nominal),0);
-  const budget=money(item.volume)*money(item.hargaSatuan);
+  const budget=totalRAB(item);
   if(otherAllocated+nominal>budget){showStatus('Alokasi melebihi anggaran item RAB ('+rupiah(budget)+').',true);return}
   const data={rabItemId,nominal,catatan:$('allocNote').value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
   try{
@@ -363,9 +365,9 @@ function tab(name){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
 }
-function resetRab(){ $('rabForm').reset();$('rabId').value='';$('rabVolume').value='1';$('rabPrice').value='0'; }
+function resetRab(){ $('rabForm').reset();$('rabId').value='';$('rabVolume').value='1';$('rabUnit').value='1';$('rabPrice').value='0'; }
 function editRab(item){
-  $('rabId').value=item.id;$('rabName').value=item.namaItem||'';$('rabCategory').value=item.kategori||'LAINNYA';$('rabVolume').value=item.volume??1;$('rabUnit').value=item.satuan||'';$('rabPrice').value=item.hargaSatuan??0;$('rabState').value=item.status||'DIAJUKAN';$('rabNote').value=item.catatan||'';tab('rab');window.scrollTo({top:0,behavior:'smooth'});
+  $('rabId').value=item.id;$('rabName').value=item.namaItem||'';$('rabCategory').value=item.kategori||'LAINNYA';$('rabVolume').value=item.volume??1;$('rabUnit').value=satuanAngka(item.satuan);$('rabPrice').value=item.hargaSatuan??0;$('rabState').value=item.status||'DIAJUKAN';$('rabNote').value=item.catatan||'';tab('rab');window.scrollTo({top:0,behavior:'smooth'});
 }
 async function changeRabState(item){
   const next=prompt('Masukkan status: DIAJUKAN, DISETUJUI, atau DITOLAK',item.status);
@@ -375,9 +377,9 @@ async function changeRabState(item){
 }
 async function saveRab(e){
   e.preventDefault();if(!canWrite())return;
-  const volume=Number($('rabVolume').value),price=Number($('rabPrice').value);
-  if(!Number.isFinite(volume)||volume<=0||!Number.isFinite(price)||price<0){showStatus('Volume atau harga tidak valid.',true);return}
-  const data={namaItem:$('rabName').value.trim(),kategori:$('rabCategory').value,volume,satuan:$('rabUnit').value.trim(),hargaSatuan:price,status:$('rabState').value,catatan:$('rabNote').value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
+  const volume=Number($('rabVolume').value),satuan=Number($('rabUnit').value),price=Number($('rabPrice').value);
+  if(!Number.isFinite(volume)||volume<=0||!Number.isFinite(satuan)||satuan<=0||!Number.isFinite(price)||price<0){showStatus('Volume, satuan, atau harga tidak valid.',true);return}
+  const data={namaItem:$('rabName').value.trim(),kategori:$('rabCategory').value,volume,satuan,hargaSatuan:price,status:$('rabState').value,catatan:$('rabNote').value.trim(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentUser.uid};
   try{
     const id=$('rabId').value;
     if(id){await rabRef().doc(id).update(data);await addAudit('RAB_DIUBAH',id,data.namaItem)}
@@ -464,7 +466,7 @@ function csvDownload(name,rows){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
-function exportRAB(){csvDownload('RAB-Roadshow-BNSP.csv',[['Nama Item','Kategori','Volume','Satuan','Harga Satuan','Total Anggaran','Status','Catatan'],...rabItems.map(x=>[x.namaItem,categoryName(x.kategori),x.volume,x.satuan,x.hargaSatuan,money(x.volume)*money(x.hargaSatuan),x.status,x.catatan])])}
+function exportRAB(){csvDownload('RAB-Roadshow-BNSP.csv',[['Nama Item','Kategori','Volume','Satuan','Harga Satuan','Total Anggaran','Status','Catatan'],...rabItems.map(x=>[x.namaItem,categoryName(x.kategori),x.volume,x.satuan,x.hargaSatuan,totalRAB(x),x.status,x.catatan])])}
 function exportTransactions(){csvDownload('Transaksi-Roadshow-BNSP.csv',[['Tanggal','Jenis','Kategori','Keterangan','Nominal','Metode','Status','Vendor/Referensi'],...transactions.map(x=>[x.tanggal,x.jenis,categoryName(x.kategori),x.keterangan,x.nominal,x.metode,x.status,x.vendor||x.referensi])])}
 
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
