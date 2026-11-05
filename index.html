@@ -54,7 +54,48 @@ function renderSlider(urls){
  refreshSlider();if(prev)prev.onclick=()=>goToSlide(slideIndex-1);if(next)next.onclick=()=>goToSlide(slideIndex+1);slider.ontouchstart=e=>{slideTouchStartX=e.changedTouches[0].clientX};slider.ontouchend=e=>{const dx=e.changedTouches[0].clientX-slideTouchStartX;if(Math.abs(dx)>45)goToSlide(slideIndex+(dx<0?1:-1))};
 }
 function goToSlide(index){const track=document.getElementById('slideTrack');if(!track)return;const slides=Array.from(track.querySelectorAll('.slide'));if(slides.length<2)return;slideIndex=(index+slides.length)%slides.length;slides.forEach((el,i)=>el.classList.toggle('active',i===slideIndex));document.querySelectorAll('#slideDots .slide-dot').forEach((el,i)=>el.classList.toggle('active',i===slideIndex))}
-function tampilkanPengaturan(data){if(!data)return;renderSlider(data.slideUrls||data.slideGambar||[]);document.getElementById('judulAcara').textContent=data.judul||data.judulAcara||'INFORMASI ACARA';document.getElementById('deskripsi').textContent=data.deskripsi||'Informasi acara akan diumumkan panitia.';document.getElementById('tanggal').textContent=formatTanggal(data.tanggalAcara||data.tanggal);document.getElementById('waktu').textContent=data.waktu||'-';document.getElementById('lokasi').textContent=data.lokasi||'-';const infoHarga=ambilHargaTiket(data);document.getElementById('harga').textContent=infoHarga.harga?(formatRupiah(infoHarga.harga)+(infoHarga.nama?' • '+infoHarga.nama:'')):'Harga belum diatur';const rawWA=String(data.wa||data.nomorWa||'').replace(/\D/g,'');nomorPanitiaWA=rawWA?(rawWA.startsWith('0')?'62'+rawWA.slice(1):rawWA.startsWith('62')?rawWA:'62'+rawWA):'6282319264646';const box=document.getElementById('benefit');const items=String(data.benefit||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);box.innerHTML=items.length?items.map(x=>`<div class="benefit"><span class="check">✓</span><span>${escapeHtml(x)}</span></div>`).join(''):'<div class="desc">Benefit peserta akan diumumkan panitia.</div>';const st=String(data.statusPendaftaran||data.status||'DIBUKA').toUpperCase();const badge=document.getElementById('status'),text=document.getElementById('statusText'),btn=document.getElementById('btnDaftar');if(st==='DITUTUP'){badge.classList.add('tutup');text.textContent='PENDAFTARAN DITUTUP';btn.classList.add('disabled');btn.textContent='PENDAFTARAN DITUTUP';btn.setAttribute('aria-disabled','true');btn.href='#'}else{badge.classList.remove('tutup');text.textContent='PENDAFTARAN DIBUKA';btn.classList.remove('disabled');btn.textContent='DAFTAR SEKARANG';btn.removeAttribute('aria-disabled');btn.href='registrasi.html'}}
+function tampilkanPengaturan(data){if(!data)return;renderSlider(data.slideUrls||data.slideGambar||[]);document.getElementById('judulAcara').textContent=data.judul||data.judulAcara||'INFORMASI ACARA';document.getElementById('deskripsi').textContent=data.deskripsi||'Informasi acara akan diumumkan panitia.';document.getElementById('tanggal').textContent=formatTanggal(data.tanggalAcara||data.tanggal);document.getElementById('waktu').textContent=data.waktu||'-';
+const lokasiEl = document.getElementById('lokasi');
+
+// Ambil nama lokasi dari pengaturan
+const namaLokasi =
+  data.lokasiNama ||
+  data.namaLokasi ||
+  data.tempat ||
+  'Garden Hotel Majalengka';
+
+// Ambil link Google Maps dari pengaturan
+const linkLokasi = String(data.lokasi || '').trim();
+
+// Kosongkan tampilan lokasi
+lokasiEl.innerHTML = '';
+
+// Tampilkan nama lokasi
+const namaEl = document.createElement('div');
+namaEl.textContent = namaLokasi;
+namaEl.style.fontWeight = '750';
+
+lokasiEl.appendChild(namaEl);
+
+// Tampilkan link Google Maps
+if (linkLokasi) {
+  const linkEl = document.createElement('a');
+
+  linkEl.href = linkLokasi;
+  linkEl.target = '_blank';
+  linkEl.rel = 'noopener noreferrer';
+  linkEl.textContent = '📍 Buka lokasi di Google Maps ↗';
+
+  linkEl.style.display = 'inline-block';
+  linkEl.style.marginTop = '6px';
+  linkEl.style.color = '#2563eb';
+  linkEl.style.fontSize = '14px';
+  linkEl.style.fontWeight = '750';
+  linkEl.style.textDecoration = 'none';
+
+  lokasiEl.appendChild(linkEl);
+}
+ infoHarga=ambilHargaTiket(data);document.getElementById('harga').textContent=infoHarga.harga?(formatRupiah(infoHarga.harga)+(infoHarga.nama?' • '+infoHarga.nama:'')):'Harga belum diatur';const rawWA=String(data.wa||data.nomorWa||'').replace(/\D/g,'');nomorPanitiaWA=rawWA?(rawWA.startsWith('0')?'62'+rawWA.slice(1):rawWA.startsWith('62')?rawWA:'62'+rawWA):'6282319264646';const box=document.getElementById('benefit');const items=String(data.benefit||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);box.innerHTML=items.length?items.map(x=>`<div class="benefit"><span class="check">✓</span><span>${escapeHtml(x)}</span></div>`).join(''):'<div class="desc">Benefit peserta akan diumumkan panitia.</div>';const st=String(data.statusPendaftaran||data.status||'DIBUKA').toUpperCase();const badge=document.getElementById('status'),text=document.getElementById('statusText'),btn=document.getElementById('btnDaftar');if(st==='DITUTUP'){badge.classList.add('tutup');text.textContent='PENDAFTARAN DITUTUP';btn.classList.add('disabled');btn.textContent='PENDAFTARAN DITUTUP';btn.setAttribute('aria-disabled','true');btn.href='#'}else{badge.classList.remove('tutup');text.textContent='PENDAFTARAN DIBUKA';btn.classList.remove('disabled');btn.textContent='DAFTAR SEKARANG';btn.removeAttribute('aria-disabled');btn.href='registrasi.html'}}
 function muatPengaturan(){renderSlider(SLIDE_DEFAULT);db.collection('pengaturan').doc('acara').onSnapshot(snap=>{if(!snap.exists){document.getElementById('statusText').textContent='PENGATURAN BELUM TERSEDIA';console.error('Dokumen pengaturan/acara belum tersedia di Firestore.');return}tampilkanPengaturan(snap.data()||{})},err=>{console.error('Gagal memuat pengaturan Firestore:',err);document.getElementById('statusText').textContent='PENGATURAN BELUM DAPAT DIMUAT'})}
 function hubungiAdminWA(){const nama=document.getElementById('namaPeserta').value.trim(),wa=document.getElementById('waPeserta').value.trim();if(!nama||!wa){alert('Silakan isi nama dan nomor WhatsApp terlebih dahulu.');return}const pesan='Assalamualaikum Admin TESPOIN Majalengka, saya ingin meminta pengiriman ulang bukti registrasi dan QR Code.\n\nNama peserta: '+nama+'\nNomor WhatsApp saat mendaftar: '+wa;const tujuan=String(nomorPanitiaWA||'6282319264646').replace(/\D/g,'');window.open('https://wa.me/'+tujuan+'?text='+encodeURIComponent(pesan),'_blank','noopener')}
 document.addEventListener('DOMContentLoaded',muatPengaturan);
