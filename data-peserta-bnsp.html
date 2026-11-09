@@ -57,7 +57,7 @@ footer{text-align:center;color:#7a8799;font-size:12px;padding:18px}
       <div class="stat"><strong id="total">—</strong><span>Total data terbaca</span></div>
       <div class="stat"><strong>DATA PESERTA</strong><span>Tab sumber spreadsheet</span></div>
     </div>
-    <p id="status" class="state">Halaman admin siap. Hubungkan endpoint pembaca Google Sheets untuk memuat data.</p>
+    <p id="status" class="state">Siap mengambil data dari Google Sheets. Tekan Muat / Refresh.</p>
   </section>
   <section class="card">
     <div class="tablewrap">
@@ -116,8 +116,8 @@ function parseCSV(text){
     if(ch==='"'&&quoted&&next==='"'){cell+='"';i++;}
     else if(ch==='"')quoted=!quoted;
     else if(ch===","&&!quoted){row.push(cell);cell="";}
-    else if((ch==="\\n"||ch==="\\r")&&!quoted){
-      if(ch==="\\r"&&next==="\\n")i++;
+    else if((ch==="\n"||ch==="\r")&&!quoted){
+      if(ch==="\r"&&next==="\n")i++;
       row.push(cell);rows.push(row);row=[];cell="";
     }else cell+=ch;
   }
