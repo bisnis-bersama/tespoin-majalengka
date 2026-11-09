@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Peserta Sertifikasi BNSP</title>
+<style>
+*{box-sizing:border-box}
+:root{--navy:#09224e;--blue:#075eea;--red:#d71920;--gold:#ffc928;--ink:#18243a;--muted:#66758a}
+body{margin:0;font-family:Arial,sans-serif;background:#eef4fc;color:var(--ink)}
+header{background:linear-gradient(120deg,#071b45,#075eea);color:white;padding:22px 18px}
+.head{max-width:1180px;margin:auto;display:flex;align-items:center;gap:16px}
+.logo{width:58px;height:58px;border-radius:14px;background:#fff;color:#075eea;display:grid;place-items:center;font-weight:900;font-size:20px;border:3px solid var(--gold)}
+h1{font-size:clamp(20px,3vw,30px);margin:0 0 5px}
+header p{margin:0;color:#dbe9ff;font-size:14px}
+main{max-width:1180px;margin:22px auto;padding:0 14px}
+.card{background:white;border-radius:18px;padding:18px;box-shadow:0 8px 28px #08275b12;margin-bottom:16px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #d1dbe9}
+input{flex:1;min-width:220px;background:#fbfdff}
+button{background:var(--blue);color:white;border:0;font-weight:700;cursor:pointer}
+button.secondary{background:#eaf1ff;color:#174a9b}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.stat{padding:15px;border-radius:13px;background:#f4f8ff}
+.stat strong{display:block;font-size:24px;color:var(--navy);margin-bottom:4px}
+.stat span{font-size:13px;color:var(--muted)}
+.tablewrap{overflow:auto;border:1px solid #e2e9f2;border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:900px;background:white}
+th,td{padding:12px 11px;text-align:left;border-bottom:1px solid #edf1f6;font-size:13px;vertical-align:top}
+th{background:#f2f6fc;color:#31425d;position:sticky;top:0;white-space:nowrap}
+td a{color:#075eea;font-weight:700;text-decoration:none}
+td a:hover{text-decoration:underline}
+.state{color:#687588;font-size:14px;padding:16px 2px}
+footer{text-align:center;color:#7a8799;font-size:12px;padding:18px}
+@media(max-width:600px){.summary{grid-template-columns:1fr}.card{padding:14px}.head{align-items:flex-start}.logo{width:48px;height:48px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div class="logo">BNSP</div>
+    <div>
+      <h1>Admin Peserta Sertifikasi</h1>
+      <p>TESPOIN • Roadshow DPD Majalengka • DATA PESERTA</p>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="card">
+    <div class="tools">
+      <input id="search" type="search" placeholder="Cari nama, NIK, kota, atau email…" aria-label="Cari peserta">
+      <button id="refresh" type="button">Muat / Refresh</button>
+      <button class="secondary" id="export" type="button">Export CSV</button>
+    </div>
+    <div class="summary">
+      <div class="stat"><strong id="count">—</strong><span>Peserta ditampilkan</span></div>
+      <div class="stat"><strong id="total">—</strong><span>Total data terbaca</span></div>
+      <div class="stat"><strong>DATA PESERTA</strong><span>Tab sumber spreadsheet</span></div>
+    </div>
+    <p id="status" class="state">Halaman admin siap. Hubungkan endpoint pembaca Google Sheets untuk memuat data.</p>
+  </section>
+  <section class="card">
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Timestamp</th><th>Nama sesuai KTP</th><th>NIK</th><th>Alamat</th>
+          <th>Kota/Kabupaten</th><th>Email</th><th>T-shirt</th><th>Dokumen PDF</th><th>Bukti Transfer</th>
+        </tr></thead>
+        <tbody id="rows"><tr><td colspan="9" class="state">Belum ada data yang dimuat.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <footer>Admin Peserta • Data berasal dari Google Sheets, bukan disimpan di halaman ini.</footer>
+</main>
+<script>
+/*
+  SETUP:
+  Masukkan URL endpoint Apps Script yang mengembalikan JSON array data peserta
+  ke READ_API_URL. Endpoint harus mengembalikan objek:
+  {success:true, data:[{timestamp,name,nik,address,city,email,tshirtSize,pdfUrl,transferUrl}]}
+  Jangan memakai endpoint doPost registrasi sebagai endpoint baca.
+*/
+const READ_API_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThBuKBJzCNgoMro1NEHyYfeP3TN5RohDfelcxH61Jtdbt7Iss6h2jz0z1m0z7e4-TysAnHRWoA9zPJ/pub?gid=0&single=true&output=csv";
+const columns = ["timestamp","name","nik","address","city","email","tshirtSize","pdfUrl","transferUrl"];
+let records = [];
+
+const el = id => document.getElementById(id);
+function safe(v){return String(v ?? "");}
+function escapeHTML(v){return safe(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function linkCell(url,label){
+  const u=safe(url).trim();
+  if(!u) return "—";
+  // Only allow ordinary http(s) links from the sheet.
+  if(!/^https?:\/\//i.test(u)) return "—";
+  return `<a href="${escapeHTML(u)}" target="_blank" rel="noopener">${label}</a>`;
+}
+function render(){
+  const q=el("search").value.trim().toLowerCase();
+  const filtered=records.filter(r=>columns.slice(0,7).some(k=>safe(r[k]).toLowerCase().includes(q)));
+  el("count").textContent=filtered.length;
+  el("total").textContent=records.length;
+  if(!filtered.length){
+    el("rows").innerHTML='<tr><td colspan="9" class="state">Tidak ada data yang cocok.</td></tr>';
+    return;
+  }
+  el("rows").innerHTML=filtered.map(r=>`<tr>
+    <td>${escapeHTML(r.timestamp||"—")}</td><td>${escapeHTML(r.name)}</td><td>${escapeHTML(r.nik)}</td>
+    <td>${escapeHTML(r.address)}</td><td>${escapeHTML(r.city)}</td><td>${escapeHTML(r.email)}</td>
+    <td>${escapeHTML(r.tshirtSize)}</td><td>${linkCell(r.pdfUrl,"Buka PDF")}</td>
+    <td>${linkCell(r.transferUrl,"Buka bukti")}</td></tr>`).join("");
+}
+function parseCSV(text){
+  const rows=[];let row=[],cell="",quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(ch==='"'&&quoted&&next==='"'){cell+='"';i++;}
+    else if(ch==='"')quoted=!quoted;
+    else if(ch===","&&!quoted){row.push(cell);cell="";}
+    else if((ch==="\\n"||ch==="\\r")&&!quoted){
+      if(ch==="\\r"&&next==="\\n")i++;
+      row.push(cell);rows.push(row);row=[];cell="";
+    }else cell+=ch;
+  }
+  if(cell.length||row.length){row.push(cell);rows.push(row);}
+  return rows;
+}
+async function loadData(){
+  if(!READ_API_URL){
+    el("status").textContent="Endpoint baca belum dipasang. Data belum dimuat. Masukkan URL endpoint GET Apps Script pada READ_API_URL.";
+    return;
+  }
+  el("refresh").disabled=true;el("status").textContent="Mengambil data peserta…";
+  try{
+    const response=await fetch(READ_API_URL,{cache:"no-store"});
+    if(!response.ok) throw new Error("HTTP "+response.status);
+    const csv=await response.text();
+    records=parseCSV(csv).slice(1).filter(row=>row.some(cell=>cell.trim())).map(row=>({
+      timestamp:row[0]||"",name:row[1]||"",nik:row[2]||"",address:row[3]||"",
+      city:row[4]||"",email:row[5]||"",tshirtSize:row[6]||"",
+      pdfUrl:row[7]||"",transferUrl:row[8]||""
+    }));
+    render();el("status").textContent="Data berhasil dimuat dari Google Sheets.";
+  }catch(err){
+    el("status").textContent="Gagal memuat data: "+(err.message||err);
+  }finally{el("refresh").disabled=false;}
+}
+function exportCSV(){
+  if(!records.length){el("status").textContent="Tidak ada data untuk diekspor.";return;}
+  const header=["Timestamp","Nama sesuai KTP","NIK","Alamat sesuai KTP","Kota/Kabupaten","Email","Ukuran T-shirt","Link Dokumen PDF","Link Bukti Transfer"];
+  const keys=columns;
+  const csv=[header,...records.map(r=>keys.map(k=>safe(r[k])))].map(row=>row.map(v=>'"'+safe(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="data-peserta-bnsp.csv";a.click();URL.revokeObjectURL(a.href);
+}
+el("search").addEventListener("input",render);
+el("refresh").addEventListener("click",loadData);
+el("export").addEventListener("click",exportCSV);
+</script>
+</body>
+</html>
