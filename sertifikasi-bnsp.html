@@ -15,6 +15,14 @@ button{width:100%;border:0;border-radius:10px;background:#155eef;color:#fff;font
 button:disabled{opacity:.6}
 small{color:#687588;font-weight:normal}
 #status{margin-top:14px;font-size:14px;white-space:pre-wrap}
+#progressWrap{display:none;margin-top:14px;padding:12px;background:#f1f6ff;border-radius:10px}
+#progressMeta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}
+#progressTrack{height:9px;background:#dce5f2;border-radius:99px;overflow:hidden}
+#progressBar{height:100%;width:0;background:#155eef;transition:width .2s}
+#popup{display:none;position:fixed;inset:0;background:#0008;z-index:99;align-items:center;justify-content:center;padding:16px}
+#popupCard{background:white;border-radius:16px;padding:22px;max-width:350px;width:100%;text-align:center;box-shadow:0 12px 40px #0003}
+#popupCard h2{margin-top:0}
+#popupCard button{margin-top:10px}
 </style>
 </head>
 <body>
@@ -52,8 +60,8 @@ small{color:#687588;font-weight:normal}
 <label style="font-weight:normal"><input type="checkbox" required style="width:auto"> Saya memastikan data yang saya isi benar.</label>
 <button id="submitBtn" type="submit">KIRIM REGISTRASI</button>
 <div id="progressWrap">
-  <div id="progressMeta"><span id="progressText">Menyiapkan...</span><strong id="progressPct">0%</strong></div>
-  <div id="progressTrack"><div id="progressBar"></div></div>
+<div id="progressMeta"><span id="progressText">Menyiapkan...</span><strong id="progressPct">0%</strong></div>
+<div id="progressTrack"><div id="progressBar"></div></div>
 </div>
 <div id="status" role="status"></div>
 </form>
@@ -64,23 +72,12 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwow909N7_osEMJLapu
 const form = document.getElementById("regForm");
 const statusBox = document.getElementById("status");
 const submitBtn = document.getElementById("submitBtn");
-const progressWrap = document.getElementById("progressWrap");
-const progressBar = document.getElementById("progressBar");
-const progressText = document.getElementById("progressText");
-const progressPct = document.getElementById("progressPct");
-const popup = document.getElementById("popup");
-function setProgress(n, label) {
-  const pct = Math.max(0, Math.min(100, n));
-  progressBar.style.width = pct + "%";
-  progressPct.textContent = Math.round(pct) + "%";
-  progressText.textContent = label || "Memproses...";
-}
-function showPopup(title, message) {
-  document.getElementById("popupTitle").textContent = title;
-  document.getElementById("popupMessage").textContent = message;
-  popup.style.display = "flex";
-}
-document.getElementById("popupOk").addEventListener("click", () => popup.style.display = "none");
+const progressWrap=document.getElementById("progressWrap"), progressBar=document.getElementById("progressBar");
+const progressText=document.getElementById("progressText"), progressPct=document.getElementById("progressPct");
+const popup=document.getElementById("popup");
+function progress(n,label){progressWrap.style.display="block";progressBar.style.width=n+"%";progressPct.textContent=n+"%";progressText.textContent=label;}
+function showPopup(title,message){document.getElementById("popupTitle").textContent=title;document.getElementById("popupMessage").textContent=message;popup.style.display="flex";}
+document.getElementById("popupOk").addEventListener("click",()=>popup.style.display="none");
 
 form.elements.name.addEventListener("input", e => e.target.value = e.target.value.toUpperCase());
 form.elements.city.addEventListener("input", e => e.target.value = e.target.value.toUpperCase());
@@ -141,10 +138,12 @@ form.addEventListener("submit", async e => {
       body: JSON.stringify(payload)
     });
 
-    statusBox.textContent =
-      "Permintaan sudah dikirim dari browser. Karena mode no-cors tidak dapat membaca balasan server, status penyimpanan belum bisa dipastikan. Periksa Spreadsheet dan kedua folder Drive sebelum mengirim ulang.";
+    progress(100,"Selesai mengirim");
+    form.reset();
+    statusBox.textContent = "Form telah dikosongkan setelah pengiriman.";
+    showPopup("REGISTRASI TERKIRIM", "Form sudah dikosongkan. Kamu menyatakan data sebelumnya sudah berhasil tersimpan di spreadsheet.");
   } catch (err) {
-    statusBox.textContent = "Pengiriman gagal: " + (err.message || err);\n    showPopup("PENGIRIMAN GAGAL", err.message || "Terjadi kesalahan saat mengirim.");
+    statusBox.textContent = "Pengiriman gagal: " + (err.message || err);\n    showPopup("PENGIRIMAN GAGAL", err.message || "Terjadi kesalahan.");
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "KIRIM REGISTRASI";
