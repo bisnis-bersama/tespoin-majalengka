@@ -157,7 +157,7 @@ async function confirmLunas(){
 }
 function closeModal(){$('modal').classList.remove('show');document.body.style.overflow='';selected=null;}
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-function waPesertaUrl(p){const nomor=normalisasiWa(p&&p.wa);const pesan='Yth. Kak '+(p&&p.nama||'Peserta')+', kami dari panitia DPD TESPOIN Majalengka mengingatkan bahwa pembayaran registrasi dengan kode '+(p&&p.kode||'-')+' Tercatat masih BELUM LUNAS karna belum ada BUKTI TRNASFER yang jelas. Mohon segera melakukan pembayaran dan konfirmasi kepada panitia dengan mengirim bukti transfer. Terima kasih.';return nomor?'https://wa.me/'+nomor+'?text='+encodeURIComponent(pesan):'https://wa.me/?text='+encodeURIComponent(pesan);}
+function waPesertaUrl(p){const nomor=normalisasiWa(p&&p.wa);const pesan='Yth. Kak '+(p&&p.nama||'Peserta')+'<br>Kami dari panitia STIMA 2nd DPD TESPOIN Majalengka<br> menginformasikan bahwa pembayaran registrasi dengan kode '+(p&&p.kode||'-')+' Tercatat masih BELUM LUNAS<br>karna belum ada BUKTI TRNASFER yang jelas.<br> Mohon segera melakukan pembayaran dan konfirmasi kepada panitia dengan mengirim bukti transfer.<br> Terima kasih.';return nomor?'https://wa.me/'+nomor+'?text='+encodeURIComponent(pesan):'https://wa.me/?text='+encodeURIComponent(pesan);}
 function normalisasiWa(v){let n=String(v||'').replace(/\D/g,'');if(n.startsWith('0'))n='62'+n.slice(1);else if(n.startsWith('8'))n='62'+n;return n;}
 let editingParticipant=null;
 let editingFileName='';
