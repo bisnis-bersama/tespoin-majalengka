@@ -49,16 +49,17 @@ border-radius:12px
 <section class="card"><div id="status" class="status"><span class="dot"></span><span id="statusText">MEMUAT STATUS PENDAFTARAN</span></div><div class="title"><div class="icon-title">📅</div><h2 id="judulAcara">ROADSHOW SERTIFIKASI BNSP TESPOIN</h2></div><div id="deskripsi" class="desc">Roadshow Sertifikasi Profesi BNSP TESPOIN DPD Majalengka.</div><div class="item"><div class="icon">📅</div><div><div class="label">Tanggal</div><div id="tanggal" class="value">Memuat tanggal...</div></div></div><div class="item"><div class="icon">🕐</div><div><div class="label">Waktu</div><div id="waktu" class="value">Memuat waktu...</div></div></div><div class="item"><div class="icon">📍</div><div><div class="label">Lokasi</div><div id="lokasi" class="value">Memuat lokasi...</div></div></div><div class="item"><div class="icon">🎟️</div><div><div class="label">Tiket</div><div id="harga" class="value">Memuat harga...</div></div></div><div id="tierList" class="tier-list" aria-label="Jadwal harga tiket"></div><a href="registrasi.html" id="btnDaftar" class="btn">DAFTAR SEKARANG</a><div class="desc" style="margin-top:17px;margin-bottom:12px"><b>QR CODE ATAU BUKTI REGISTRASI HILANG?</b><br>Masukkan nama dan nomor WhatsApp yang digunakan saat mendaftar. Admin akan membantu mengirim ulang bukti registrasi.</div><div class="recovery-form"><div><label for="namaPeserta">Nama Peserta</label><input type="text" id="namaPeserta" placeholder="Masukkan nama lengkap" autocomplete="name"></div><div><label for="waPeserta">Nomor WhatsApp</label><input type="tel" id="waPeserta" placeholder="Contoh: 081234567890" autocomplete="tel"></div></div><button type="button" class="btn dark" onclick="hubungiAdminWA()">MINTA BUKTI REGISTRASI YANG HILANG</button><a href="https://wa.me/6282319264646?text=Assalamualaikum%20Panitia%20Registrasi%20TESPOIN%20Majalengka%2C%20saya%20ingin%20bertanya%20mengenai%20registrasi%20peserta." target="_blank" rel="noopener noreferrer" class="btn wa-panitia">🟢 HUBUNGI PANITIA REGISTRASI VIA WHATSAPP</a></section>
 <section class="card"><div class="title"><div class="icon-title">🎁</div><h2>Benefit Peserta</h2></div><div id="benefit" class="benefits"><div class="benefit"><span class="check">✓</span><span>Kaos Peserta</span></div><div class="benefit"><span class="check">✓</span><span>Makan 1 kali</span></div><div class="benefit"><span class="check">✓</span><span>Coffee Break 1 kali</span></div><div class="benefit"><span class="check">✓</span><span>Sertifikat Seminar</span></div><div class="benefit"><span class="check">✓</span><span>Doorprize</span></div><div class="benefit"><span class="check">✓</span><span>Ak</span></div></div></section>
 
+
 <footer class="footer">
   DPD TESPOIN MAJALENGKA • TEKNISI PONSEL MAJALENGKA
   <br>
 
-  <!-- LOGIN PANITIA TETAP DIPERTAHANKAN -->
+  <!-- LOGIN PANITIA TETAP ADA -->
   <a href="login-panitia.html" class="admin-login">
     🔐 Login Panitia
   </a>
 
-  <!-- IDENTITAS FIXZI BUSINESS -->
+  <!-- LOGO DAN HAK CIPTA BISA DIKLIK -->
   <div style="
     margin-top:22px;
     padding-top:15px;
@@ -66,34 +67,46 @@ border-radius:12px
     text-align:center;
   ">
 
-    <img
-      src="fixzi-business.png"
-      alt="FIXZI BUSINESS"
+    <a
+      href="https://fixzi-global.vercel.app"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Kunjungi website FIXZI GLOBAL"
       style="
-        width:90px;
-        height:auto;
-        display:block;
-        margin:0 auto 8px;
+        display:inline-flex;
+        flex-direction:column;
+        align-items:center;
+        text-decoration:none;
+        cursor:pointer;
       "
     >
 
-    <div style="
-      font-size:14px;
-      font-weight:800;
-      letter-spacing:1px;
-      color:#222;
-    ">
+      <img
+        src="fixzi-business.png"
+        alt="FIXZI BUSINESS"
+        style="
+          width:90px;
+          height:auto;
+          display:block;
+          margin:0 auto;
+        "
+      >
 
-    <div style="
-      font-size:10px;
-      color:#999;
-      margin-top:8px;
-    ">
-      © 2026 A YUDI THEA. All Rights Reserved.
-    </div>
+      <span style="
+        font-size:10px;
+        color:#999;
+        margin-top:8px;
+        letter-spacing:0.3px;
+        line-height:1.6;
+      ">
+        © 2026 A YUDI THEA. All Rights Reserved.
+      </span>
+
+    </a>
 
   </div>
 </footer>
+
 
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
