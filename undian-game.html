@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101820">
+<title>Undian Doorprize | DPD TESPOIN Majalengka</title>
+<style>
+*{box-sizing:border-box}
+:root{--gold:#f5c400;--dark:#101820;--green:#198754}
+html,body{margin:0;min-height:100%;background:#eef1f5;color:#171717;font-family:Arial,Helvetica,sans-serif}
+.wrap{max-width:1440px;margin:auto;padding:16px}
+.header{background:#111;color:#fff;border-radius:18px;padding:18px 22px;text-align:center}
+.header h1{margin:0;color:var(--gold);font-size:clamp(22px,2.2vw,34px)}
+.header p{margin:7px 0 0;color:#ddd;font-size:12px;letter-spacing:1.5px}
+.panel{background:#fff;margin-top:14px;padding:18px;border-radius:16px;box-shadow:0 4px 16px #0000000d;min-width:0}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.controls select,.controls button{font-size:14px;font-weight:700;border:0;border-radius:10px;padding:12px 14px}
+.controls select{background:#f3f4f6;flex:1;min-width:220px}
+.btn{cursor:pointer}
+.yellow{background:var(--gold);color:#111}
+.dark{background:#111;color:#fff}
+.green{background:var(--green);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.status{display:none;padding:11px 13px;border-radius:10px;margin-top:12px;font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.status.show{display:block}
+.ok{background:#dcfce7;color:#166534}
+.err{background:#fee2e2;color:#991b1b}
+.small{font-size:12px;color:#666;line-height:1.6}
+.statline{font-size:14px;font-weight:800;margin-top:10px}
+.main-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:14px;align-items:start}
+.drawing-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:510px}
+.digit-title{font-weight:900;font-size:clamp(17px,2vw,23px);text-align:center;margin:20px 0 8px;letter-spacing:1px}
+.digit-subtitle{font-size:12px;color:#64748b;text-align:center;margin-bottom:14px}
+.digit-display{display:flex;justify-content:center;align-items:center;gap:clamp(6px,1.8vw,16px);width:100%;padding:25px 2px}
+.digit-display span{display:flex;align-items:center;justify-content:center;width:clamp(54px,13vw,112px);height:clamp(76px,17vw,128px);background:#101820;color:var(--gold);border:3px solid var(--gold);border-radius:14px;font-size:clamp(38px,9vw,76px);font-weight:900;font-variant-numeric:tabular-nums;box-shadow:0 5px 15px #0003}
+.digit-display span.locked{background:#198754;color:#fff;border-color:var(--gold)}
+.digit-display span.spinning{color:#fff;background:#263746}
+.stage-info{background:#fffbea;border:1px solid #f5c400;border-radius:10px;padding:15px;margin:10px 0 22px;text-align:center;font-weight:800;min-height:48px;width:100%;line-height:1.5}
+.spin-controls{display:flex;justify-content:center;gap:12px;width:100%;max-width:560px}
+.spin-controls button{flex:1;min-height:54px;font-size:16px}
+.result{display:none;text-align:center;border:3px solid var(--gold);background:#fffbea;border-radius:16px;padding:22px;overflow-wrap:anywhere}
+.result.show{display:block}
+.caption{font-size:14px;font-weight:900;color:#8a6500;letter-spacing:1.5px;margin-bottom:18px}
+.result-label{font-size:11px;font-weight:800;color:#64748b;letter-spacing:1.2px;margin-top:14px}
+.winner-code{font-size:clamp(30px,5vw,46px);font-weight:900;color:#8a6500;margin:6px 0 12px}
+.winner-name{font-size:clamp(22px,3vw,34px);font-weight:900;margin:6px 0 12px;color:#111;line-height:1.25}
+.winner-address{font-size:clamp(15px,2vw,19px);font-weight:700;line-height:1.7;color:#334155;margin-top:6px}
+.history{padding-left:24px;margin-bottom:0}
+.history li{margin:10px 0;overflow-wrap:anywhere;line-height:1.5}
+.side-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+.side-panel .panel{margin-top:0}
+.footer{font-size:11px;color:#777;text-align:center;padding:14px}
+.celebration{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
+.celebration.show{display:flex}
+.celebration-message{position:relative;z-index:2;background:#101820;color:var(--gold);border:3px solid var(--gold);border-radius:22px;padding:24px 30px;text-align:center;font-weight:900;font-size:clamp(25px,5vw,54px);box-shadow:0 12px 45px #0005;animation:pop .65s cubic-bezier(.2,1.6,.4,1) both}
+.celebration-message small{display:block;color:#fff;font-size:clamp(13px,2vw,19px);margin-top:8px;letter-spacing:2px}
+.confetti{position:absolute;top:-24px;width:10px;height:16px;animation:fall var(--fall,3s) linear forwards;left:var(--left,50%);background:var(--color,var(--gold));transform:rotate(var(--rot,0deg))}
+@keyframes fall{to{transform:translate3d(var(--drift,30px),110vh,0) rotate(900deg)}}
+@keyframes pop{0%{transform:scale(.35);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@media(min-width:1000px) and (orientation:landscape){.wrap{padding:12px 20px}.header{padding:13px 20px}.main-grid{grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr)}.drawing-panel{min-height:calc(100vh - 170px);padding:10px 18px}}
+@media(max-width:850px){.main-grid{grid-template-columns:1fr}.drawing-panel{min-height:auto}}
+@media(max-width:500px){.wrap{padding:10px}.header{padding:16px 12px}.header h1{font-size:20px}.header p{font-size:11px;letter-spacing:1px}.panel{padding:14px}.controls select,.controls button{width:100%;min-width:0}.spin-controls{gap:8px}.spin-controls button{font-size:14px;padding:12px 8px}.digit-display span{border-width:2px;border-radius:10px}}
+@media(prefers-reduced-motion:reduce){.celebration-message{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="header"><h1>DPD TESPOIN MAJALENGKA</h1><p>PUTARAN SPIN UNDIAN DOORPRIZE</p></header>
+
+<section class="panel">
+  <div class="controls">
+    <select id="jenisUndian" aria-label="Pilih putaran undian">
+      <option value="motor">Undian 1</option>
+      <option value="listrik">Undian 2</option>
+    </select>
+    <button id="muat" class="btn yellow" type="button">↻ Muat Data Peserta</button>
+  </div>
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <div class="statline" id="jumlah">Data peserta belum dimuat.</div>
+  <p class="small">Peserta dengan status pembayaran <b>LUNAS</b> dan nomor undian tepat 4 digit memenuhi syarat. Pemenang tidak akan terpilih kembali pada putaran yang sama selama halaman ini tetap terbuka. Angka yang sudah di-STOP akan tetap terlihat dan terkunci.</p>
+</section>
+
+<div class="main-grid">
+  <section class="panel drawing-panel">
+    <div class="digit-title">PENGUNDIAN NOMOR 4 DIGIT</div>
+    <div class="digit-subtitle">STOP MANUAL untuk mengunci angka pada setiap tahap</div>
+    <div class="digit-display" aria-label="Nomor undian empat digit">
+      <span id="digit0">?</span><span id="digit1">?</span><span id="digit2">?</span><span id="digit3">?</span>
+    </div>
+    <div id="stageInfo" class="stage-info">Muat data peserta untuk memulai pengundian.</div>
+    <div class="controls spin-controls">
+      <button id="putar" class="btn green" type="button" disabled>▶ PUTAR SPIN</button>
+      <button id="stop" class="btn dark" type="button" disabled>■ STOP MANUAL</button>
+    </div>
+  </section>
+
+  <div class="side-panel">
+    <section id="hasil" class="panel result" aria-live="polite">
+      <div class="caption">PEMENANG UNDIAN</div>
+      <div class="result-label">NOMOR UNDIAN</div><div id="kodeMenang" class="winner-code">—</div>
+      <div class="result-label">NAMA LENGKAP</div><div id="namaMenang" class="winner-name">—</div>
+      <div class="result-label">ALAMAT PESERTA</div><div id="alamatMenang" class="winner-address">—</div>
+    </section>
+    <section class="panel">
+      <b>Riwayat pemenang</b>
+      <ol id="riwayat" class="history"><li class="small">Belum ada pemenang.</li></ol>
+      <p class="small">Riwayat pada halaman ini bersifat sementara dan akan hilang jika halaman dimuat ulang atau ditutup.</p>
+    </section>
+  </div>
+</div>
+<div class="footer">Sumber data: Firebase Firestore • Koleksi peserta</div>
+</div>
+
+<div id="celebration" class="celebration" aria-hidden="true"></div>
+<audio id="applauseAudio" preload="none"><source src="https://cdn.pixabay.com/audio/2022/03/15/audio_783f6a1f3d.mp3" type="audio/mpeg"></audio>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBL_AE-ckPgJOhJX4xUYC04nBvfPdNDppQ",
+  authDomain: "register-peserta.firebaseapp.com",
+  projectId: "register-peserta",
+  storageBucket: "register-peserta.firebasestorage.app",
+  messagingSenderId: "983090504866",
+  appId: "1:983090504866:web:7879b0784b9fecad4863fb"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+const $ = id => document.getElementById(id);
+
+let peserta = [];
+let eligible = [];
+let winners = { motor: new Set(), listrik: new Set() };
+
+let stage = 0;
+let lockedDigits = [null, null, null, null];
+let isSpinning = false;
+let spinTimer = null;
+let gameComplete = false;
+let selectedWinner = null;
+let celebrationTimer = null;
+
+function showStatus(msg, type = 'ok') {
+  $('status').textContent = msg;
+  $('status').className = 'status show ' + (type === 'err' ? 'err' : 'ok');
+}
+
+function clean(v) {
+  return String(v == null ? '' : v).trim();
+}
+
+function upper(v) {
+  return clean(v).toUpperCase();
+}
+
+function kode(p) {
+  return clean(p.kode || p.kodeRegistrasi || p.nomorRegistrasi || p._docId || '');
+}
+
+function digitCode(p) {
+  const value = kode(p);
+  return /^\d{4}$/.test(value) ? value : null;
+}
+
+function nama(p) {
+  return clean(p.nama || p.namaPeserta || p.name || 'Nama tidak tersedia');
+}
+
+function alamat(p) {
+  return clean(
+    p.alamatLengkap || p.alamat || p.alamatPeserta ||
+    p.domisili || p.kota || p.kabupaten || 'Alamat tidak tersedia'
+  );
+}
+
+function updateEligible() {
+  const type = $('jenisUndian').value;
+  eligible = peserta.filter(p =>
+    upper(p.statusPembayaran) === 'LUNAS' &&
+    digitCode(p) !== null &&
+    !winners[type].has(kode(p))
+  );
+
+  $('jumlah').textContent =
+    'Peserta yang memenuhi syarat: ' + eligible.length +
+    ' (LUNAS, kode 4 digit)';
+
+  updateButtons();
+}
+
+function renderDigits(animatedValues = {}) {
+  for (let i = 0; i < 4; i++) {
+    const el = $('digit' + i);
+    if (lockedDigits[i] !== null) {
+      el.textContent = lockedDigits[i];
+      el.classList.add('locked');
+      el.classList.remove('spinning');
+    } else if (Object.prototype.hasOwnProperty.call(animatedValues, i)) {
+      el.textContent = animatedValues[i];
+      el.classList.remove('locked');
+      el.classList.add('spinning');
+    } else {
+      el.textContent = '?';
+      el.classList.remove('locked', 'spinning');
+    }
+  }
+}
+
+function resetGame() {
+  if (spinTimer) clearInterval(spinTimer);
+  spinTimer = null;
+  isSpinning = false;
+  stage = 0;
+  lockedDigits = [null, null, null, null];
+  selectedWinner = null;
+  gameComplete = false;
+  $('hasil').classList.remove('show');
+  renderDigits();
+  $('stageInfo').textContent =
+    'Tahap 1: angka pertama dan angka terakhir akan berputar bersamaan.';
+  updateButtons();
+}
+
+function updateButtons() {
+  $('putar').disabled = isSpinning || eligible.length === 0;
+  $('stop').disabled = !isSpinning;
+  $('muat').disabled = isSpinning;
+  $('jenisUndian').disabled = isSpinning;
+
+  if (gameComplete) {
+    $('putar').textContent = '▶ UNDIAN BERIKUTNYA';
+  } else {
+    $('putar').textContent =
+      stage === 0 ? '▶ PUTAR TAHAP 1' :
+      stage === 1 ? '▶ PUTAR TAHAP 2' :
+      '▶ PUTAR TAHAP 3';
+  }
+}
+
+/* Kandidat selalu dibatasi oleh digit yang sudah terkunci. */
+function getCandidatePool() {
+  return eligible.filter(p => {
+    const code = digitCode(p);
+    if (!code) return false;
+
+    for (let i = 0; i < 4; i++) {
+      if (lockedDigits[i] !== null &&
+          code[i] !== String(lockedDigits[i])) return false;
+    }
+    return true;
+  });
+}
+
+function getActivePositions() {
+  if (stage === 0) return [0, 3];
+  if (stage === 1) return [1];
+  if (stage === 2) return [2];
+  return [];
+}
+
+function startSpin() {
+  if (isSpinning) return;
+
+  if (gameComplete) {
+    resetGame();
+    updateEligible();
+  }
+
+  const pool = getCandidatePool();
+  if (!pool.length) {
+    showStatus('Tidak ada peserta yang cocok dengan angka yang terkunci.', 'err');
+    return;
+  }
+
+  isSpinning = true;
+  updateButtons();
+
+  const positions = getActivePositions();
+  $('hasil').classList.remove('show');
+
+  $('stageInfo').textContent =
+    stage === 0
+      ? 'TAHAP 1 — Angka pertama dan angka terakhir sedang berputar.'
+      : stage === 1
+        ? 'TAHAP 2 — Angka kedua sedang berputar.'
+        : 'TAHAP 3 — Angka ketiga sedang berputar.';
+
+  showStatus('Angka sedang berputar. Tekan STOP MANUAL untuk mengunci angka.');
+
+  spinTimer = setInterval(() => {
+    const animated = {};
+    positions.forEach(position => {
+      animated[position] = Math.floor(Math.random() * 10);
+    });
+    renderDigits(animated);
+  }, 75);
+}
+
+function stopSpin() {
+  if (!isSpinning) return;
+
+  clearInterval(spinTimer);
+  spinTimer = null;
+
+  const pool = getCandidatePool();
+  if (!pool.length) {
+    isSpinning = false;
+    updateButtons();
+    showStatus('Tidak ada peserta yang cocok. Silakan mulai ulang.', 'err');
+    return;
+  }
+
+  /*
+   * Pilih satu kandidat secara acak pada setiap tahap, lalu kunci digit
+   * tahap itu. Pemilihan bertingkat ini mempertahankan peluang yang sama
+   * bagi setiap peserta yang memenuhi syarat.
+   */
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  const code = digitCode(chosen);
+
+  getActivePositions().forEach(position => {
+    lockedDigits[position] = code[position];
+  });
+
+  isSpinning = false;
+  renderDigits();
+
+  if (stage === 0) {
+    stage = 1;
+    $('stageInfo').textContent =
+      'Tahap 1 selesai. Angka pertama dan terakhir terkunci. Lanjutkan ke tahap 2.';
+    showStatus('Angka pertama dan terakhir berhasil dikunci.');
+    updateButtons();
+    return;
+  }
+
+  if (stage === 1) {
+    stage = 2;
+    $('stageInfo').textContent =
+      'Tahap 2 selesai. Angka kedua terkunci. Lanjutkan ke tahap 3.';
+    showStatus('Angka kedua berhasil dikunci.');
+    updateButtons();
+    return;
+  }
+
+  selectedWinner = chosen;
+  finishWinner();
+}
+
+function finishWinner() {
+  if (!selectedWinner) return;
+
+  const type = $('jenisUndian').value;
+  const winner = selectedWinner;
+  const finalCode = lockedDigits.join('');
+
+  if (digitCode(winner) !== finalCode) {
+    showStatus('Validasi nomor pemenang gagal. Hasil tidak ditampilkan.', 'err');
+    selectedWinner = null;
+    resetGame();
+    updateEligible();
+    return;
+  }
+
+  winners[type].add(kode(winner));
+
+  $('kodeMenang').textContent = finalCode;
+  $('namaMenang').textContent = nama(winner);
+  $('alamatMenang').textContent = alamat(winner);
+  $('hasil').classList.add('show');
+
+  const history = $('riwayat');
+  if (history.querySelector('li.small')) history.replaceChildren();
+
+  const li = document.createElement('li');
+  li.textContent =
+    'No. ' + finalCode + ' — ' + nama(winner) + ' — ' + alamat(winner);
+  history.prepend(li);
+
+  gameComplete = true;
+  $('stageInfo').textContent =
+    'PENGUNDIAN SELESAI — NOMOR PEMENANG: ' + finalCode;
+
+  updateEligible();
+  showStatus('Pemenang berhasil ditetapkan: ' + nama(winner));
+  playCelebration();
+}
+
+async function loadData() {
+  $('muat').disabled = true;
+  showStatus('Memeriksa akses Admin dan mengambil data peserta...');
+
+  try {
+    const user = await new Promise((resolve, reject) => {
+      let unsubscribe = () => {};
+      unsubscribe = auth.onAuthStateChanged(
+        u => { unsubscribe(); resolve(u); },
+        e => { unsubscribe(); reject(e); }
+      );
+    });
+
+    if (!user) {
+      location.href = 'login.html';
+      return;
+    }
+
+    const roleSnap = await db.collection('users').doc(user.uid).get();
+    const role = roleSnap.exists ? upper(roleSnap.data().role) : '';
+
+    if (role !== 'ADMIN') {
+      showStatus('Akses ditolak. Halaman undian khusus Admin.', 'err');
+      await auth.signOut();
+      setTimeout(() => { location.href = 'login.html'; }, 1200);
+      return;
+    }
+
+    const snap = await db.collection('peserta').get();
+    peserta = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+
+    winners = { motor: new Set(), listrik: new Set() };
+
+    $('hasil').classList.remove('show');
+    $('riwayat').replaceChildren();
+
+    const empty = document.createElement('li');
+    empty.className = 'small';
+    empty.textContent = 'Belum ada pemenang.';
+    $('riwayat').appendChild(empty);
+
+    resetGame();
+    updateEligible();
+
+    const invalidCount = peserta.filter(p =>
+      upper(p.statusPembayaran) === 'LUNAS' && digitCode(p) === null
+    ).length;
+
+    showStatus(
+      'Data berhasil dimuat dari Firestore (' + peserta.length +
+      ' peserta). Peserta LUNAS dengan kode bukan 4 digit: ' + invalidCount + '.'
+    );
+  } catch (e) {
+    console.error(e);
+    showStatus('Gagal memuat data: ' + (e.message || e), 'err');
+  } finally {
+    $('muat').disabled = false;
+    updateButtons();
+  }
+}
+
+function playCelebration() {
+  const overlay = $('celebration');
+  overlay.replaceChildren();
+
+  const message = document.createElement('div');
+  message.className = 'celebration-message';
+  message.textContent = '🎉 SELAMAT! 🎉';
+
+  const small = document.createElement('small');
+  small.textContent = 'PEMENANG DOORPRIZE';
+  message.appendChild(small);
+  overlay.appendChild(message);
+
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+
+  const colors = ['#f5c400','#198754','#ef4444','#3b82f6','#ec4899','#ffffff'];
+  for (let i = 0; i < 110; i++) {
+    const piece = document.createElement('i');
+    piece.className = 'confetti';
+    piece.style.setProperty('--left', Math.random() * 100 + '%');
+    piece.style.setProperty('--color', colors[i % colors.length]);
+    piece.style.setProperty('--fall', (2.5 + Math.random() * 2.5) + 's');
+    piece.style.setProperty('--drift', ((Math.random() - .5) * 260) + 'px');
+    piece.style.setProperty('--rot', Math.random() * 360 + 'deg');
+    piece.style.animationDelay = Math.random() * .8 + 's';
+    overlay.appendChild(piece);
+  }
+
+  const audio = $('applauseAudio');
+  if (audio) {
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise && playPromise.catch) playPromise.catch(() => {});
+  }
+
+  if (celebrationTimer) clearTimeout(celebrationTimer);
+  celebrationTimer = setTimeout(() => {
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.replaceChildren();
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    celebrationTimer = null;
+  }, 5000);
+}
+
+$('muat').addEventListener('click', loadData);
+$('putar').addEventListener('click', startSpin);
+$('stop').addEventListener('click', stopSpin);
+
+$('jenisUndian').addEventListener('change', () => {
+  resetGame();
+  updateEligible();
+});
+
+loadData();
+</script>
+</body>
+</html>
